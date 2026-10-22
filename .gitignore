@@ -1,0 +1,29 @@
+# Fichiers de secrets et variables d'environnement (Règles security.md)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dart & Flutter
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Code generation & cache
+*.g.dart
+*.freezed.dart
+
+# Supabase local data
+supabase/.branches
+supabase/.temp
+.supabase/
+
+# IDEs & OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

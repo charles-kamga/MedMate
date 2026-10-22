@@ -1,0 +1,58 @@
+name: medmate
+description: "Application de mise en relation patients-pharmacies à Yaoundé (Flutter + Supabase/PostGIS)"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+  flutter: '>=3.16.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Gestion d'état & Architecture
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+
+  # Programmation fonctionnelle & Result pattern
+  fpdart: ^1.1.0
+
+  # Modèles immuables & Sérialisation
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Backend Supabase & Réseau
+  supabase_flutter: ^2.8.3
+
+  # Cartographie OpenStreetMap & Géolocalisation
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  geolocator: ^13.0.2
+
+  # Sécurité & Stockage local chiffré (Offline-first)
+  sqflite_sqlcipher: ^3.3.2
+  flutter_secure_storage: ^9.2.2
+
+  # Utilitaires & Idempotence
+  uuid: ^4.5.1
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Tests & Mocks
+  mocktail: ^1.0.4
+  bloc_test: ^9.1.7
+
+  # Générateurs de code
+  build_runner: ^2.4.14
+  freezed: ^2.5.7
+  json_serializable: ^6.9.3
+
+  # Analyse statique et qualité de code d'élite
+  very_good_analysis: ^6.0.0
+
+flutter:
+  uses-material-design: true
