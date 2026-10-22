@@ -1,5 +1,16 @@
 import 'package:flutter/material.dart';
-import 'core/constants/yaounde_landmarks.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'core/network/network_info.dart';
+import 'core/theme/app_theme.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/home/presentation/views/main_navigation_screen.dart';
+import 'features/pharmacy_search/data/repositories/pharmacy_repository_impl.dart';
+import 'features/pharmacy_search/domain/repositories/pharmacy_repository.dart';
+import 'features/pharmacy_search/domain/usecases/request_reservation.dart';
+import 'features/pharmacy_search/domain/usecases/search_medications.dart';
+import 'features/pharmacy_search/domain/usecases/search_pharmacies.dart';
+import 'features/pharmacy_search/presentation/bloc/pharmacy_search_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -7,93 +18,41 @@ void main() {
 }
 
 class MedMateApp extends StatelessWidget {
-  const MedMateApp({super.key});
+  const MedMateApp({
+    super.key,
+    this.enableNetworkTiles = true,
+    this.pharmacyRepository,
+  });
+
+  final bool enableNetworkTiles;
+  final PharmacyRepository? pharmacyRepository;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'MedMate Yaoundé',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF00897B), // Vert médical apaisant
-          secondary: const Color(0xFF0288D1),
+    final repo = pharmacyRepository ??
+        PharmacyRepositoryImpl(
+          supabaseClient: SupabaseClient('http://localhost:54321', 'anon-dummy-key'),
+          networkInfo: const NetworkInfoImpl(),
+        );
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(
+          create: (_) => AuthBloc(),
         ),
-        useMaterial3: true,
-      ),
-      home: const PharmacySearchHomePage(),
-    );
-  }
-}
-
-class PharmacySearchHomePage extends StatelessWidget {
-  const PharmacySearchHomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('MedMate — Pharmacies Yaoundé'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.location_on, color: Theme.of(context).primaryColor),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Repères Urbains de Yaoundé',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Sélectionnez votre carrefour ou quartier pour trouver les officines ouvertes ou de garde sans consommer inutilement de forfait internet.',
-                    style: TextStyle(fontSize: 13, color: Colors.black87),
-                  ),
-                ],
-              ),
-            ),
+        BlocProvider<PharmacySearchBloc>(
+          create: (_) => PharmacySearchBloc(
+            searchPharmaciesUseCase: SearchPharmaciesUseCase(repo),
+            searchMedicationsUseCase: SearchMedicationsUseCase(repo),
+            requestReservationUseCase: RequestReservationUseCase(repo),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Carrefours Incontournables (Accès Rapide)',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          ...YaoundeLandmarks.list.map(
-            (landmark) => Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                  child: Icon(Icons.local_pharmacy, color: Theme.of(context).primaryColor),
-                ),
-                title: Text(landmark.nom, style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text('${landmark.quartier} (${landmark.arrondissement})\n${landmark.description}'),
-                isThreeLine: true,
-                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Recherche des officines autour de : ${landmark.nom}'),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
+        ),
+      ],
+      child: MaterialApp(
+        title: 'MedMate Yaoundé',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        home: MainNavigationScreen(enableNetworkTiles: enableNetworkTiles),
       ),
     );
   }
