@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/network/network_info.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/flash_order/presentation/cubit/flash_order_cubit.dart';
 import 'features/home/presentation/views/main_navigation_screen.dart';
 import 'features/pharmacy_search/data/repositories/pharmacy_repository_impl.dart';
 import 'features/pharmacy_search/domain/repositories/pharmacy_repository.dart';
@@ -39,6 +40,9 @@ class MedMateApp extends StatelessWidget {
       providers: [
         BlocProvider<AuthBloc>(
           create: (_) => AuthBloc(),
+        ),
+        BlocProvider<FlashOrderCubit>(
+          create: (_) => FlashOrderCubit(),
         ),
         BlocProvider<PharmacySearchBloc>(
           create: (_) => PharmacySearchBloc(

@@ -22,6 +22,8 @@ class AppColors {
   static const Color warningSoft = Color(0xFFFEF3C7);
   static const Color emergency = Color(0xFFE11D48); // Rose-600 (Urgence vitale)
   static const Color emergencySoft = Color(0xFFFFE4E6);
+  static const Color error = emergency; // Alias pour erreurs et indisponibilités
+  static const Color errorSoft = emergencySoft;
 
   // Surfaces & Fonds (Thème Clair)
   static const Color background = Color(0xFFF8FAFC); // Slate-50

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/bento_card.dart';
+import '../../../flash_order/presentation/cubit/flash_order_cubit.dart';
 import '../../domain/entities/medication.dart';
 
 /// Vue du catalogue national homologué et recherche tolérante aux fautes
 class MedicationCatalogView extends StatefulWidget {
-  const MedicationCatalogView({super.key});
+  const MedicationCatalogView({super.key, this.onSwitchToFlashOrder});
+
+  final VoidCallback? onSwitchToFlashOrder;
 
   @override
   State<MedicationCatalogView> createState() => _MedicationCatalogViewState();
@@ -371,6 +375,9 @@ class _MedicationCatalogViewState extends State<MedicationCatalogView> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(ctx);
+                    context.read<FlashOrderCubit>().selectMedication(medication);
+                    context.read<FlashOrderCubit>().launchFlashOrder();
+                    widget.onSwitchToFlashOrder?.call();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Demande flash transmise pour ${medication.nomCommercial} !'),
