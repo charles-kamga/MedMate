@@ -121,7 +121,8 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
             children: [
               if (widget.enableNetworkTiles)
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
+                  subdomains: const ['a', 'b', 'c'],
                   userAgentPackageName: 'cm.medmate.medmate',
                 ),
               MarkerLayer(
