@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 /// Hiérarchie scellée pour les échecs métier de MedMate
 sealed class Failure extends Equatable {
-  const Failure(this.message, {this.code});
+  const Failure(this.message, [this.code]);
 
   final String message;
   final String? code;
@@ -30,7 +30,7 @@ final class ServerFailure extends Failure {
 /// Erreur de lecture/écriture dans le cache local SQLite chiffré
 final class CacheFailure extends Failure {
   const CacheFailure([
-    super.message = 'Impossible d''accéder au stockage local sécurisé.',
+    super.message = "Impossible d'accéder au stockage local sécurisé.",
     super.code = 'CACHE_ERROR',
   ]);
 }
@@ -54,7 +54,7 @@ final class AuthFailure extends Failure {
 /// Ressource introuvable (médicament non homologué, officine introuvable)
 final class NotFoundFailure extends Failure {
   const NotFoundFailure([
-    super.message = 'La ressource demandée n''a pas été trouvée.',
+    super.message = "La ressource demandée n'a pas été trouvée.",
     super.code = 'NOT_FOUND',
   ]);
 }
@@ -62,7 +62,7 @@ final class NotFoundFailure extends Failure {
 /// Échec de réservation (délai dépassé ou quota atteint)
 final class ReservationFailure extends Failure {
   const ReservationFailure([
-    super.message = 'La réservation n''a pas pu être confirmée.',
+    super.message = "La réservation n'a pas pu être confirmée.",
     super.code = 'RESERVATION_ERROR',
   ]);
 }

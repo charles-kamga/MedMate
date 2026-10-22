@@ -42,7 +42,7 @@ void main() {
     ),
   ];
 
-  test('doit retourner une liste de pharmacies lors d''une recherche réussie', () async {
+  test("doit retourner une liste de pharmacies lors d'une recherche réussie", () async {
     // Arrange
     when(
       () => mockRepository.searchNearbyPharmacies(
@@ -50,13 +50,13 @@ void main() {
         longitude: any(named: 'longitude'),
         maxRadiusMeters: any(named: 'maxRadiusMeters'),
       ),
-    ).thenAnswer((_) async => Right(tPharmacies));
+    ).thenAnswer((_) async => Right<Failure, List<Pharmacy>>(tPharmacies));
 
     // Act
     final result = await useCase(tParams);
 
     // Assert
-    expect(result, Right(tPharmacies));
+    expect(result, Right<Failure, List<Pharmacy>>(tPharmacies));
     verify(
       () => mockRepository.searchNearbyPharmacies(
         latitude: tLat,
@@ -76,13 +76,13 @@ void main() {
         longitude: any(named: 'longitude'),
         maxRadiusMeters: any(named: 'maxRadiusMeters'),
       ),
-    ).thenAnswer((_) async => const Left(tFailure));
+    ).thenAnswer((_) async => const Left<Failure, List<Pharmacy>>(tFailure));
 
     // Act
     final result = await useCase(tParams);
 
     // Assert
-    expect(result, const Left(tFailure));
+    expect(result, const Left<Failure, List<Pharmacy>>(tFailure));
     verify(
       () => mockRepository.searchNearbyPharmacies(
         latitude: tLat,

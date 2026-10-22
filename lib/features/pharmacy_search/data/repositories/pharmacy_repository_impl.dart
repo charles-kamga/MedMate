@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:fpdart/fpdart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/yaounde_landmarks.dart';
-import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../domain/entities/medication.dart';
@@ -36,7 +35,7 @@ class PharmacyRepositoryImpl implements PharmacyRepository {
       }
 
       // Appel de la procédure stockée RPC de dispatch équitable (Round-Robin ONPC)
-      final List<dynamic> response = await supabaseClient.rpc(
+      final response = await supabaseClient.rpc<List<dynamic>>(
         'calculate_fair_dispatch',
         params: {
           'p_demande_id': '00000000-0000-0000-0000-000000000000',
@@ -48,14 +47,17 @@ class PharmacyRepositoryImpl implements PharmacyRepository {
       );
 
       final pharmacies = response
-          .map((item) => PharmacyModel.fromJson(item as Map<String, dynamic>))
+          .cast<Map<String, dynamic>>()
+          .map(PharmacyModel.fromJson)
           .toList();
 
-      return Right(pharmacies);
+      return Right<Failure, List<Pharmacy>>(pharmacies);
     } on PostgrestException catch (e) {
-      return Left(ServerFailure(e.message, e.code));
+      return Left<Failure, List<Pharmacy>>(ServerFailure(e.message, e.code));
     } catch (e) {
-      return const Left(ServerFailure('Erreur inattendue lors de la recherche des officines.'));
+      return const Left<Failure, List<Pharmacy>>(
+        ServerFailure('Erreur inattendue lors de la recherche des officines.'),
+      );
     }
   }
 
@@ -75,14 +77,17 @@ class PharmacyRepositoryImpl implements PharmacyRepository {
           .limit(20);
 
       final medications = (response as List<dynamic>)
-          .map((item) => MedicationModel.fromJson(item as Map<String, dynamic>))
+          .cast<Map<String, dynamic>>()
+          .map(MedicationModel.fromJson)
           .toList();
 
-      return Right(medications);
+      return Right<Failure, List<Medication>>(medications);
     } on PostgrestException catch (e) {
-      return Left(ServerFailure(e.message, e.code));
+      return Left<Failure, List<Medication>>(ServerFailure(e.message, e.code));
     } catch (e) {
-      return const Left(ServerFailure('Erreur lors de la consultation du catalogue.'));
+      return const Left<Failure, List<Medication>>(
+        ServerFailure('Erreur lors de la consultation du catalogue.'),
+      );
     }
   }
 
@@ -97,7 +102,9 @@ class PharmacyRepositoryImpl implements PharmacyRepository {
     try {
       final isConnected = await networkInfo.isConnected;
       if (!isConnected) {
-        return const Left(NetworkFailure('Impossible de réserver sans connexion internet active.'));
+        return const Left<Failure, Reservation>(
+          NetworkFailure('Impossible de réserver sans connexion internet active.'),
+        );
       }
 
       // Génération sécurisée d'un code de retrait OTP à 6 chiffres
@@ -127,11 +134,13 @@ class PharmacyRepositoryImpl implements PharmacyRepository {
         'medication_name': medicationData?['nom_commercial'] ?? 'Médicament',
       });
 
-      return Right(model);
+      return Right<Failure, Reservation>(model);
     } on PostgrestException catch (e) {
-      return Left(ServerFailure(e.message, e.code));
+      return Left<Failure, Reservation>(ServerFailure(e.message, e.code));
     } catch (e) {
-      return const Left(ReservationFailure('Échec de la validation de la réservation.'));
+      return const Left<Failure, Reservation>(
+        ReservationFailure('Échec de la validation de la réservation.'),
+      );
     }
   }
 

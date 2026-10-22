@@ -1,4 +1,5 @@
 /// Exceptions techniques lancées au sein de la couche Data
+library;
 
 class ServerException implements Exception {
   const ServerException([this.message = 'Erreur serveur Supabase', this.statusCode]);

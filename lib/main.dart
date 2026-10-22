@@ -1,15 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/constants/yaounde_landmarks.dart';
-import 'core/network/network_info.dart';
-import 'features/pharmacy_search/data/repositories/pharmacy_repository_impl.dart';
-import 'features/pharmacy_search/domain/usecases/request_reservation.dart';
-import 'features/pharmacy_search/domain/usecases/search_medications.dart';
-import 'features/pharmacy_search/domain/usecases/search_pharmacies.dart';
-import 'features/pharmacy_search/presentation/bloc/pharmacy_search_bloc.dart';
-import 'features/pharmacy_search/presentation/bloc/pharmacy_search_event.dart';
-import 'features/pharmacy_search/presentation/bloc/pharmacy_search_state.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -86,7 +76,7 @@ class PharmacySearchHomePage extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                  backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                   child: Icon(Icons.local_pharmacy, color: Theme.of(context).primaryColor),
                 ),
                 title: Text(landmark.nom, style: const TextStyle(fontWeight: FontWeight.w600)),

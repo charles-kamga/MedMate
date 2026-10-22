@@ -19,7 +19,7 @@ dependencies:
   fpdart: ^1.1.0
 
   # Modèles immuables & Sérialisation
-  freezed_annotation: ^2.4.4
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.9.0
 
   # Backend Supabase & Réseau
@@ -47,9 +47,9 @@ dev_dependencies:
   bloc_test: ^9.1.7
 
   # Générateurs de code
-  build_runner: ^2.4.14
-  freezed: ^2.5.7
-  json_serializable: ^6.9.3
+  build_runner: ^2.4.13
+  freezed: ^3.1.0
+  json_serializable: ^6.9.0
 
   # Analyse statique et qualité de code d'élite
   very_good_analysis: ^6.0.0

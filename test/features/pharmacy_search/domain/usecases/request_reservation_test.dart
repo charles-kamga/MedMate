@@ -49,13 +49,13 @@ void main() {
         patientPhone: any(named: 'patientPhone'),
         quantite: any(named: 'quantite'),
       ),
-    ).thenAnswer((_) async => Right(tReservation));
+    ).thenAnswer((_) async => Right<Failure, Reservation>(tReservation));
 
     // Act
     final result = await useCase(tParams);
 
     // Assert
-    expect(result, Right(tReservation));
+    expect(result, Right<Failure, Reservation>(tReservation));
     verify(
       () => mockRepository.requestReservation(
         clientReservationId: 'test-uuid-v4',
@@ -84,7 +84,9 @@ void main() {
     // Assert
     expect(
       result,
-      const Left(ReservationFailure('La quantité doit être supérieure à zéro.')),
+      const Left<Failure, Reservation>(
+        ReservationFailure('La quantité doit être supérieure à zéro.'),
+      ),
     );
     verifyZeroInteractions(mockRepository);
   });
@@ -105,7 +107,9 @@ void main() {
     // Assert
     expect(
       result,
-      const Left(ReservationFailure('Numéro de téléphone requis pour la réservation.')),
+      const Left<Failure, Reservation>(
+        ReservationFailure('Numéro de téléphone requis pour la réservation.'),
+      ),
     );
     verifyZeroInteractions(mockRepository);
   });
