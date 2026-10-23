@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
-import 'package:medmate/features/pharmacy_search/domain/entities/pharmacy.dart';
 import 'package:medmate/features/pharmacy_search/domain/repositories/pharmacy_repository.dart';
 import 'package:medmate/main.dart';
 import 'package:mocktail/mocktail.dart';
@@ -13,16 +11,9 @@ void main() {
 
   setUp(() {
     mockRepository = MockPharmacyRepository();
-    when(
-      () => mockRepository.searchNearbyPharmacies(
-        latitude: any(named: 'latitude'),
-        longitude: any(named: 'longitude'),
-        maxRadiusMeters: any(named: 'maxRadiusMeters'),
-      ),
-    ).thenAnswer((_) async => const Right<Never, List<Pharmacy>>([]));
   });
 
-  testWidgets('Smoke test affichage complet du prototype MedMate', (WidgetTester tester) async {
+  testWidgets('Test de la barre de navigation et en-tête MedMate', (WidgetTester tester) async {
     await tester.pumpWidget(
       MedMateApp(
         enableNetworkTiles: false,
@@ -31,41 +22,25 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Vérification de la présence de la barre de navigation à 4 onglets
+    // Vérification de la marque MedMate dans le Header
+    expect(find.text('MedMate'), findsOneWidget);
+    expect(find.text('✚'), findsOneWidget);
+    expect(find.byIcon(Icons.notifications_none_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.person_outline_rounded), findsWidgets);
+
+    // Vérification des 4 onglets de navigation
     expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.text('Commande Flash'), findsOneWidget);
-    expect(find.text('Médicaments'), findsOneWidget);
-    expect(find.text('Pharmacies'), findsOneWidget);
-    expect(find.text('Mon Espace'), findsOneWidget);
+    expect(find.text('Accueil'), findsOneWidget);
+    expect(find.text('Mes recherches'), findsOneWidget);
+    expect(find.text('Rappels'), findsOneWidget);
+    expect(find.text('Profil'), findsOneWidget);
 
-    // Onglet par défaut : Commande Flash
-    expect(find.text('Commande Flash Démo'), findsOneWidget);
-    expect(find.text('Vue Patient'), findsOneWidget);
-    expect(find.text('Vue Pharmacien'), findsOneWidget);
-    expect(find.text('Lancer la commande flash (2 à 3 pharmacies)'), findsOneWidget);
-
-    // Basculer vers l'onglet Pharmacies pour valider la cartographie
-    await tester.tap(find.text('Pharmacies'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Repères & Carrefours de Yaoundé'), findsOneWidget);
-    expect(find.text('Carrefour Warda'), findsOneWidget);
-
-    // Basculer vers l'onglet Catalogue pour valider le catalogue homologué
-    await tester.tap(find.text('Médicaments'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Catalogue & Disponibilité'), findsOneWidget);
-
-    // Basculer vers l'onglet Mon Espace pour valider l'espace sécurité
-    await tester.tap(find.text('Mon Espace'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Espace Patient & Sécurité'), findsOneWidget);
-    expect(find.text('Connexion Rapide par SMS OTP'), findsOneWidget);
+    // Vue par défaut : Étape 0 (Accueil)
+    expect(find.text('De quels médicaments avez-vous besoin ?'), findsOneWidget);
+    expect(find.text('Trouver mes médicaments →'), findsOneWidget);
   });
 
-  testWidgets('Test complet du flux client Commande Flash (Patient -> Dispatch -> Pharmacien -> OTP)', (WidgetTester tester) async {
+  testWidgets('Test du parcours complet Étape 0 à 4 selon spécifications maître d’œuvre', (WidgetTester tester) async {
     await tester.pumpWidget(
       MedMateApp(
         enableNetworkTiles: false,
@@ -74,52 +49,111 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // 1. Patient lance la commande flash
-    final launchButton = find.text('Lancer la commande flash (2 à 3 pharmacies)');
-    expect(launchButton, findsOneWidget);
-    await tester.ensureVisible(launchButton);
-    await tester.tap(launchButton);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    // 2. Dispatch radar en cours vers 3 pharmacies
-    expect(find.text('Dispatch MedMate en cours...'), findsOneWidget);
-    expect(find.textContaining('Pharmacie du Soleil'), findsWidgets);
-
-    // 3. Bascule vers la Vue Pharmacien pour répondre à la commande
-    await tester.tap(find.text('Vue Pharmacien'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.textContaining('Demande #ORD-'), findsOneWidget);
-    expect(find.text('1. Disponible (En Stock)'), findsOneWidget);
-    expect(find.text('2. Disponible sous conditions...'), findsOneWidget);
-    expect(find.text('3. Indisponible (Rupture)'), findsOneWidget);
-
-    // 4. Le pharmacien clique "Disponible" (gagne immédiatement la commande)
-    await tester.tap(find.text('1. Disponible (En Stock)'));
+    // Étape 0 : Clic sur le bouton principal pour démarrer le parcours
+    final startButton = find.text('Trouver mes médicaments →');
+    expect(startButton, findsOneWidget);
+    await tester.ensureVisible(startButton);
+    await tester.tap(startButton);
     await tester.pumpAndSettle();
 
-    expect(find.text('Félicitations ! Vous avez remporté cette commande.'), findsOneWidget);
+    // Étape 1 : Choisissez vos médicaments
+    expect(find.text('Étape 1 sur 4'), findsOneWidget);
+    expect(find.text('Choisissez vos médicaments'), findsOneWidget);
+    expect(find.text('Votre liste est vide.'), findsOneWidget);
 
-    // 5. Bascule vers la Vue Patient pour finaliser
-    await tester.tap(find.text('Vue Patient'));
+    // Ajouter 'Paracétamol 500 mg'
+    final addButtons = find.widgetWithText(OutlinedButton, '+ Ajouter');
+    expect(addButtons, findsWidgets);
+    await tester.ensureVisible(addButtons.first);
+    await tester.tap(addButtons.first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Pharmacie trouvée !'), findsOneWidget);
-    expect(find.text('Pharmacie du Soleil a répondu en premier'), findsOneWidget);
+    expect(find.text('Ma liste (1)'), findsOneWidget);
+    expect(find.text('Retirer'), findsOneWidget);
 
-    // 6. Choix du mode d'acquisition : Code OTP au comptoir
-    final reserveBtn = find.text('Générer mon Code de Réservation au Comptoir');
-    expect(reserveBtn, findsOneWidget);
-    await tester.ensureVisible(reserveBtn);
-    await tester.tap(reserveBtn);
+    // Clic sur Continuer vers l'étape 2
+    final continueButton = find.text('Continuer →');
+    await tester.ensureVisible(continueButton);
+    await tester.tap(continueButton);
     await tester.pumpAndSettle();
 
-    // 7. Vérification de la génération du code OTP et des consignes
-    expect(find.text('Réservation au Comptoir Confirmée !'), findsOneWidget);
-    expect(find.text('CODE DE RETRAIT COMPTOIR (OTP)'), findsOneWidget);
-    expect(find.textContaining('RET-'), findsOneWidget);
-    expect(find.textContaining('Valable pendant 02h 00m'), findsOneWidget);
+    // Étape 2 : Trouvez une pharmacie
+    expect(find.text('Étape 2 sur 4'), findsOneWidget);
+    expect(find.text('Trouvez une pharmacie'), findsOneWidget);
+    expect(find.textContaining('Pharmacie du Centre'), findsWidgets);
+    expect(find.text('Tous disponibles'), findsWidgets);
+
+    // Choisir la première pharmacie
+    final choosePharmacy = find.widgetWithText(OutlinedButton, 'Choisir cette pharmacie →').first;
+    await tester.ensureVisible(choosePharmacy);
+    await tester.tap(choosePharmacy);
+    await tester.pumpAndSettle();
+
+    // Étape 3 : Fiche détaillée de la pharmacie
+    expect(find.text('Étape 3 sur 4'), findsOneWidget);
+    expect(find.text('Pharmacie du Centre'), findsOneWidget);
+    expect(find.text('Votre liste'), findsOneWidget);
+    expect(find.text('Total indicatif'), findsOneWidget);
+    expect(find.textContaining('500 FCFA'), findsWidgets);
+
+    // Clic sur 'Voir l’itinéraire →'
+    final routeButton = find.text('Voir l’itinéraire →');
+    await tester.ensureVisible(routeButton);
+    await tester.tap(routeButton);
+    await tester.pumpAndSettle();
+
+    // Étape 4 : Rendez-vous à la pharmacie
+    expect(find.text('Étape 4 sur 4'), findsOneWidget);
+    expect(find.text('Rendez-vous à la pharmacie'), findsOneWidget);
+    expect(find.text('Ouvrir dans Google Maps ↗'), findsOneWidget);
+
+    // Terminer et retourner à l'accueil
+    final finishButton = find.text('Terminer');
+    await tester.ensureVisible(finishButton);
+    await tester.tap(finishButton);
+    await tester.pumpAndSettle();
+
+    // De retour sur Étape 0
+    expect(find.text('De quels médicaments avez-vous besoin ?'), findsOneWidget);
+  });
+
+  testWidgets('Test de navigation dans les onglets auxiliaires et raccourcis', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MedMateApp(
+        enableNetworkTiles: false,
+        pharmacyRepository: mockRepository,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 1. Navigation vers Mes recherches
+    await tester.tap(find.text('Mes recherches'));
+    await tester.pumpAndSettle();
+    expect(find.text('Retrouvez vos médicaments rapidement.'), findsOneWidget);
+    expect(find.text('Rechercher maintenant'), findsOneWidget);
+
+    // 2. Navigation vers Rappels
+    await tester.tap(find.text('Rappels'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mes rappels'), findsOneWidget);
+    expect(find.text('Vos rappels de prise de médicaments apparaîtront ici.'), findsOneWidget);
+
+    // 3. Navigation vers Profil
+    await tester.tap(find.text('Profil'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mon profil'), findsOneWidget);
+    expect(find.text('Bienvenue dans votre espace patient MedMate.'), findsOneWidget);
+    expect(find.text('Carte interactive des pharmacies'), findsOneWidget);
+
+    // 4. Clic sur Notifications dans la barre supérieure
+    await tester.tap(find.byIcon(Icons.notifications_none_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Notifications'), findsOneWidget);
+    expect(find.text('Aucune nouvelle notification.'), findsOneWidget);
+
+    // 5. Clic sur 'Retour à l’accueil'
+    await tester.tap(find.text('Retour à l’accueil'));
+    await tester.pumpAndSettle();
+    expect(find.text('De quels médicaments avez-vous besoin ?'), findsOneWidget);
   });
 }
