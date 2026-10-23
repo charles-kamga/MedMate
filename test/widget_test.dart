@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:medmate/core/config/app_config.dart';
 import 'package:medmate/features/pharmacy_search/domain/repositories/pharmacy_repository.dart';
 import 'package:medmate/main.dart';
 import 'package:mocktail/mocktail.dart';
@@ -22,8 +23,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Vérification de la marque MedMate dans le Header
-    expect(find.text('MedMate'), findsOneWidget);
+    // Vérification de la marque configurée dans AppConfig
+    expect(find.text(AppConfig.appName), findsOneWidget);
     expect(find.text('✚'), findsOneWidget);
     expect(find.byIcon(Icons.notifications_none_rounded), findsOneWidget);
     expect(find.byIcon(Icons.person_outline_rounded), findsWidgets);
@@ -35,12 +36,59 @@ void main() {
     expect(find.text('Rappels'), findsOneWidget);
     expect(find.text('Profil'), findsOneWidget);
 
+    // Carte d'accès prioritaire Pharmacies de garde
+    expect(find.text('Pharmacies de garde ce soir'), findsOneWidget);
+
     // Vue par défaut : Étape 0 (Accueil)
     expect(find.text('De quels médicaments avez-vous besoin ?'), findsOneWidget);
     expect(find.text('Trouver mes médicaments →'), findsOneWidget);
   });
 
-  testWidgets('Test du parcours complet Étape 0 à 4 selon spécifications maître d’œuvre', (WidgetTester tester) async {
+  testWidgets('Test complet de l’écran officiel Pharmacies de garde (Maquette Miguel)', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MedMateApp(
+        enableNetworkTiles: false,
+        pharmacyRepository: mockRepository,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 1. Clic sur le bouton Voir de la carte des pharmacies de garde
+    final dutyCardButton = find.widgetWithText(ElevatedButton, 'Voir →').first;
+    expect(dutyCardButton, findsOneWidget);
+    await tester.ensureVisible(dutyCardButton);
+    await tester.tap(dutyCardButton);
+    await tester.pumpAndSettle();
+
+    // 2. Vérification de l'écran des pharmacies de garde
+    expect(find.text('Pharmacies de garde'), findsOneWidget);
+    expect(find.text('Trouvez une pharmacie de garde près de vous'), findsOneWidget);
+    expect(find.text('Programme de garde'), findsOneWidget);
+    expect(find.text('Plus proches'), findsOneWidget);
+    expect(find.text('Toutes les gardes'), findsOneWidget);
+
+    // 3. Vérification de la présence des boutons d'action Appeler & Itinéraire
+    expect(find.text('Appeler'), findsWidgets);
+    expect(find.text('Itinéraire'), findsWidgets);
+
+    // 4. Basculer vers l'onglet "Toutes les gardes"
+    await tester.tap(find.text('Toutes les gardes'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsOneWidget);
+
+    // 5. Retour vers l'accueil
+    final backButton = find.byType(BackButton);
+    if (backButton.evaluate().isNotEmpty) {
+      await tester.tap(backButton);
+    } else {
+      await tester.tap(find.byIcon(Icons.arrow_back));
+    }
+    await tester.pumpAndSettle();
+
+    expect(find.text('De quels médicaments avez-vous besoin ?'), findsOneWidget);
+  });
+
+  testWidgets('Test du parcours complet Étape 0 à 4 avec tarification au comptoir (zéro prix fixé)', (WidgetTester tester) async {
     await tester.pumpWidget(
       MedMateApp(
         enableNetworkTiles: false,
@@ -82,6 +130,7 @@ void main() {
     expect(find.text('Trouvez une pharmacie'), findsOneWidget);
     expect(find.textContaining('Pharmacie du Centre'), findsWidgets);
     expect(find.text('Tous disponibles'), findsWidgets);
+    expect(find.textContaining('Disponibilité : Tous en stock'), findsWidgets);
 
     // Choisir la première pharmacie
     final choosePharmacy = find.widgetWithText(OutlinedButton, 'Choisir cette pharmacie →').first;
@@ -89,12 +138,12 @@ void main() {
     await tester.tap(choosePharmacy);
     await tester.pumpAndSettle();
 
-    // Étape 3 : Fiche détaillée de la pharmacie
+    // Étape 3 : Fiche détaillée de la pharmacie avec politique de tarification au comptoir
     expect(find.text('Étape 3 sur 4'), findsOneWidget);
     expect(find.text('Pharmacie du Centre'), findsOneWidget);
     expect(find.text('Votre liste'), findsOneWidget);
-    expect(find.text('Total indicatif'), findsOneWidget);
-    expect(find.textContaining('500 FCFA'), findsWidgets);
+    expect(find.text('Tarification officielle'), findsOneWidget);
+    expect(find.text('Au comptoir'), findsOneWidget);
 
     // Clic sur 'Voir l’itinéraire →'
     final routeButton = find.text('Voir l’itinéraire →');

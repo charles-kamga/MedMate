@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:medmate/core/config/app_config.dart';
 import 'package:medmate/core/theme/app_colors.dart';
+import 'package:medmate/features/duty_pharmacy/presentation/views/duty_pharmacy_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Modèle pour les données de pharmacie de démonstration de la maquette HTML
@@ -9,14 +11,12 @@ class PharmacyDemoData {
     required this.distance,
     required this.phone,
     required this.stock,
-    required this.prices,
   });
 
   final String name;
   final String distance;
   final String phone;
   final List<int> stock;
-  final List<int?> prices;
 }
 
 /// Vue principale interactive du parcours patient (Étapes 0 à 4)
@@ -49,21 +49,18 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
       distance: '1,2 km',
       phone: '+237600000001',
       stock: [0, 1, 2, 3, 4],
-      prices: [500, 1800, 1200, 900, 700],
     ),
     PharmacyDemoData(
       name: 'Pharmacie Santé Plus',
       distance: '2,4 km',
       phone: '+237600000002',
       stock: [0, 2, 3, 4],
-      prices: [600, null, 1100, 850, 650],
     ),
     PharmacyDemoData(
       name: 'Pharmacie de la Paix',
       distance: '3,1 km',
       phone: '+237600000003',
       stock: [0, 1, 2, 4],
-      prices: [550, 2000, 1300, null, 750],
     ),
   ];
 
@@ -137,26 +134,6 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
 
   bool _isMatch(PharmacyDemoData p) {
     return _selected.every(p.stock.contains);
-  }
-
-  int _totalPrice(PharmacyDemoData p) {
-    return _selected.fold(0, (sum, i) => sum + (p.prices[i] ?? 0));
-  }
-
-  bool _allPricesKnown(PharmacyDemoData p) {
-    return _selected.every((i) => p.prices[i] != null);
-  }
-
-  String _formatPrice(int price) {
-    final s = price.toString();
-    final buffer = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) {
-        buffer.write(' ');
-      }
-      buffer.write(s[i]);
-    }
-    return buffer.toString();
   }
 
   Future<void> _openGoogleMaps(String pharmacyName) async {
@@ -388,7 +365,91 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
             ),
           ),
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 24),
+
+        // Carte d'accès prioritaire : Pharmacies de garde (Capture de Miguel)
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFEAF7F0), Color(0xFFF1F8F4)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFCFE5D6)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A163E2C),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: const Text('🌙', style: TextStyle(fontSize: 22)),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Pharmacies de garde ce soir',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Officines de nuit ouvertes à $_city',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const DutyPharmacyScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Voir →',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
 
         // Section Mes recherches récentes
         const Text(
@@ -545,7 +606,7 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
 
         // Legal Notice Banner
         _buildNoticeBanner(
-          'MedMate vous met en relation avec des pharmacies. Aucun achat ni livraison dans cette version.',
+          '${AppConfig.appName} vous met en relation avec les pharmacies déclarées. Aucun achat ni livraison directe dans cette version.',
         ),
       ],
     );
@@ -895,7 +956,7 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
         ),
         const SizedBox(height: 20),
 
-        // Cartes de pharmacies
+        // Cartes de pharmacies (Focus Disponibilité, Zéro Prix Fixé)
         if (filteredPharmacies.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
@@ -908,10 +969,6 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
           ...filteredPharmacies.map((entry) {
             final p = entry.value;
             final isFull = _isMatch(p);
-            final allKnown = _allPricesKnown(p);
-            final priceStr = allKnown
-                ? '${_formatPrice(_totalPrice(p))} FCFA'
-                : 'Incomplet';
 
             return Container(
               margin: const EdgeInsets.only(bottom: 14),
@@ -963,7 +1020,7 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '📍 $_city · ${p.distance} · Prix indicatif : $priceStr',
+                    '📍 $_city · ${p.distance} · Disponibilité : ${isFull ? 'Tous en stock' : 'Stock partiel'}',
                     style: const TextStyle(
                       fontSize: 13,
                       color: AppColors.textSecondary,
@@ -1009,10 +1066,6 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
   // ==========================================
   Widget _buildStep3Detail() {
     final p = pharmacies[_chosen];
-    final allKnown = _allPricesKnown(p);
-    final totalStr = allKnown
-        ? '${_formatPrice(_totalPrice(p))} FCFA'
-        : 'Non calculable';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1036,7 +1089,7 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
         ),
         const SizedBox(height: 20),
 
-        // Carte Liste et Tarifs
+        // Carte Liste et Disponibilité au comptoir
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
@@ -1059,7 +1112,6 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
               const SizedBox(height: 12),
               ..._selected.map((index) {
                 final isAvailable = p.stock.contains(index);
-                final price = p.prices[index];
                 return Container(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: const BoxDecoration(
@@ -1098,39 +1150,62 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
                           ],
                         ),
                       ),
-                      Text(
-                        price != null ? '${_formatPrice(price)} F' : 'Prix inconnu',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isAvailable ? AppColors.primarySoft : AppColors.warningSoft,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          isAvailable ? 'En stock' : 'Sur commande',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isAvailable ? AppColors.primary : AppColors.warning,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 );
               }),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Total indicatif',
+                    'Tarification officielle',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  Text(
-                    totalStr,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoft,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Au comptoir',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Prix fixé directement par l’officine selon la réglementation pharmaceutique en vigueur. Aucun paiement direct requis dans cette version.',
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.4,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
           ),
@@ -1213,7 +1288,7 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
 
         // Legal Notice Banner
         _buildNoticeBanner(
-          'Les prix et stocks sont fictifs dans cette démonstration. Ils doivent être confirmés directement auprès de la pharmacie.',
+          'La disponibilité des stocks est déclarée par les pharmacies partenaires. Le tarif officiel est appliqué directement au comptoir lors de votre passage.',
         ),
       ],
     );

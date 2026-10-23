@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:medmate/core/config/app_config.dart';
 import 'package:medmate/core/theme/app_colors.dart';
 import 'package:medmate/features/auth/presentation/views/auth_view.dart';
 import 'package:medmate/features/patient_flow/presentation/views/auxiliary_tabs_views.dart';
@@ -73,7 +74,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
             const SizedBox(width: 8),
             const Text(
-              'MedMate',
+              AppConfig.appName,
               style: TextStyle(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w900,
