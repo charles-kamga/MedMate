@@ -8,6 +8,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SendOtpTriggered>(_onSendOtp);
     on<VerifyOtpTriggered>(_onVerifyOtp);
     on<ContinueAsGuestTriggered>(_onContinueAsGuest);
+    on<SignInPharmacistTriggered>(_onSignInPharmacist);
     on<SignOutTriggered>(_onSignOut);
   }
 
@@ -45,6 +46,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   void _onContinueAsGuest(ContinueAsGuestTriggered event, Emitter<AuthState> emit) {
     emit(AuthGuest(UserSession.guest()));
+  }
+
+  void _onSignInPharmacist(SignInPharmacistTriggered event, Emitter<AuthState> emit) {
+    emit(const AuthLoading());
+    final session = UserSession.pharmacist(
+      telephone: event.telephone,
+      profile: event.profile,
+    );
+    emit(AuthAuthenticated(session));
   }
 
   void _onSignOut(SignOutTriggered event, Emitter<AuthState> emit) {

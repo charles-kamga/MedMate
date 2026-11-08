@@ -14,6 +14,10 @@ class PharmacyModel extends Pharmacy {
     required super.estOuverte,
     required super.estDeGarde,
     super.distanceMetres,
+    super.isPartner = true,
+    super.horaires,
+    super.proposeLivraison = false,
+    super.responsable,
   });
 
   factory PharmacyModel.fromJson(Map<String, dynamic> json) {
@@ -30,6 +34,10 @@ class PharmacyModel extends Pharmacy {
       estDeGarde: json['est_de_garde'] as bool? ?? false,
       distanceMetres: (json['distance_meters'] as num?)?.toDouble() ??
           (json['distance_metres'] as num?)?.toDouble(),
+      isPartner: json['is_partner'] as bool? ?? true,
+      horaires: json['horaires'] as String?,
+      proposeLivraison: json['propose_livraison'] as bool? ?? false,
+      responsable: json['responsable'] as String?,
     );
   }
 
@@ -46,6 +54,10 @@ class PharmacyModel extends Pharmacy {
       'est_ouverte': estOuverte,
       'est_de_garde': estDeGarde,
       'distance_metres': distanceMetres,
+      'is_partner': isPartner,
+      'horaires': horaires,
+      'propose_livraison': proposeLivraison,
+      'responsable': responsable,
     };
   }
 }

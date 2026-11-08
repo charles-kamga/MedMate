@@ -14,6 +14,10 @@ class Pharmacy extends Equatable {
     required this.estOuverte,
     required this.estDeGarde,
     this.distanceMetres,
+    this.isPartner = true,
+    this.horaires,
+    this.proposeLivraison = false,
+    this.responsable,
   });
 
   final String id;
@@ -27,6 +31,10 @@ class Pharmacy extends Equatable {
   final bool estOuverte;
   final bool estDeGarde;
   final double? distanceMetres;
+  final bool isPartner;
+  final String? horaires;
+  final bool proposeLivraison;
+  final String? responsable;
 
   @override
   List<Object?> get props => [
@@ -41,5 +49,9 @@ class Pharmacy extends Equatable {
         estOuverte,
         estDeGarde,
         distanceMetres,
+        isPartner,
+        horaires,
+        proposeLivraison,
+        responsable,
       ];
 }

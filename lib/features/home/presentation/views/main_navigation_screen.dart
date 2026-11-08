@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:medmate/core/config/app_config.dart';
 import 'package:medmate/core/theme/app_colors.dart';
+import 'package:medmate/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:medmate/features/auth/presentation/bloc/auth_state.dart';
 import 'package:medmate/features/auth/presentation/views/auth_view.dart';
+import 'package:medmate/features/flash_order/presentation/views/patient_request_wizard_view.dart';
+import 'package:medmate/features/flash_order/presentation/views/pharmacist_portal_view.dart';
 import 'package:medmate/features/patient_flow/presentation/views/auxiliary_tabs_views.dart';
 import 'package:medmate/features/patient_flow/presentation/views/patient_home_flow_view.dart';
 import 'package:medmate/features/pharmacy_search/presentation/views/pharmacy_map_view.dart';
@@ -177,6 +182,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   Widget _buildCurrentTabContent() {
+    final authState = context.watch<AuthBloc>().state;
+    final isPharmacist = authState is AuthAuthenticated && authState.session.isPharmacist;
+
     switch (_currentTab) {
       case 'history':
         return AuxiliaryTabView(
@@ -186,6 +194,32 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           buttonLabel: 'Rechercher maintenant',
           icon: Icons.search_rounded,
           onActionPressed: () => _setTab('home'),
+          extraWidget: Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => Scaffold(
+                        appBar: AppBar(title: const Text('Demande en vagues')),
+                        body: const PatientRequestWizardView(),
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.flash_on_rounded),
+                label: const Text('Lancer une demande inversée (V2) →', style: TextStyle(fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ),
         );
 
       case 'reminders':
@@ -208,6 +242,40 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           onActionPressed: () => _setTab('home'),
           extraWidget: Column(
             children: [
+              Material(
+                color: Colors.transparent,
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primarySoft,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.storefront_rounded, color: AppColors.primary),
+                  ),
+                  title: const Text(
+                    'Portail Officine Partenaire (Pharmacien)',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  ),
+                  subtitle: const Text(
+                    'Traiter les demandes entrantes et valider les retraits OTP',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => Scaffold(
+                          appBar: AppBar(title: const Text('Portail Officine Partenaire')),
+                          body: const PharmacistPortalView(),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const Divider(color: Color(0xFFEDF2EE)),
               Material(
                 color: Colors.transparent,
                 child: ListTile(
@@ -268,12 +336,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => Scaffold(
-                          appBar: AppBar(
-                            title: const Text('Authentification'),
-                          ),
-                          body: const AuthView(),
-                        ),
+                        builder: (_) => const AuthView(),
                       ),
                     );
                   },
@@ -295,6 +358,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
       case 'home':
       default:
+        if (isPharmacist) {
+          return PharmacistPortalView(
+            key: const ValueKey('tab_home_pharma'),
+            initialPharmacyId: authState.session.pharmacyProfile?.pharmacyId ?? 'pharma-soleil',
+          );
+        }
         return PatientHomeFlowView(
           key: const ValueKey('tab_home'),
           onOpenReminders: () => _setTab('reminders'),

@@ -7,6 +7,7 @@ class BentoCard extends StatelessWidget {
     required this.child,
     super.key,
     this.padding = const EdgeInsets.all(16),
+    this.margin,
     this.backgroundColor = AppColors.surface,
     this.borderColor = AppColors.border,
     this.onTap,
@@ -14,6 +15,7 @@ class BentoCard extends StatelessWidget {
 
   final Widget child;
   final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? margin;
   final Color backgroundColor;
   final Color borderColor;
   final VoidCallback? onTap;
@@ -21,6 +23,7 @@ class BentoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: margin,
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(20),

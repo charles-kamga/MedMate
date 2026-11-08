@@ -35,6 +35,10 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
       estOuverte: true,
       estDeGarde: true,
       distanceMetres: 350,
+      isPartner: true,
+      horaires: '24h/24 (De garde)',
+      proposeLivraison: true,
+      responsable: 'Dr. Jean Mballa',
     ),
     Pharmacy(
       id: 'pharmacy-soleil',
@@ -48,6 +52,10 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
       estOuverte: true,
       estDeGarde: false,
       distanceMetres: 800,
+      isPartner: true,
+      horaires: '08h00 - 21h00',
+      proposeLivraison: true,
+      responsable: 'Dr. Aïcha Bello',
     ),
     Pharmacy(
       id: 'pharmacy-obili',
@@ -61,6 +69,10 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
       estOuverte: true,
       estDeGarde: true,
       distanceMetres: 1200,
+      isPartner: true,
+      horaires: '24h/24 (De garde)',
+      proposeLivraison: false,
+      responsable: 'Dr. Paul Biye',
     ),
     Pharmacy(
       id: 'pharmacy-acacia',
@@ -74,6 +86,25 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
       estOuverte: true,
       estDeGarde: false,
       distanceMetres: 2400,
+      isPartner: false,
+      horaires: '08h00 - 20h00',
+      proposeLivraison: false,
+    ),
+    Pharmacy(
+      id: 'pharmacy-mfoundi',
+      nom: 'Pharmacie du Mfoundi',
+      licenceOnpc: 'ONPC-YDE-0304',
+      quartier: 'Centre-Ville',
+      carrefourRepere: 'Marché Mfoundi',
+      latitude: 3.8640,
+      longitude: 11.5230,
+      telephoneGarde: '+237699000099',
+      estOuverte: true,
+      estDeGarde: false,
+      distanceMetres: 600,
+      isPartner: false,
+      horaires: '08h00 - 19h30',
+      proposeLivraison: false,
     ),
   ];
 
@@ -146,6 +177,7 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
                   // Marqueurs des pharmacies
                   ..._samplePharmacies.map((pharmacy) {
                     final isSelected = _selectedPharmacy?.id == pharmacy.id;
+                    final isPartner = pharmacy.isPartner;
                     return Marker(
                       point: LatLng(pharmacy.latitude, pharmacy.longitude),
                       width: isSelected ? 60 : 46,
@@ -155,9 +187,14 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           decoration: BoxDecoration(
-                            color: pharmacy.estDeGarde ? AppColors.success : AppColors.primary,
+                            color: isPartner
+                                ? (pharmacy.estDeGarde ? AppColors.success : AppColors.primary)
+                                : const Color(0xFF64748B),
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: isSelected ? 3 : 2),
+                            border: Border.all(
+                              color: isPartner ? Colors.white : const Color(0xFFCBD5E1),
+                              width: isSelected ? 3 : 2,
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.2),
@@ -166,7 +203,11 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
                               ),
                             ],
                           ),
-                          child: const Icon(Icons.local_pharmacy_rounded, color: Colors.white, size: 24),
+                          child: Icon(
+                            isPartner ? Icons.local_pharmacy_rounded : Icons.storefront_outlined,
+                            color: Colors.white,
+                            size: isPartner ? 24 : 20,
+                          ),
                         ),
                       ),
                     );
@@ -250,6 +291,53 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
                     },
                   ),
                 ),
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Partenaires in-app (${_samplePharmacies.where((p) => p.isPartner).length})',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFF94A3B8), shape: BoxShape.circle)),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Non-partenaires (${_samplePharmacies.where((p) => !p.isPartner).length})',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -296,25 +384,56 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: pharmacy.estDeGarde ? AppColors.successSoft : AppColors.primarySoft,
+                  color: pharmacy.isPartner ? AppColors.primarySoft : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  pharmacy.estDeGarde ? 'DE GARDE CE SOIR' : 'OUVERTE',
+                  pharmacy.isPartner ? '✓ PARTENAIRE AFYA SANTÉ' : 'NON PARTENAIRE (RECENSÉE)',
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: pharmacy.estDeGarde ? AppColors.success : AppColors.primary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: pharmacy.isPartner ? AppColors.primary : const Color(0xFF64748B),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                '${pharmacy.quartier} • ${pharmacy.carrefourRepere}',
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-              ),
+              if (pharmacy.estDeGarde)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondarySoft,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'DE GARDE',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondary),
+                  ),
+                ),
             ],
           ),
+          if (!pharmacy.isPartner) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Color(0xFF64748B)),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Cette officine est recensée à titre d’information. Elle n’est pas partenaire et ne reçoit pas de requêtes directes via l’application.',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [
@@ -332,36 +451,55 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.phone_rounded, size: 18),
-                  label: const Text('Appel Garde'),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Appel vers : ${pharmacy.telephoneGarde}')),
-                    );
-                  },
+          if (pharmacy.isPartner) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.phone_rounded, size: 18),
+                    label: const Text('Appel Officine'),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Appel vers : ${pharmacy.telephoneGarde}')),
+                      );
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.shopping_bag_outlined, size: 18),
-                  label: const Text('Disponibilité'),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Demande de disponibilité flash envoyée à ${pharmacy.nom}'),
-                        backgroundColor: AppColors.primary,
-                      ),
-                    );
-                  },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.flash_on_rounded, size: 18),
+                    label: const Text('Solliciter'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Cette officine recevra votre demande lors de la prochaine recherche.'),
+                          backgroundColor: AppColors.primary,
+                        ),
+                      );
+                    },
+                  ),
                 ),
+              ],
+            ),
+          ] else ...[
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.phone_rounded, size: 18),
+                label: const Text('Appeler l’officine directement'),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Appel vers : ${pharmacy.telephoneGarde}')),
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ],
       ),
     );

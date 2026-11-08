@@ -4,26 +4,28 @@ import 'package:flutter/material.dart';
 class AppColors {
   const AppColors._();
 
-  // Couleurs Officielles Maquette Maître d'Œuvre
+  // Couleurs Officielles Afya Santé (Vert médical)
   static const Color primary = Color(0xFF16835D); // --green
   static const Color primaryLight = Color(0xFF26A674);
   static const Color primaryDark = Color(0xFF123B30); // --dark
   static const Color primarySoft = Color(0xFFEAF7F0); // --pale
 
-  // Couleurs Secondaires & Cartographie
+  // Couleurs Secondaires & Cartographie (Bleu soignant)
   static const Color secondary = Color(0xFF0284C7); // Sky-600
   static const Color secondaryLight = Color(0xFF38BDF8); // Sky-400
   static const Color secondarySoft = Color(0xFFE0F2FE); // Sky-100
 
-  // Couleurs Sémantiques & Alertes
+  // Couleurs Sémantiques & Alertes (Rouge réservé aux alertes et refus critiques)
   static const Color success = Color(0xFF16835D);
   static const Color successSoft = Color(0xFFEAF7F0);
-  static const Color warning = Color(0xFFA16A13); // --warn
-  static const Color warningSoft = Color(0xFFFFF6E7); // --warn-bg
-  static const Color emergency = Color(0xFFE11D48);
-  static const Color emergencySoft = Color(0xFFFFE4E6);
-  static const Color error = emergency;
-  static const Color errorSoft = emergencySoft;
+  static const Color alert = Color(0xFFE11D48); // Rouge alerte officiel
+  static const Color alertSoft = Color(0xFFFFE4E6);
+  static const Color emergency = alert;
+  static const Color emergencySoft = alertSoft;
+  static const Color error = alert;
+  static const Color errorSoft = alertSoft;
+  static const Color warning = Color(0xFF0284C7); // Info/conditionnel en bleu conforme
+  static const Color warningSoft = Color(0xFFE0F2FE);
 
   // Surfaces & Fonds (Thème Clair Maquette)
   static const Color background = Color(0xFFF7FAF8); // --bg

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/bento_card.dart';
+import '../../domain/entities/user_session.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 
-/// Vue d'authentification et gestion du profil patient (UI/UX Pro Max)
+/// Vue d'authentification et gestion du profil (Patient ou Pharmacien Partenaire)
 class AuthView extends StatefulWidget {
   const AuthView({super.key});
 
@@ -15,8 +16,42 @@ class AuthView extends StatefulWidget {
 }
 
 class _AuthViewState extends State<AuthView> {
-  final _phoneController = TextEditingController();
+  final _phoneController = TextEditingController(text: '699112233');
   final _otpController = TextEditingController();
+
+  UserRole _selectedRole = UserRole.patient;
+  int _selectedPharmacyIndex = 0;
+
+  // Profils officines de référence (Section 5 du CDC)
+  static const List<PharmacyStaffProfile> _partnerPharmacies = [
+    PharmacyStaffProfile(
+      pharmacyId: 'pharma-soleil',
+      pharmacyName: 'Pharmacie du Soleil',
+      licenceOnpc: 'ONPC-YDE-0105',
+      responsable: 'Dr. Aïcha Bello (Titulaire)',
+      quarter: 'Carrefour Warda',
+      telephone: '+237 677 12 34 56',
+      estDeGarde: false,
+    ),
+    PharmacyStaffProfile(
+      pharmacyId: 'pharma-centre',
+      pharmacyName: 'Grande Pharmacie du Centre',
+      licenceOnpc: 'ONPC-YDE-0042',
+      responsable: 'Dr. Jean Mballa (Titulaire)',
+      quarter: 'Poste Centrale',
+      telephone: '+237 699 88 77 66',
+      estDeGarde: true,
+    ),
+    PharmacyStaffProfile(
+      pharmacyId: 'pharma-obili',
+      pharmacyName: "Pharmacie d'Obili",
+      licenceOnpc: 'ONPC-YDE-0211',
+      responsable: 'Dr. Paul Biye (Titulaire)',
+      quarter: 'Carrefour Obili',
+      telephone: '+237 655 44 33 22',
+      estDeGarde: true,
+    ),
+  ];
 
   @override
   void dispose() {
@@ -33,15 +68,16 @@ class _AuthViewState extends State<AuthView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: AppColors.emergency,
+              backgroundColor: AppColors.alert,
             ),
           );
         }
       },
       builder: (context, state) {
         return Scaffold(
+          backgroundColor: Colors.white,
           appBar: AppBar(
-            title: const Text('Espace Patient & Sécurité'),
+            title: const Text('Compte & Authentification'),
           ),
           body: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -49,15 +85,31 @@ class _AuthViewState extends State<AuthView> {
               if (state is AuthAuthenticated || state is AuthGuest) ...[
                 _buildConnectedProfileCard(context, state),
               ] else ...[
-                _buildHeaderCard(),
+                _buildRoleSelector(),
                 const SizedBox(height: 20),
-                if (state is AuthOtpSent) ...[
-                  _buildOtpInputCard(context, state.telephone),
+                if (_selectedRole == UserRole.patient) ...[
+                  _buildHeaderCard(
+                    title: 'Espace Patient Afya Santé',
+                    subtitle: 'Recherchez sans engagement. Vos données de santé restent anonymes et chiffrées.',
+                    icon: Icons.person_outline_rounded,
+                  ),
+                  const SizedBox(height: 20),
+                  if (state is AuthOtpSent) ...[
+                    _buildOtpInputCard(context, state.telephone),
+                  ] else ...[
+                    _buildPhoneInputCard(context, state is AuthLoading),
+                  ],
+                  const SizedBox(height: 16),
+                  _buildGuestAccessCard(context),
                 ] else ...[
-                  _buildPhoneInputCard(context, state is AuthLoading),
+                  _buildHeaderCard(
+                    title: 'Accès Réservé Pharmacies Partenaires',
+                    subtitle: 'Espace officiel sécurisé pour officines enregistrées à l’ONPC.',
+                    icon: Icons.local_pharmacy_rounded,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildPharmacistLoginCard(context, state is AuthLoading),
                 ],
-                const SizedBox(height: 20),
-                _buildGuestAccessCard(context),
               ],
               const SizedBox(height: 24),
               _buildComplianceFooter(),
@@ -68,7 +120,32 @@ class _AuthViewState extends State<AuthView> {
     );
   }
 
-  Widget _buildHeaderCard() {
+  Widget _buildRoleSelector() {
+    return SegmentedButton<UserRole>(
+      segments: const [
+        ButtonSegment(
+          value: UserRole.patient,
+          label: Text('Patient'),
+          icon: Icon(Icons.person_rounded),
+        ),
+        ButtonSegment(
+          value: UserRole.pharmacist,
+          label: Text('Pharmacien Partenaire'),
+          icon: Icon(Icons.medical_services_rounded),
+        ),
+      ],
+      selected: {_selectedRole},
+      onSelectionChanged: (val) {
+        setState(() => _selectedRole = val.first);
+      },
+    );
+  }
+
+  Widget _buildHeaderCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
     return BentoCard(
       backgroundColor: AppColors.primarySoft.withValues(alpha: 0.5),
       borderColor: AppColors.primaryLight.withValues(alpha: 0.3),
@@ -80,25 +157,25 @@ class _AuthViewState extends State<AuthView> {
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.shield_outlined, color: Colors.white, size: 28),
+            child: Icon(icon, color: Colors.white, size: 28),
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Accès Sécurisé & Anonymat',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Consultez librement. Vos données de santé restent strictement chiffrées.',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  subtitle,
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3),
                 ),
               ],
             ),
@@ -114,33 +191,31 @@ class _AuthViewState extends State<AuthView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Connexion Rapide par SMS OTP',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            'Numéro de téléphone mobile (+237)',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Entrez votre numéro pour confirmer vos réservations et recevoir votre code de retrait.',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 16),
           TextField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.phone_iphone_rounded, color: AppColors.primary),
+            decoration: InputDecoration(
               prefixText: '+237 ',
-              prefixStyle: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-                fontSize: 15,
-              ),
-              hintText: '699 11 22 33',
+              prefixStyle: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              hintText: '699112233',
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
+            height: 48,
             child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: isLoading
                   ? null
                   : () {
@@ -154,7 +229,7 @@ class _AuthViewState extends State<AuthView> {
                       width: 20,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                     )
-                  : const Text('Recevoir le code SMS'),
+                  : const Text('Recevoir le code SMS →', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),
         ],
@@ -172,7 +247,7 @@ class _AuthViewState extends State<AuthView> {
             children: [
               const Text(
                 'Code de Validation SMS',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
               Text(
                 '+237 $phone',
@@ -195,7 +270,13 @@ class _AuthViewState extends State<AuthView> {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
+            height: 48,
             child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: () {
                 context.read<AuthBloc>().add(
                       VerifyOtpTriggered(
@@ -204,7 +285,7 @@ class _AuthViewState extends State<AuthView> {
                       ),
                     );
               },
-              child: const Text('Valider & Accéder'),
+              child: const Text('Valider & Accéder à l’Espace Patient', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),
         ],
@@ -218,29 +299,98 @@ class _AuthViewState extends State<AuthView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Icon(Icons.flash_on_rounded, color: AppColors.secondary, size: 22),
-              SizedBox(width: 8),
-              Text(
-                'Urgence Médicale Sans Compte',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
           const Text(
-            'Accédez immédiatement aux pharmacies de garde et repères de Yaoundé sans fournir aucune coordonnée.',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            'Recherche Express sans Inscription',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 6),
+          const Text(
+            'Formulez vos demandes et consultez les disponibilités déclarées sans fournir aucune coordonnée préalable.',
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
+            height: 44,
             child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.secondary,
+                side: const BorderSide(color: AppColors.secondary),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: () {
                 context.read<AuthBloc>().add(const ContinueAsGuestTriggered());
               },
-              child: const Text('Continuer en Mode Invité (Zéro Friction)'),
+              child: const Text('Continuer en Mode Invité (Zéro Friction)', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPharmacistLoginCard(BuildContext context, bool isLoading) {
+    final selectedProfile = _partnerPharmacies[_selectedPharmacyIndex];
+
+    return BentoCard(
+      borderColor: AppColors.primary,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Sélectionner votre Officine Partenaire :',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 10),
+          ..._partnerPharmacies.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final p = entry.value;
+            final isChosen = idx == _selectedPharmacyIndex;
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: isChosen ? AppColors.primary : AppColors.border),
+              ),
+              color: isChosen ? AppColors.primarySoft : Colors.white,
+              child: ListTile(
+                dense: true,
+                leading: Icon(
+                  isChosen ? Icons.radio_button_checked : Icons.radio_button_off,
+                  color: isChosen ? AppColors.primary : AppColors.textSecondary,
+                ),
+                title: Text(p.pharmacyName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                subtitle: Text('${p.responsable} · ${p.quarter}', style: const TextStyle(fontSize: 11)),
+                onTap: () {
+                  setState(() => _selectedPharmacyIndex = idx);
+                },
+              ),
+            );
+          }),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () {
+                context.read<AuthBloc>().add(
+                      SignInPharmacistTriggered(
+                        telephone: selectedProfile.telephone,
+                        profile: selectedProfile,
+                      ),
+                    );
+              },
+              child: Text(
+                'Se connecter en tant que ${selectedProfile.pharmacyName} →',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ],
@@ -250,10 +400,20 @@ class _AuthViewState extends State<AuthView> {
 
   Widget _buildConnectedProfileCard(BuildContext context, AuthState state) {
     final isGuest = state is AuthGuest;
-    final title = isGuest ? 'Session Invité (Anonyme)' : 'Patient Identifié';
+    final isPharmacist = state is AuthAuthenticated && state.session.isPharmacist;
+    final session = state is AuthAuthenticated ? state.session : null;
+
+    final title = isGuest
+        ? 'Session Invité (Patient)'
+        : (isPharmacist
+            ? 'Espace Officine Partenaire'
+            : 'Patient Identifié');
+
     final subtitle = isGuest
-        ? 'Recherche et consultation illimitées sans compte.'
-        : 'Connecté avec le numéro : ${(state as AuthAuthenticated).session.telephone}';
+        ? 'Consultation libre sans profil sauvegardé.'
+        : (isPharmacist
+            ? '${session?.pharmacyProfile?.pharmacyName} (${session?.pharmacyProfile?.quarter})'
+            : 'Numéro : ${session?.telephone}');
 
     return BentoCard(
       child: Column(
@@ -262,11 +422,14 @@ class _AuthViewState extends State<AuthView> {
           Row(
             children: [
               CircleAvatar(
-                radius: 24,
-                backgroundColor: isGuest ? AppColors.secondarySoft : AppColors.primarySoft,
+                radius: 26,
+                backgroundColor: isPharmacist ? AppColors.primarySoft : (isGuest ? AppColors.secondarySoft : AppColors.primarySoft),
                 child: Icon(
-                  isGuest ? Icons.person_outline_rounded : Icons.verified_user_rounded,
-                  color: isGuest ? AppColors.secondary : AppColors.primary,
+                  isPharmacist
+                      ? Icons.medical_services_rounded
+                      : (isGuest ? Icons.person_outline_rounded : Icons.verified_user_rounded),
+                  color: isPharmacist ? AppColors.primary : (isGuest ? AppColors.secondary : AppColors.primary),
+                  size: 26,
                 ),
               ),
               const SizedBox(width: 14),
@@ -276,45 +439,52 @@ class _AuthViewState extends State<AuthView> {
                   children: [
                     Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 2),
-                    Text(subtitle, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                    Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                   ],
                 ),
               ),
             ],
           ),
           const Divider(height: 28),
-          const Text(
-            'Réservations actives & Retraits',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 20),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Aucune réservation en attente. Vos retraits expirés (TTL 2h) sont automatiquement effacés.',
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+
+          if (isPharmacist && session?.pharmacyProfile != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Titulaire : ${session!.pharmacyProfile!.responsable}',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    'Licence ONPC : ${session.pharmacyProfile!.licenceOnpc}',
+                    style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
+          ],
+
           SizedBox(
             width: double.infinity,
+            height: 46,
             child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.alert,
+                side: const BorderSide(color: AppColors.alert),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: () {
                 context.read<AuthBloc>().add(const SignOutTriggered());
               },
-              child: const Text('Se déconnecter / Changer de profil'),
+              child: const Text('Se déconnecter / Changer de rôle', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),
         ],
@@ -332,7 +502,7 @@ class _AuthViewState extends State<AuthView> {
           SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Conformité Loi n° 2024/017 du 23 décembre 2024 sur la protection des données personnelles au Cameroun (ANTIC). Purge automatique des historiques à 30 jours.',
+              'Conformité Loi n° 2024/017 du 23 décembre 2024 sur la protection des données personnelles au Cameroun (ANTIC). Purge automatique des historiques de requêtes à 30 jours.',
               style: TextStyle(fontSize: 11, color: AppColors.textTertiary, height: 1.4),
             ),
           ),

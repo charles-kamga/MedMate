@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/user_session.dart';
 
 sealed class AuthEvent extends Equatable {
   const AuthEvent();
@@ -39,4 +40,18 @@ final class ContinueAsGuestTriggered extends AuthEvent {
 /// Déconnexion
 final class SignOutTriggered extends AuthEvent {
   const SignOutTriggered();
+}
+
+/// Authentification en tant que Pharmacien partenaire
+final class SignInPharmacistTriggered extends AuthEvent {
+  const SignInPharmacistTriggered({
+    required this.telephone,
+    required this.profile,
+  });
+
+  final String telephone;
+  final PharmacyStaffProfile profile;
+
+  @override
+  List<Object?> get props => [telephone, profile];
 }

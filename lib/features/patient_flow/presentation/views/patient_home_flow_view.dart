@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:medmate/core/config/app_config.dart';
 import 'package:medmate/core/theme/app_colors.dart';
 import 'package:medmate/features/duty_pharmacy/presentation/views/duty_pharmacy_screen.dart';
+import 'package:medmate/features/flash_order/presentation/views/patient_request_wizard_view.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Modèle pour les données de pharmacie de démonstration de la maquette HTML
@@ -365,7 +366,85 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+
+        // Carte prioritaire Afya Santé V2 : Demande inversée sans pharmacie imposée
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFEAF7F0), Color(0xFFE0F2FE)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A163E2C),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'AFYA SANTÉ V2 · PARCOURS CIBLE',
+                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  const Spacer(),
+                  const Text('⚡ Escalade 2 min', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.secondary)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Demande sans sélection de pharmacie',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Créez votre panier multi-médicaments. L’application sollicite les pharmacies par vagues de 2 et vous comparez leurs offres réelles.',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.3),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => Scaffold(
+                          appBar: AppBar(title: const Text('Demande en vagues')),
+                          body: const PatientRequestWizardView(),
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.flash_on_rounded, size: 18),
+                  label: const Text('Tester la demande en vagues →', style: TextStyle(fontWeight: FontWeight.w800)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
 
         // Carte d'accès prioritaire : Pharmacies de garde (Capture de Miguel)
         Container(
