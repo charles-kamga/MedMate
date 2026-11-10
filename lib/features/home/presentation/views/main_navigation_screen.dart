@@ -10,6 +10,7 @@ import 'package:medmate/features/flash_order/presentation/views/pharmacist_porta
 import 'package:medmate/features/patient_flow/presentation/views/auxiliary_tabs_views.dart';
 import 'package:medmate/features/patient_flow/presentation/views/patient_home_flow_view.dart';
 import 'package:medmate/features/pharmacy_search/presentation/views/pharmacy_map_view.dart';
+import 'package:medmate/features/reservation/presentation/views/patient_flash_flow_view.dart';
 
 /// Écran principal MedMate aligné sur la maquette HTML du maître d'œuvre
 class MainNavigationScreen extends StatefulWidget {
@@ -196,28 +197,28 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           onActionPressed: () => _setTab('home'),
           extraWidget: Padding(
             padding: const EdgeInsets.only(top: 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => Scaffold(appBar: AppBar(title: const Text('Recherche Flash Yango')), body: const PatientFlashFlowView()))),
+                    icon: const Icon(Icons.bolt_rounded),
+                    label: const Text('Recherche Flash « Style Yango » →', style: TextStyle(fontWeight: FontWeight.w700)),
+                  ),
                 ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => Scaffold(
-                        appBar: AppBar(title: const Text('Demande en vagues')),
-                        body: const PatientRequestWizardView(),
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.flash_on_rounded),
-                label: const Text('Lancer une demande inversée (V2) →', style: TextStyle(fontWeight: FontWeight.w700)),
-              ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(foregroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => Scaffold(appBar: AppBar(title: const Text('Demande en vagues')), body: const PatientRequestWizardView()))),
+                    icon: const Icon(Icons.flash_on_rounded),
+                    label: const Text('Demande inversée classique (V2) →', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
             ),
           ),
         );
