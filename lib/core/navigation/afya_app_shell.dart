@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
 import '../../core/theme/app_colors.dart';
-import '../../features/flash_order/presentation/views/pharmacist_portal_view.dart';
+import '../../features/pharmacist_portal/presentation/views/pharmacist_portal_view.dart';
 import '../../features/patient_flow/presentation/views/auxiliary_tabs_views.dart';
 import '../../features/patient_flow/presentation/views/patient_home_flow_view.dart';
 import '../../features/pharmacy_search/presentation/views/pharmacy_map_view.dart';

@@ -14,6 +14,12 @@ import 'features/pharmacy_search/domain/usecases/search_medications.dart';
 import 'features/pharmacy_search/domain/usecases/search_pharmacies.dart';
 import 'features/pharmacy_search/presentation/bloc/pharmacy_search_bloc.dart';
 import 'features/pharmacy_search/presentation/controllers/medication_catalog_cubit.dart';
+import 'features/pharmacist_portal/data/repositories/pharmacist_portal_repository_impl.dart';
+import 'features/pharmacist_portal/domain/repositories/pharmacist_portal_repository.dart';
+import 'features/pharmacist_portal/domain/usecases/get_pending_counter_orders.dart';
+import 'features/pharmacist_portal/domain/usecases/submit_counter_quote.dart';
+import 'features/pharmacist_portal/domain/usecases/validate_counter_otp.dart';
+import 'features/pharmacist_portal/presentation/controllers/pharmacist_counter_cubit.dart';
 import 'features/reservation/data/repositories/reservation_repository_impl.dart';
 import 'features/reservation/domain/repositories/reservation_repository.dart';
 import 'features/reservation/domain/usecases/escalate_dispatch_wave.dart';
@@ -32,12 +38,14 @@ class MedMateApp extends StatelessWidget {
     this.enableNetworkTiles = true,
     this.pharmacyRepository,
     this.reservationRepository,
+    this.pharmacistPortalRepository,
     this.useAfyaAppShell = false,
   });
 
   final bool enableNetworkTiles;
   final PharmacyRepository? pharmacyRepository;
   final ReservationRepository? reservationRepository;
+  final PharmacistPortalRepository? pharmacistPortalRepository;
   final bool useAfyaAppShell;
 
   @override
@@ -49,6 +57,7 @@ class MedMateApp extends StatelessWidget {
         );
 
     final resRepo = reservationRepository ?? ReservationRepositoryImpl();
+    final pharmaRepo = pharmacistPortalRepository ?? PharmacistPortalRepositoryImpl();
     final searchMedsUseCase = SearchMedicationsUseCase(repo);
 
     return MultiBlocProvider(
@@ -77,6 +86,13 @@ class MedMateApp extends StatelessWidget {
             escalateDispatchWaveUseCase: EscalateDispatchWaveUseCase(resRepo),
             selectPharmacyOfferUseCase: SelectPharmacyOfferUseCase(resRepo),
             reservationRepository: resRepo,
+          ),
+        ),
+        BlocProvider<PharmacistCounterCubit>(
+          create: (_) => PharmacistCounterCubit(
+            getPendingOrders: GetPendingCounterOrdersUseCase(pharmaRepo),
+            submitQuoteUseCase: SubmitCounterQuoteUseCase(pharmaRepo),
+            validateOtpUseCase: ValidateCounterOtpUseCase(pharmaRepo),
           ),
         ),
       ],
