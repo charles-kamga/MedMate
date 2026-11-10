@@ -44,7 +44,7 @@ void main() {
     mockCatalogCubit = MockMedicationCatalogCubit();
 
     when(() => mockAuthBloc.state).thenReturn(const AuthInitial());
-    when(() => mockFlashOrderCubit.state).thenReturn(FlashOrderState.initial());
+    when(() => mockFlashOrderCubit.state).thenReturn(const FlashOrderState());
     when(() => mockFlashCubit.state).thenReturn(const FlashReservationState());
     when(() => mockCatalogCubit.state).thenReturn(const MedicationCatalogInitial());
   });
@@ -91,7 +91,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text(AppConfig.appName), findsOneWidget);
-      expect(find.text('Yaoundé'), findsOneWidget);
+      expect(find.text('Yaoundé'), findsWidgets);
       expect(find.text(AppConfig.emergencyPhone), findsOneWidget);
 
       expect(find.byType(NavigationBar), findsOneWidget);

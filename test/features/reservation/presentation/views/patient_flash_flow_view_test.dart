@@ -27,7 +27,12 @@ class MockFlashReservationCubit extends MockCubit<FlashReservationState>
 class MockMedicationCatalogCubit extends MockCubit<MedicationCatalogState>
     implements MedicationCatalogCubit {}
 
+class FakePharmacyOffer extends Fake implements PharmacyOffer {}
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(FakePharmacyOffer());
+  });
   late MockFlashReservationCubit mockFlashCubit;
   late MockMedicationCatalogCubit mockCatalogCubit;
 
@@ -289,6 +294,8 @@ void main() {
 
       // Clic sur Choisir cette pharmacie
       final chooseBtn = find.widgetWithText(ElevatedButton, 'Choisir cette pharmacie').first;
+      await tester.ensureVisible(chooseBtn);
+      await tester.pumpAndSettle();
       await tester.tap(chooseBtn);
       await tester.pumpAndSettle();
 

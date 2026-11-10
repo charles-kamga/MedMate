@@ -41,7 +41,8 @@ class _YangoPulseFlashButtonState extends State<YangoPulseFlashButton>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     );
-    _pulseAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _pulseAnimation =
+        CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     if (widget.enableAnimation && widget.isActionable) {
       _controller.repeat(reverse: true);
     }
@@ -53,8 +54,9 @@ class _YangoPulseFlashButtonState extends State<YangoPulseFlashButton>
     if (widget.enableAnimation && widget.isActionable) {
       if (!_controller.isAnimating) _controller.repeat(reverse: true);
     } else if (_controller.isAnimating) {
-      _controller.stop();
-      _controller.reset();
+      _controller
+        ..stop()
+        ..reset();
     }
   }
 
@@ -74,7 +76,7 @@ class _YangoPulseFlashButtonState extends State<YangoPulseFlashButton>
   @override
   Widget build(BuildContext context) {
     final enabled = widget.isActionable;
-    final tickerEnabled = TickerMode.of(context);
+    final tickerEnabled = TickerMode.valuesOf(context).enabled;
     if (!tickerEnabled && _controller.isAnimating) _controller.stop();
 
     final buttonContent = Container(
@@ -107,7 +109,9 @@ class _YangoPulseFlashButtonState extends State<YangoPulseFlashButton>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: enabled ? Colors.white.withValues(alpha: 0.2) : AppColors.border,
+                    color: enabled
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : AppColors.border,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -125,7 +129,8 @@ class _YangoPulseFlashButtonState extends State<YangoPulseFlashButton>
                       Text(
                         widget.label,
                         style: TextStyle(
-                          color: enabled ? Colors.white : AppColors.textSecondary,
+                          color:
+                              enabled ? Colors.white : AppColors.textSecondary,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
@@ -136,7 +141,9 @@ class _YangoPulseFlashButtonState extends State<YangoPulseFlashButton>
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: enabled ? Colors.white.withValues(alpha: 0.9) : AppColors.textTertiary,
+                          color: enabled
+                              ? Colors.white.withValues(alpha: 0.9)
+                              : AppColors.textTertiary,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -144,7 +151,9 @@ class _YangoPulseFlashButtonState extends State<YangoPulseFlashButton>
                     ],
                   ),
                 ),
-                Icon(Icons.arrow_forward_rounded, color: enabled ? Colors.white : AppColors.textTertiary, size: 20),
+                Icon(Icons.arrow_forward_rounded,
+                    color: enabled ? Colors.white : AppColors.textTertiary,
+                    size: 20,),
               ],
             ),
     );
@@ -152,14 +161,17 @@ class _YangoPulseFlashButtonState extends State<YangoPulseFlashButton>
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
-        final pulseValue = (enabled && widget.enableAnimation && tickerEnabled) ? _pulseAnimation.value : 0.0;
+        final pulseValue = (enabled && widget.enableAnimation && tickerEnabled)
+            ? _pulseAnimation.value
+            : 0.0;
         return Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             boxShadow: enabled
                 ? [
                     BoxShadow(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.25 + (0.25 * pulseValue)),
+                      color: const Color(0xFF10B981)
+                          .withValues(alpha: 0.25 + (0.25 * pulseValue)),
                       blurRadius: 12 + (10 * pulseValue),
                       spreadRadius: 1 + (3 * pulseValue),
                       offset: const Offset(0, 4),

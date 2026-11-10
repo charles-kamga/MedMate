@@ -391,7 +391,11 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -404,7 +408,6 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
                       style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
                     ),
                   ),
-                  const Spacer(),
                   const Text('⚡ Escalade 2 min', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.secondary)),
                 ],
               ),
