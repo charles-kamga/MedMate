@@ -1,20 +1,33 @@
-# Sécurité, Confidentialité & Données de Santé (MedMate)
+---
+trigger: glob
+globs: ["lib/**", "supabase/**", "web/**"]
+description: "Sécurité OWASP Web/Mobile/API, CSP, flux PKCE Supabase, politiques RLS PostgreSQL et conformité Loi n° 2024/017 (ANTIC/APDP Cameroun)"
+---
 
-Ce document établit les exigences de sécurité et de conformité légale applicables à l'ensemble des modules de MedMate.
+# Sécurité, Confidentialité & Données de Santé (Afya Santé / MedMate)
+
+Ce document établit les exigences de sécurité et de conformité légale applicables à l'ensemble des modules de **Afya Santé** (package `medmate`, Flutter Web, Mobile et Supabase).
 
 ---
 
-## 1. OWASP Mobile & API Top 10
+## 1. OWASP Web, Mobile & API Top 10
 
 ### 1.1 Validation Stricte des Entrées (Défense en Profondeur)
-- Ne jamais faire confiance aux données transmises par le client mobile.
+- Ne jamais faire confiance aux données transmises par le client Web ou Mobile.
 - Chaque point d'entrée API (Supabase RPC, Edge Function, Webhook) doit valider la structure, le format, la taille et le type des paramètres avant tout traitement.
 - Utiliser des contraintes SQL explicites (`CHECK`, `NOT NULL`, `FOREIGN KEY`) au niveau de la base de données.
-- Prévention des injections SQL : utiliser exclusivement les requêtes préparées et l'ORM/Query Builder Supabase ; proscrire toute concaténation de chaînes dans les requêtes brutes.
+- Prévention des injections SQL et XSS : utiliser exclusivement les requêtes préparées et le Query Builder Supabase ; proscrire toute concaténation de chaînes SQL ou injection HTML non échappée.
 
-### 1.2 Chiffrement en Transit et au Repos
-- Toutes les communications réseau doivent utiliser exclusivement **TLS 1.3** avec *Certificate Pinning* sur les domaines Supabase et passerelles critiques.
-- Données locales sensibles (identifiants de session, clés de cache) chiffrées au repos via `SQLCipher` et le Keystore/Keychain de la plateforme.
+### 1.2 Sécurité Navigateur (Flutter Web : CSP, PKCE, CORS & TLS)
+- **Flux d'authentification PKCE obligatoire sur le Web** :
+  - Initialiser `Supabase.initialize` avec `authOptions: const FlutterAuthClientOptions(authFlowType: AuthFlowType.pkce)` pour empêcher l'exposition de jetons d'accès dans les fragments d'URL (`#access_token=...`).
+- **Content Security Policy (CSP) & En-têtes HTTP** :
+  - Restreindre les sources autorisées dans `web/index.html` et sur l'hébergeur aux seuls domaines légitimes : `'self'`, le projet `*.supabase.co`, le serveur de tuiles OpenStreetMap France (`https://*.tile.openstreetmap.fr`), et `https://fonts.googleapis.com` / `https://fonts.gstatic.com`.
+  - Activer `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` et `Strict-Transport-Security` (HSTS) en production.
+- **CORS strict** sur les Supabase Edge Functions : autoriser explicitement le domaine de production Web d'Afya Santé et `localhost` uniquement en développement.
+- **Chiffrement en Transit et au Repos** :
+  - Toutes les communications réseau utilisent exclusivement **HTTPS / TLS 1.3** (`wss://` pour Supabase Realtime).
+  - Sur le Web, aucune donnée médicale sensible n'est stockée en clair dans `localStorage`. Sur Mobile natif, les secrets de session utilisent le Keystore/Keychain via `flutter_secure_storage`.
 
 ---
 

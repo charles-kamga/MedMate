@@ -87,7 +87,7 @@ CREATE TABLE public.pharmacy_staff (
 );
 
 -- ==============================================================================
--- 5. Catalogue National des Médicaments (Homologués Cameroun)
+-- 5. Catalogue National des Médicaments (Homologués Cameroun — Politique Zéro Prix)
 -- ==============================================================================
 
 CREATE TABLE public.medicaments (
@@ -97,7 +97,6 @@ CREATE TABLE public.medicaments (
   forme VARCHAR(100) NOT NULL, -- Comprimé, Sirop, Injectable, etc.
   dosage VARCHAR(100) NOT NULL,
   classe_therapeutique VARCHAR(150),
-  prix_homologue_cfa INTEGER NOT NULL CHECK (prix_homologue_cfa >= 0),
   necessite_ordonnance BOOLEAN NOT NULL DEFAULT false,
   code_national VARCHAR(50) UNIQUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())

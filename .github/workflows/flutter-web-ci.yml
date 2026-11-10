@@ -1,0 +1,52 @@
+name: Afya Santé — Flutter Web & Quality Gates CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  verify-and-build-web:
+    name: Analyze, Test & Build Flutter Web
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable Flutter Web
+        run: flutter config --enable-web
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Audit Sovereignty (No Google Maps / No unprotected dart:io / No service_role)
+        run: |
+          if grep -rnE "google\.com/maps|maps\.googleapis|google_maps_flutter|mapbox" lib/; then
+            echo "ERREUR: Violation de la souveraineté OpenStreetMap (référence Google Maps ou Mapbox détectée)."
+            exit 1
+          fi
+          if grep -rn "import 'dart:io'" lib/; then
+            echo "ERREUR: Import dart:io non compatible Flutter Web détecté dans lib/."
+            exit 1
+          fi
+          if grep -rn "SERVICE_ROLE" lib/ web/; then
+            echo "ERREUR: Clé secrète SERVICE_ROLE détectée côté client."
+            exit 1
+          fi
+
+      - name: Static Analysis (Zero Warnings / Zero Infos)
+        run: dart analyze --fatal-infos --fatal-warnings
+
+      - name: Run Unit & Widget Tests
+        run: flutter test --coverage
+
+      - name: Build Flutter Web (Release)
+        run: flutter build web --release

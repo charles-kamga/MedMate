@@ -1,6 +1,11 @@
-# Coding Standards & Rigueur Technique (MedMate)
+---
+trigger: always_on
+description: "Standards de codage Dart/Flutter : typage strict sans dynamic, modèles immuables Freezed, gestion d'erreurs Either/Result et résilience réseau Web/Mobile"
+---
 
-Ce document dicte les standards de programmation non négociables pour l'ensemble du code de l'application MedMate (Flutter / Dart / Supabase).
+# Coding Standards & Rigueur Technique (Afya Santé / MedMate)
+
+Ce document dicte les standards de programmation non négociables pour l'ensemble du code de l'application **Afya Santé** (package `medmate`, Flutter Web / Mobile / Dart / Supabase).
 
 ---
 
@@ -35,7 +40,7 @@ class PharmacyStock with _$PharmacyStock {
     required MedicationId medicationId,
     required PharmacyId pharmacyId,
     required int availableUnits,
-    required Money unitPrice,
+    required bool isAvailableAtCounter,
     required DateTime updatedAt,
   }) = _PharmacyStock;
 
@@ -82,18 +87,21 @@ class InsufficientStockFailure extends Failure {
 
 ---
 
-## 3. Résilience Réseau & Stratégie Offline-First (Contexte Cameroun / 3G)
+## 3. Résilience Réseau & Stratégie Offline-First (Web & Mobile — Contexte Cameroun / 3G)
 
-### 3.1 Cache Local SQLite Chiffré (SQLCipher)
-- Le stockage local (pharmacies de garde, repères de Yaoundé, historique des consultations récentes) s'effectue dans une base SQLite chiffrée via `SQLCipher` (`sqflite_sqlcipher` ou `drift` avec backend chiffré).
-- La clé de déchiffrement locale est conservée dans le secure storage de l'OS (`flutter_secure_storage` avec Keystore Android / Keychain iOS).
+### 3.1 Stockage Local Multi-Plateforme Sécurisé (Web & Natif)
+- **Sur Flutter Web (`kIsWeb == true`)** :
+  - Le cache local concerne uniquement les **données publiques non sensibles** (liste des pharmacies de garde, quartiers et carrefours de Yaoundé, tuiles OSM).
+  - **Interdiction absolue** de stocker des données de santé nominatives ou des photos d'ordonnances en clair dans `window.localStorage` ou `sessionStorage`. Les données sensibles de session patient restent en mémoire vive (`Uint8List` / état BLoC) le temps de la transaction.
+- **Sur Mobile Natif (Android / iOS)** :
+  - Les identifiants de session et clés de cache locales utilisent le stockage sécurisé de l'OS (`flutter_secure_storage` avec Keystore Android / Keychain iOS).
 
 ### 3.2 File d'Attente Sortante Idempotente (Outbox Pattern)
 - En cas de déconnexion ou de basculement sur réseau dégradé (2G/3G instable à Yaoundé) :
-  - Les requêtes d'action (ex: réservation de médicament) reçoivent un `client_generated_id` (UUID v4).
-  - L'action est persistée dans une table locale `outbox_mutations` avec état `pending`.
-  - Un gestionnaire de synchronisation en arrière-plan dépile la file d'attente dès le rétablissement de la connectivité.
-  - Supabase gère l'idempotence via contrainte d'unicité sur `client_generated_id`.
+  - Les requêtes d'action (ex. demande de disponibilité ou réservation) reçoivent un `client_generated_id` (UUID v4).
+  - L'action est conservée dans une file `outbox_mutations` avec état `pending`.
+  - Un gestionnaire de synchronisation dépile la file d'attente dès le rétablissement de la connectivité.
+  - Supabase garantit l'idempotence via contrainte d'unicité sur `client_generated_id`.
 
 ### 3.3 Timeouts Ajustés et Exponential Backoff avec Jitter
 - Configurer les timeouts HTTP/WebSocket à **10 secondes maximum** (au lieu des 30 à 60 secondes par défaut) pour éviter le blocage des threads UI et libérer rapidement les sockets sur réseau instable.

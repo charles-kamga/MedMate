@@ -33,3 +33,19 @@ class LocationException implements Exception {
   @override
   String toString() => 'LocationException: $message';
 }
+
+class AuthException implements Exception {
+  const AuthException([this.message = "Erreur d'authentification"]);
+  final String message;
+
+  @override
+  String toString() => 'AuthException: $message';
+}
+
+class NotFoundException implements Exception {
+  const NotFoundException([this.message = 'Ressource introuvable']);
+  final String message;
+
+  @override
+  String toString() => 'NotFoundException: $message';
+}

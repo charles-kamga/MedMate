@@ -1,6 +1,12 @@
-# Stratégie de Tests & Contrôle Continu (MedMate)
+---
+trigger: glob
+globs: ["test/**", "lib/**"]
+description: "Pyramide des tests, tests multi-viewport Flutter Web, mocks stricts et portes de qualité (analyze, test, build web)"
+---
 
-Ce document formalise les critères d'exigence relatifs aux tests automatisés et à la validation continue de la qualité logicielle pour MedMate.
+# Stratégie de Tests & Contrôle Continu (Afya Santé / MedMate)
+
+Ce document formalise les critères d'exigence relatifs aux tests automatisés et à la validation continue de la qualité logicielle pour **Afya Santé** (package `medmate`, Flutter Web & Mobile).
 
 ---
 
@@ -61,7 +67,13 @@ void main() {
 - **Interdiction formelle** d'appeler des APIs externes payantes ou à effet de bord lors des tests automatisés :
   - Passerelle SMS locale camerounaise (ex. SMS Gateway / Campay / CinetPay) : utiliser une interface `SmsService` mockée.
   - Notifications Push (Firebase Cloud Messaging) : mockée via `NotificationService`.
-  - Fournisseur de cartographie (Google Maps / OpenStreetMap) : mocké avec des coordonnées déterministes de Yaoundé.
+  - Fournisseur de cartographie (**OpenStreetMap uniquement**) : mocké avec des coordonnées déterministes de Yaoundé (zéro appel réseau vers les serveurs de tuiles OSM pendant `flutter test`).
+
+### 1.4 Tests de Widgets Multi-Viewport (Spécifique Flutter Web)
+- Chaque écran principal (`MainNavigationScreen`, `DutyPharmacyScreen`, `PharmacistPortalView`) doit être testé sur au moins deux tailles d'écran dans `WidgetTester` :
+  1. **Viewport Mobile Patient** : `tester.view.physicalSize = const Size(390, 844)` (`devicePixelRatio = 1.0`).
+  2. **Viewport Desktop Comptoir Pharmacie** : `tester.view.physicalSize = const Size(1280, 800)` (`devicePixelRatio = 1.0`).
+- Vérifier l'absence totale d'exception `RenderFlex overflowed` et la présence des éléments clés.
 
 ---
 
@@ -72,13 +84,19 @@ Avant de valider ou de soumettre toute modification de code :
 ### 2.1 Analyse Statique Zéro-Tolérance
 - Exécuter impérativement :
   ```bash
-  dart analyze --fatal-infos --fatal-warnings
+  /home/charles/development/flutter/bin/dart analyze --fatal-infos --fatal-warnings
   ```
 - **Zéro avertissement (0 warning, 0 info)** toléré. Tout code provoquant un avertissement de linter doit être corrigé avant validation.
 
 ### 2.2 Exécution de la Suite de Tests
 - Exécuter la suite complète de tests :
   ```bash
-  flutter test --coverage
+  /home/charles/development/flutter/bin/flutter test --coverage
   ```
 - Aucun test en échec n'est toléré. Les régressions doivent être traitées immédiatement.
+
+### 2.3 Vérification de la Compilation Flutter Web
+- Vérifier que le bundle Web compile sans erreur d'import natif (`dart:io`) ni d'asset manquant :
+  ```bash
+  /home/charles/development/flutter/bin/flutter build web --release
+  ```

@@ -1,6 +1,11 @@
-# Architecture & Découpage Système (MedMate)
+---
+trigger: always_on
+description: "Clean Architecture modulaire, modélisation spatiale PostGIS de Yaoundé, souveraineté OpenStreetMap et conformité déontologique ONPC"
+---
 
-Ce document définit les principes architecturaux stricts qui régissent la structure du projet MedMate (Frontend Flutter et Backend Supabase/PostgreSQL).
+# Architecture & Découpage Système (Afya Santé / MedMate)
+
+Ce document définit les principes architecturaux stricts qui régissent la structure du projet **Afya Santé** (package `medmate`, Frontend Flutter Web & Mobile et Backend Supabase/PostgreSQL).
 
 ---
 
@@ -64,6 +69,14 @@ WHERE p.est_ouverte = true
   AND (p.quartier = :quartier_patient OR ST_DWithin(p.location, ST_SetSRID(ST_MakePoint(:user_lon, :user_lat), 4326)::geography, 3000))
 ORDER BY distance_metres ASC;
 ```
+
+### 2.3 Choix du Fournisseur Cartographique : OpenStreetMap (OSM)
+- **Préférence souveraine absolue** : Utilisation exclusive d'**OpenStreetMap** via `flutter_map` avec le serveur de tuiles OSM France (`https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png`).
+- **Interdiction formelle des SDKs et APIs propriétaires payantes** : Rejet de Google Maps Platform et de Mapbox pour éliminer tout risque de facturation imprévue, de blocage de carte bancaire et de dépendance externe.
+- **Optimisation low-data & résilience** :
+  - Cache local des tuiles pour un fonctionnement fluide sur les réseaux mobiles 3G/EDGE à Yaoundé.
+  - Respect de la politique d'utilisation OSM (*Tile Usage Policy*) avec un `User-Agent` déclaré (`AppConfig.osmUserAgent`).
+  - Liens externes de secours systématiquement dirigés vers OpenStreetMap (`https://www.openstreetmap.org/search?query=...`).
 
 ---
 

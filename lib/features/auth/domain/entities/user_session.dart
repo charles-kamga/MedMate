@@ -1,114 +1,65 @@
 import 'package:equatable/equatable.dart';
+import 'package:medmate/features/auth/domain/entities/patient_session.dart';
+import 'package:medmate/features/auth/domain/entities/pharmacist_profile.dart';
 
-/// Rôle actif de l'utilisateur
-enum UserRole {
-  patient,
-  pharmacist,
-}
-
-/// Profil professionnel d'un pharmacien connecté
-class PharmacyStaffProfile extends Equatable {
-  const PharmacyStaffProfile({
-    required this.pharmacyId,
-    required this.pharmacyName,
-    required this.licenceOnpc,
-    required this.responsable,
-    required this.quarter,
-    required this.telephone,
-    this.estDeGarde = false,
-  });
-
-  final String pharmacyId;
-  final String pharmacyName;
-  final String licenceOnpc;
-  final String responsable;
-  final String quarter;
-  final String telephone;
-  final bool estDeGarde;
-
-  @override
-  List<Object?> get props => [
-        pharmacyId,
-        pharmacyName,
-        licenceOnpc,
-        responsable,
-        quarter,
-        telephone,
-        estDeGarde,
-      ];
-}
-
-/// Entité représentant la session utilisateur (Patient ou Pharmacien)
+/// Session unifiée représentant soit une navigation patient, soit une session pharmacien.
 class UserSession extends Equatable {
   const UserSession({
-    required this.userId,
-    required this.telephone,
-    required this.estAuthentifie,
-    this.estAnonyme = false,
-    this.role = UserRole.patient,
-    this.nomComplet,
-    this.pharmacyProfile,
+    required this.sessionId,
+    required this.createdAt,
+    this.patientSession,
+    this.pharmacistProfile,
+    this.isActive = true,
   });
 
-  factory UserSession.guest() {
-    return const UserSession(
-      userId: 'guest-session',
-      telephone: '',
-      estAuthentifie: false,
-      estAnonyme: true,
-      role: UserRole.patient,
-      nomComplet: 'Patient Invité',
-    );
-  }
+  /// Identifiant unique de session globale.
+  final String sessionId;
 
-  factory UserSession.patient({
-    required String telephone,
-    String? nomComplet,
+  /// Détails de session patient si l'utilisateur est un patient.
+  final PatientSession? patientSession;
+
+  /// Profil pharmacien si l'utilisateur est un professionnel authentifié.
+  final PharmacistProfile? pharmacistProfile;
+
+  /// Horodatage de création de la session.
+  final DateTime createdAt;
+
+  /// Indique si la session est actuellement active et valide.
+  final bool isActive;
+
+  /// Indique si l'utilisateur connecté est un pharmacien d'officine.
+  bool get isPharmacist => pharmacistProfile != null;
+
+  /// Indique si la session correspond à un patient.
+  bool get isPatient => patientSession != null;
+
+  /// Indique si la session est pleinement authentifiée (pharmacien ou patient identifié avec téléphone).
+  bool get isAuthenticated =>
+      isPharmacist || (patientSession != null && !patientSession!.isAnonymous);
+
+  /// Crée une copie immuable de la session avec des champs modifiés.
+  UserSession copyWith({
+    String? sessionId,
+    PatientSession? patientSession,
+    PharmacistProfile? pharmacistProfile,
+    DateTime? createdAt,
+    bool? isActive,
   }) {
     return UserSession(
-      userId: 'patient-${DateTime.now().millisecondsSinceEpoch}',
-      telephone: telephone,
-      estAuthentifie: true,
-      estAnonyme: false,
-      role: UserRole.patient,
-      nomComplet: nomComplet ?? 'Patient Afya',
+      sessionId: sessionId ?? this.sessionId,
+      patientSession: patientSession ?? this.patientSession,
+      pharmacistProfile: pharmacistProfile ?? this.pharmacistProfile,
+      createdAt: createdAt ?? this.createdAt,
+      isActive: isActive ?? this.isActive,
     );
   }
-
-  factory UserSession.pharmacist({
-    required String telephone,
-    required PharmacyStaffProfile profile,
-  }) {
-    return UserSession(
-      userId: 'pharma-${profile.pharmacyId}',
-      telephone: telephone,
-      estAuthentifie: true,
-      estAnonyme: false,
-      role: UserRole.pharmacist,
-      nomComplet: profile.responsable,
-      pharmacyProfile: profile,
-    );
-  }
-
-  final String userId;
-  final String telephone;
-  final bool estAuthentifie;
-  final bool estAnonyme;
-  final UserRole role;
-  final String? nomComplet;
-  final PharmacyStaffProfile? pharmacyProfile;
-
-  bool get isPharmacist => role == UserRole.pharmacist;
-  bool get isPatient => role == UserRole.patient;
 
   @override
   List<Object?> get props => [
-        userId,
-        telephone,
-        estAuthentifie,
-        estAnonyme,
-        role,
-        nomComplet,
-        pharmacyProfile,
+        sessionId,
+        patientSession,
+        pharmacistProfile,
+        createdAt,
+        isActive,
       ];
 }

@@ -118,9 +118,9 @@ INSERT INTO public.pharmacies (
     false
   );
 
--- 4. Catalogue National Homologué des Médicaments Essentiels (Cameroun)
+-- 4. Catalogue National Homologué des Médicaments Essentiels (Cameroun — Politique Zéro Prix)
 INSERT INTO public.medicaments (
-  nom_commercial, dci, forme, dosage, classe_therapeutique, prix_homologue_cfa, necessite_ordonnance, code_national
+  nom_commercial, dci, forme, dosage, classe_therapeutique, necessite_ordonnance, code_national
 ) VALUES
   (
     'Doliprane 1000mg',
@@ -128,7 +128,6 @@ INSERT INTO public.medicaments (
     'Comprimé effervescent',
     '1000 mg',
     'Antalgique / Antipyrétique',
-    1500,
     false,
     'CAM-MED-001'
   ),
@@ -138,7 +137,6 @@ INSERT INTO public.medicaments (
     'Comprimé',
     '500 mg',
     'Antalgique / Antipyrétique',
-    1200,
     false,
     'CAM-MED-002'
   ),
@@ -148,7 +146,6 @@ INSERT INTO public.medicaments (
     'Comprimé',
     '20 mg / 120 mg',
     'Antipaludique (CTA)',
-    2800,
     false,
     'CAM-MED-003'
   ),
@@ -158,7 +155,6 @@ INSERT INTO public.medicaments (
     'Gélule',
     '500 mg',
     'Antibiotique Bêta-lactamine',
-    3200,
     true,
     'CAM-MED-004'
   ),
@@ -168,7 +164,6 @@ INSERT INTO public.medicaments (
     'Capsule molle',
     '400 mg',
     'Anti-inflammatoire non stéroïdien (AINS)',
-    2400,
     false,
     'CAM-MED-005'
   ),
@@ -178,7 +173,6 @@ INSERT INTO public.medicaments (
     'Sachet pour solution buvable',
     'Sachet 20.5 g',
     'Réhydratation',
-    400,
     false,
     'CAM-MED-006'
   ),
@@ -188,7 +182,6 @@ INSERT INTO public.medicaments (
     'Comprimé pelliculé',
     '500 mg',
     'Antibiotique Fluoroquinolone',
-    4500,
     true,
     'CAM-MED-007'
   ),
@@ -198,7 +191,6 @@ INSERT INTO public.medicaments (
     'Gélule gastro-résistante',
     '20 mg',
     'Antiulcéreux / Inhibiteur de la pompe à protons',
-    3800,
     false,
     'CAM-MED-008'
   )

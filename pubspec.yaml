@@ -30,8 +30,7 @@ dependencies:
   latlong2: ^0.9.1
   geolocator: ^13.0.2
 
-  # Sécurité & Stockage local chiffré (Offline-first)
-  sqflite_sqlcipher: ^3.3.2
+  # Sécurité & Stockage local (Web & Mobile)
   flutter_secure_storage: ^9.2.2
 
   # Utilitaires & Idempotence
