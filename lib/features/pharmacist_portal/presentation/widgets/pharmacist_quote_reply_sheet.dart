@@ -182,19 +182,21 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
   }
 
   Widget _buildConditionalBox() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
         color: const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: PharmacistQuoteReplySheet.amber.withValues(alpha: 0.4)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Conditions exigées :', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFFB45309))),
-          CheckboxListTile(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: PharmacistQuoteReplySheet.amber.withValues(alpha: 0.4)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Conditions exigées :', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFFB45309))),
+              CheckboxListTile(
             dense: true,
             contentPadding: EdgeInsets.zero,
             activeColor: PharmacistQuoteReplySheet.amber,
@@ -221,7 +223,9 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
           ),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildUnavailableBox() {
@@ -230,10 +234,10 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.border)),
       child: DropdownButtonFormField<String>(
-        value: _unavReason,
+        initialValue: _unavReason,
         isExpanded: true,
         decoration: InputDecoration(
-          labelText: 'Motif d\'indisponibilité (prix fixé à 0 FCFA)',
+          labelText: "Motif d'indisponibilité (prix fixé à 0 FCFA)",
           labelStyle: const TextStyle(fontSize: 11),
           contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -274,16 +278,21 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
   }
 
   Widget _buildDeliveryBox() {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.border)),
-      child: Column(
+    return Material(
+      color: AppColors.surfaceVariant,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: AppColors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
         children: [
           SwitchListTile(
             key: const ValueKey('switch_mototaxi'),
             dense: true,
             contentPadding: EdgeInsets.zero,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             title: const Text('Option mototaxi partenaire', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
             value: _delivery,
             onChanged: (v) => setState(() => _delivery = v),
@@ -320,7 +329,8 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
             ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildSubmitButton() {
@@ -334,7 +344,7 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
         style: ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
         onPressed: _submit,
         icon: Icon(isUnav ? Icons.cancel_outlined : Icons.send_rounded, size: 16),
-        label: Text(isUnav ? 'Notifier l\'indisponibilité' : 'Transmettre l\'offre chiffrée', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+        label: Text(isUnav ? "Notifier l'indisponibilité" : "Transmettre l'offre chiffrée", style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
       ),
     );
   }

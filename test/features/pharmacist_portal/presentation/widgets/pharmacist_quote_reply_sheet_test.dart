@@ -74,7 +74,7 @@ void main() {
     );
   }
 
-  testWidgets('affiche les 3 statuts ONPC et valide la saisie d\'un prix disponible', (tester) async {
+  testWidgets("affiche les 3 statuts ONPC et valide la saisie d'un prix disponible", (tester) async {
     when(() => mockCubit.submitQuote(
           orderId: any(named: 'orderId'),
           pharmacyId: any(named: 'pharmacyId'),
@@ -85,7 +85,7 @@ void main() {
           proposesDelivery: any(named: 'proposesDelivery'),
           deliveryFeeCfa: any(named: 'deliveryFeeCfa'),
           estimatedDeliveryMinutes: any(named: 'estimatedDeliveryMinutes'),
-        )).thenAnswer((_) async {});
+        ),).thenAnswer((_) async {});
 
     await tester.pumpWidget(
       buildTestWidget(order: sampleOrder, pharmacyId: 'pharma-soleil'),
@@ -117,7 +117,7 @@ void main() {
           proposesDelivery: false,
           deliveryFeeCfa: 0,
           estimatedDeliveryMinutes: null,
-        )).called(1);
+        ),).called(1);
   });
 
   testWidgets('bascule en Indisponible avec prix 0 FCFA', (tester) async {
@@ -131,7 +131,7 @@ void main() {
           proposesDelivery: any(named: 'proposesDelivery'),
           deliveryFeeCfa: any(named: 'deliveryFeeCfa'),
           estimatedDeliveryMinutes: any(named: 'estimatedDeliveryMinutes'),
-        )).thenAnswer((_) async {});
+        ),).thenAnswer((_) async {});
 
     await tester.pumpWidget(
       buildTestWidget(order: sampleOrder, pharmacyId: 'pharma-soleil'),
@@ -159,6 +159,6 @@ void main() {
           proposesDelivery: false,
           deliveryFeeCfa: 0,
           estimatedDeliveryMinutes: null,
-        )).called(1);
+        ),).called(1);
   });
 }

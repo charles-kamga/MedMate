@@ -28,10 +28,9 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
         final isTargeted = order.targets.any((t) => t.id == pharmacyId);
         final isAssigned = order.selectedOffer?.pharmacyId == pharmacyId;
         return isTargeted || isAssigned;
-      }).toList();
+      }).toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-      // Tri : les plus récentes d'abord
-      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return Right(List.unmodifiable(list));
     } catch (e) {
       return Left(ServerFailure('Erreur lors du chargement des commandes : $e'));

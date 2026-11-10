@@ -43,7 +43,7 @@ void main() {
           orderId: any(named: 'orderId'),
           pharmacyId: any(named: 'pharmacyId'),
           otpCode: any(named: 'otpCode'),
-        )).thenAnswer((_) async {});
+        ),).thenAnswer((_) async {});
 
     await tester.pumpWidget(
       buildTestWidget(orderId: 'ORD-999', pharmacyId: 'pharma-soleil'),
@@ -73,7 +73,7 @@ void main() {
           orderId: 'ORD-999',
           pharmacyId: 'pharma-soleil',
           otpCode: '842915',
-        )).called(1);
+        ),).called(1);
   });
 
   testWidgets('fonctionnement des touches retour arrière et effacer', (tester) async {

@@ -3,7 +3,7 @@ import 'package:medmate/core/config/app_config.dart';
 
 void main() {
   group('AppConfig', () {
-    test('buildOsmSearchUrl génère l\'URL conforme OpenStreetMap', () {
+    test("buildOsmSearchUrl génère l'URL conforme OpenStreetMap", () {
       final url = AppConfig.buildOsmSearchUrl(
         latitude: 3.8688,
         longitude: 11.5175,

@@ -106,4 +106,3 @@ final class ConsumedOtpFailure extends Failure {
     super.code = 'CONSUMED_OTP',
   ]);
 }
-

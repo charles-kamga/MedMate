@@ -183,6 +183,7 @@ class FlashOrder extends Equatable {
   bool get isExpired => DateTime.now().isAfter(expiresAt);
 
   FlashOrder copyWith({
+    String? id,
     List<BasketItem>? items,
     String? quarter,
     List<DispatchedPharmacy>? targets,
@@ -199,7 +200,7 @@ class FlashOrder extends Equatable {
     bool? isPickedUp,
   }) {
     return FlashOrder(
-      id: id,
+      id: id ?? this.id,
       items: items ?? this.items,
       quarter: quarter ?? this.quarter,
       targets: targets ?? this.targets,

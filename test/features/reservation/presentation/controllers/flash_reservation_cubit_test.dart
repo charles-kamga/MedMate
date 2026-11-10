@@ -130,7 +130,7 @@ void main() {
   });
 
   group('FlashReservationCubit - Initialisation et Panier', () {
-    test('l\'état initial est conforme', () {
+    test("l'état initial est conforme", () {
       expect(cubit.state.basketItems, isEmpty);
       expect(cubit.state.selectedLandmark, isNull);
       expect(cubit.state.currentOrder, isNull);
@@ -140,7 +140,7 @@ void main() {
       expect(cubit.state.canSubmit, isFalse);
     });
 
-    test('addItem ajoute un nouvel article et gère l\'ordonnance', () {
+    test("addItem ajoute un nouvel article et gère l'ordonnance", () {
       cubit.addItem(sampleMedicationRx, quantity: 2, note: 'Prendre le soir');
 
       expect(cubit.state.basketItems.length, 1);
@@ -172,7 +172,7 @@ void main() {
       expect(cubit.state.basketItems, isEmpty);
     });
 
-    test('updateNote modifie la précision associée à l\'article', () {
+    test("updateNote modifie la précision associée à l'article", () {
       cubit.addItem(sampleMedication, quantity: 1);
       final itemId = cubit.state.basketItems.first.id;
 
@@ -180,7 +180,7 @@ void main() {
       expect(cubit.state.basketItems.first.prescriptionNote, 'Gélules si possible');
     });
 
-    test('removeItem supprime l\'article spécifié', () {
+    test("removeItem supprime l'article spécifié", () {
       cubit
         ..addItem(sampleMedication, quantity: 1)
         ..addItem(sampleMedicationRx, quantity: 1);
@@ -208,7 +208,7 @@ void main() {
       expect(cubit.state.errorMessage, contains('panier'));
     });
 
-    test('échoue si aucun repère urbain n\'est sélectionné', () async {
+    test("échoue si aucun repère urbain n'est sélectionné", () async {
       cubit.addItem(sampleMedication, quantity: 1);
       await cubit.submitFlashRequest();
 
@@ -217,12 +217,12 @@ void main() {
     });
 
     blocTest<FlashReservationCubit, FlashReservationState>(
-      'émet [loading, offersReceived] lors d\'une soumission réussie avec offres',
+      "émet [loading, offersReceived] lors d'une soumission réussie avec offres",
       setUp: () {
         when(() => mockSubmitFlashRequestUseCase(
               items: any(named: 'items'),
               landmark: sampleLandmark,
-            )).thenAnswer((_) async => Right(sampleOrder));
+            ),).thenAnswer((_) async => Right(sampleOrder));
       },
       build: () => cubit,
       seed: () => const FlashReservationState(
@@ -252,14 +252,14 @@ void main() {
     );
 
     blocTest<FlashReservationCubit, FlashReservationState>(
-      'émet [loading, failure] en cas d\'échec de soumission',
+      "émet [loading, failure] en cas d'échec de soumission",
       setUp: () {
         when(() => mockSubmitFlashRequestUseCase(
               items: any(named: 'items'),
               landmark: sampleLandmark,
-            )).thenAnswer((_) async => const Left(
+            ),).thenAnswer((_) async => const Left(
               ServerFailure('Connexion réseau interrompue'),
-            ));
+            ),);
       },
       build: () => cubit,
       seed: () => const FlashReservationState(
@@ -297,7 +297,7 @@ void main() {
     });
 
     blocTest<FlashReservationCubit, FlashReservationState>(
-      'émet [loading, offersReceived] lors d\'une escalade réussie',
+      "émet [loading, offersReceived] lors d'une escalade réussie",
       setUp: () {
         when(() => mockEscalateDispatchWaveUseCase('ORD-12345'))
             .thenAnswer((_) async => Right(sampleOrder.copyWith(currentWave: 2)));
@@ -321,7 +321,7 @@ void main() {
     );
   });
 
-  group('FlashReservationCubit - Sélection d\'offre et OTP', () {
+  group("FlashReservationCubit - Sélection d'offre et OTP", () {
     test('échoue si aucune commande en cours', () async {
       await cubit.selectOffer(sampleOffer, patientPhone: '699112233');
       expect(cubit.state.status, FlashReservationStatus.failure);
@@ -334,7 +334,7 @@ void main() {
               orderId: 'ORD-12345',
               offer: sampleOffer,
               patientPhone: '699112233',
-            )).thenAnswer((_) async => Right(sampleReservation));
+            ),).thenAnswer((_) async => Right(sampleReservation));
       },
       build: () => cubit,
       seed: () => FlashReservationState(
@@ -381,7 +381,7 @@ void main() {
       ],
     );
 
-    test('reset réinitialise l\'état complètement', () {
+    test("reset réinitialise l'état complètement", () {
       cubit
         ..addItem(sampleMedication, quantity: 2)
         ..selectLandmark(sampleLandmark)

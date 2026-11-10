@@ -66,7 +66,7 @@ void main() {
   });
 
   Widget buildTestWidget({PharmacistCounterCubit? cubit}) {
-    final view = const PharmacistPortalView(initialPharmacyId: 'pharma-soleil');
+    const view = PharmacistPortalView(initialPharmacyId: 'pharma-soleil');
     if (cubit != null) {
       return MaterialApp(
         home: BlocProvider<PharmacistCounterCubit>.value(
@@ -96,7 +96,7 @@ void main() {
       expect(find.text('Sélectionnez une commande dans la file'), findsOneWidget);
     });
 
-    testWidgets('desktop : sélection d\'une commande affiche le panneau de devis à droite',
+    testWidgets("desktop : sélection d'une commande affiche le panneau de devis à droite",
         (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -116,7 +116,7 @@ void main() {
       expect(find.byType(PharmacistQuoteReplySheet), findsOneWidget);
     });
 
-    testWidgets('desktop : sélection d\'une commande prête affiche le clavier OTP',
+    testWidgets("desktop : sélection d'une commande prête affiche le clavier OTP",
         (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;

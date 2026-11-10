@@ -57,7 +57,7 @@ void main() {
     necessiteOrdonnance: false,
   );
 
-  final sampleItem = BasketItem(
+  const sampleItem = BasketItem(
     id: 'item-1',
     medication: sampleMedication,
     quantity: 2,
@@ -129,7 +129,7 @@ void main() {
 
   final sampleOrder = FlashOrder(
     id: 'ORD-123456',
-    items: [sampleItem],
+    items: const [sampleItem],
     quarter: 'Carrefour Warda, Poste Centrale',
     targets: sampleTargets,
     currentWave: 1,
@@ -219,7 +219,7 @@ void main() {
       configureViewport(tester, width: 390, height: 844);
 
       when(() => mockFlashCubit.state).thenReturn(
-        FlashReservationState(
+        const FlashReservationState(
           basketItems: [sampleItem],
           selectedLandmark: sampleLandmark,
           status: FlashReservationStatus.initial,
@@ -242,7 +242,7 @@ void main() {
 
       when(() => mockFlashCubit.state).thenReturn(
         FlashReservationState(
-          basketItems: [sampleItem],
+          basketItems: const [sampleItem],
           selectedLandmark: sampleLandmark,
           currentOrder: sampleOrder,
           status: FlashReservationStatus.waveActive,
@@ -270,7 +270,7 @@ void main() {
 
       when(() => mockFlashCubit.state).thenReturn(
         FlashReservationState(
-          basketItems: [sampleItem],
+          basketItems: const [sampleItem],
           selectedLandmark: sampleLandmark,
           currentOrder: sampleOrder,
           status: FlashReservationStatus.offersReceived,
@@ -317,7 +317,7 @@ void main() {
 
       when(() => mockFlashCubit.state).thenReturn(
         FlashReservationState(
-          basketItems: [sampleItem],
+          basketItems: const [sampleItem],
           selectedLandmark: sampleLandmark,
           currentOrder: sampleOrder.copyWith(selectedOffer: sampleOffers[0]),
           confirmedReservation: sampleReservation,

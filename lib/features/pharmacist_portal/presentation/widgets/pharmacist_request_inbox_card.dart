@@ -99,25 +99,33 @@ class PharmacistRequestInboxCard extends StatelessWidget {
     final isExpired = seconds <= 0 || order.isExpired;
 
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppColors.primarySoft,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            '#${order.id}',
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: AppColors.primary,
-            ),
+        Expanded(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '#${order.id}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(child: _buildStatusBadge()),
+            ],
           ),
         ),
         const SizedBox(width: 8),
-        _buildStatusBadge(),
-        const Spacer(),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
@@ -161,37 +169,30 @@ class PharmacistRequestInboxCard extends StatelessWidget {
         bg = const Color(0xFFEFF6FF);
         fg = AppColors.secondary;
         label = 'Vague ${order.currentWave} active';
-        break;
       case FlashOrderStatus.offersReceived:
         bg = const Color(0xFFEFF6FF);
         fg = AppColors.secondary;
         label = 'Offres reçues';
-        break;
       case FlashOrderStatus.accepted:
         bg = _amberSoft;
         fg = const Color(0xFFB45309);
         label = 'Offre retenue';
-        break;
       case FlashOrderStatus.readyForPickup:
         bg = const Color(0xFFEAF7F0);
         fg = _emerald;
         label = 'Prêt pour retrait';
-        break;
       case FlashOrderStatus.delivered:
         bg = const Color(0xFFEAF7F0);
         fg = AppColors.primary;
         label = 'Délivré au comptoir';
-        break;
       case FlashOrderStatus.expired:
         bg = AppColors.alertSoft;
         fg = AppColors.alert;
         label = 'Expiré';
-        break;
       case FlashOrderStatus.idle:
         bg = AppColors.surfaceVariant;
         fg = AppColors.textSecondary;
         label = 'En attente';
-        break;
     }
 
     return Container(
@@ -202,6 +203,8 @@ class PharmacistRequestInboxCard extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
@@ -297,12 +300,16 @@ class PharmacistRequestInboxCard extends StatelessWidget {
         order.status == FlashOrderStatus.accepted;
     final isDelivered = order.status == FlashOrderStatus.delivered;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
       children: [
         if (_hasSubmittedQuote)
-          Row(
-            children: const [
+          const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Icon(Icons.check_circle_rounded, size: 14, color: _emerald),
               SizedBox(width: 4),
               Text(
@@ -316,8 +323,9 @@ class PharmacistRequestInboxCard extends StatelessWidget {
             isDelivered ? 'Retrait effectué' : 'Action requise',
             style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
           ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
           children: [
             if (!isDelivered && onQuotePressed != null)
               TextButton.icon(
@@ -336,8 +344,7 @@ class PharmacistRequestInboxCard extends StatelessWidget {
                   style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
                 ),
               ),
-            if (canValidateOtp && onValidateOtpPressed != null) ...[
-              const SizedBox(width: 8),
+            if (canValidateOtp && onValidateOtpPressed != null)
               ElevatedButton.icon(
                 key: ValueKey('btn_otp_${order.id}'),
                 style: ElevatedButton.styleFrom(
@@ -355,7 +362,6 @@ class PharmacistRequestInboxCard extends StatelessWidget {
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
                 ),
               ),
-            ],
           ],
         ),
       ],

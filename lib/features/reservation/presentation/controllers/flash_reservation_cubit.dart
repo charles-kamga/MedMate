@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/yaounde_landmarks.dart';
 import '../../../flash_order/domain/entities/basket_item.dart';
+import '../../../flash_order/domain/entities/flash_order.dart';
 import '../../../flash_order/domain/entities/pharmacy_offer.dart';
 import '../../../pharmacy_search/domain/entities/medication.dart';
+import '../../../realtime_dispatch/domain/repositories/realtime_dispatch_repository.dart';
 import '../../domain/repositories/reservation_repository.dart';
 import '../../domain/usecases/escalate_dispatch_wave.dart';
 import '../../domain/usecases/select_pharmacy_offer.dart';
@@ -16,16 +19,32 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
     required EscalateDispatchWaveUseCase escalateDispatchWaveUseCase,
     required SelectPharmacyOfferUseCase selectPharmacyOfferUseCase,
     required ReservationRepository reservationRepository,
+    RealtimeDispatchRepository? realtimeRepository,
+    bool enableAutoEscalation = false,
+    Duration autoEscalationDuration = const Duration(seconds: 120),
   })  : _submitFlashRequestUseCase = submitFlashRequestUseCase,
         _escalateDispatchWaveUseCase = escalateDispatchWaveUseCase,
         _selectPharmacyOfferUseCase = selectPharmacyOfferUseCase,
         _reservationRepository = reservationRepository,
+        _realtimeRepository = realtimeRepository ??
+            (reservationRepository is RealtimeDispatchRepository
+                ? reservationRepository
+                : null),
+        _enableAutoEscalation = enableAutoEscalation,
+        _autoEscalationDuration = autoEscalationDuration,
         super(const FlashReservationState());
 
   final SubmitFlashRequestUseCase _submitFlashRequestUseCase;
   final EscalateDispatchWaveUseCase _escalateDispatchWaveUseCase;
   final SelectPharmacyOfferUseCase _selectPharmacyOfferUseCase;
   final ReservationRepository _reservationRepository;
+  final RealtimeDispatchRepository? _realtimeRepository;
+  final bool _enableAutoEscalation;
+  final Duration _autoEscalationDuration;
+
+  StreamSubscription<List<PharmacyOffer>>? _offersSubscription;
+  StreamSubscription<FlashOrder>? _orderSubscription;
+  Timer? _escalationTimer;
 
   /// Ajoute un médicament au panier ou incrémente sa quantité s'il est déjà présent
   void addItem(
@@ -142,6 +161,8 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
           currentOrder: order,
           clearError: true,
         ),);
+        _subscribeToRealtimeOrder(order.id);
+        _startAutoEscalationTimer();
       },
     );
   }
@@ -178,6 +199,7 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
           currentOrder: updatedOrder,
           clearError: true,
         ),);
+        _startAutoEscalationTimer();
       },
     );
   }
@@ -212,12 +234,15 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
         status: FlashReservationStatus.failure,
         errorMessage: failure.message,
       ),),
-      (reservation) => emit(state.copyWith(
-        status: FlashReservationStatus.reservationConfirmed,
-        confirmedReservation: reservation,
-        currentOrder: currentOrder.copyWith(selectedOffer: offer),
-        clearError: true,
-      ),),
+      (reservation) {
+        _escalationTimer?.cancel();
+        emit(state.copyWith(
+          status: FlashReservationStatus.reservationConfirmed,
+          confirmedReservation: reservation,
+          currentOrder: currentOrder.copyWith(selectedOffer: offer),
+          clearError: true,
+        ),);
+      },
     );
   }
 
@@ -244,12 +269,93 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
           status: status,
           clearError: true,
         ),);
+        _subscribeToRealtimeOrder(refreshedOrder.id);
       },
     );
   }
 
+  void _subscribeToRealtimeOrder(String orderId) {
+    if (_realtimeRepository == null) return;
+
+    _offersSubscription?.cancel();
+    _offersSubscription = _realtimeRepository.watchOffersForOrder(orderId).listen(
+      (offers) {
+        if (isClosed) return;
+        final currentOrder = state.currentOrder;
+        if (currentOrder != null && currentOrder.id == orderId) {
+          final updatedOrder = currentOrder.copyWith(offers: offers);
+          final status = offers.isNotEmpty &&
+                  state.status != FlashReservationStatus.reservationConfirmed
+              ? FlashReservationStatus.offersReceived
+              : state.status;
+          emit(state.copyWith(
+            currentOrder: updatedOrder,
+            status: status,
+            clearError: true,
+          ),);
+        }
+      },
+    );
+
+    _orderSubscription?.cancel();
+    _orderSubscription = _realtimeRepository.watchFlashOrder(orderId).listen(
+      (orderUpdate) {
+        if (isClosed) return;
+        String? notification;
+        if (orderUpdate.status == FlashOrderStatus.readyForPickup) {
+          notification = 'Votre réservation est validée et prête à être retirée !';
+        } else if (orderUpdate.status == FlashOrderStatus.delivered ||
+            orderUpdate.isPickedUp) {
+          notification = "Commande délivrée et clôturée par l'officine.";
+        }
+
+        final status = orderUpdate.offers.isNotEmpty &&
+                state.status != FlashReservationStatus.reservationConfirmed
+            ? FlashReservationStatus.offersReceived
+            : (state.status == FlashReservationStatus.initial
+                ? FlashReservationStatus.waveActive
+                : state.status);
+
+        emit(state.copyWith(
+          currentOrder: orderUpdate,
+          status: status,
+          realtimeNotification: notification,
+        ),);
+      },
+    );
+  }
+
+  void _startAutoEscalationTimer() {
+    _escalationTimer?.cancel();
+    if (!_enableAutoEscalation) return;
+
+    _escalationTimer = Timer(_autoEscalationDuration, () async {
+      if (isClosed) return;
+      final currentOrder = state.currentOrder;
+      if (currentOrder != null && currentOrder.selectedOffer == null) {
+        await escalateWave();
+      }
+    });
+  }
+
+  /// Efface la notification temps réel courante
+  void clearNotification() {
+    emit(state.copyWith(clearNotification: true));
+  }
+
   /// Réinitialise l'ensemble du flux de réservation
   void reset() {
+    _offersSubscription?.cancel();
+    _orderSubscription?.cancel();
+    _escalationTimer?.cancel();
     emit(const FlashReservationState());
+  }
+
+  @override
+  Future<void> close() {
+    _offersSubscription?.cancel();
+    _orderSubscription?.cancel();
+    _escalationTimer?.cancel();
+    return super.close();
   }
 }

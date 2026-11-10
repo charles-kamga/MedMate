@@ -19,7 +19,7 @@ void main() {
 
   final sampleOrder = FlashOrder(
     id: 'order-123',
-    items: [
+    items: const [
       BasketItem(
         id: 'item-1',
         medication: sampleMedication,

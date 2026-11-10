@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../flash_order/domain/entities/flash_order.dart';
 import '../../../flash_order/domain/entities/pharmacy_offer.dart';
+import '../../../realtime_dispatch/domain/repositories/realtime_dispatch_repository.dart';
 import '../../domain/usecases/get_pending_counter_orders.dart';
 import '../../domain/usecases/submit_counter_quote.dart';
 import '../../domain/usecases/validate_counter_otp.dart';
@@ -13,11 +14,13 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
     required GetPendingCounterOrdersUseCase getPendingOrders,
     required SubmitCounterQuoteUseCase submitQuoteUseCase,
     required ValidateCounterOtpUseCase validateOtpUseCase,
+    RealtimeDispatchRepository? realtimeRepository,
     bool enableAutoRefresh = false,
     Duration autoRefreshInterval = const Duration(seconds: 30),
   })  : _getPendingOrders = getPendingOrders,
         _submitQuoteUseCase = submitQuoteUseCase,
         _validateOtpUseCase = validateOtpUseCase,
+        _realtimeRepository = realtimeRepository,
         _enableAutoRefresh = enableAutoRefresh,
         _autoRefreshInterval = autoRefreshInterval,
         super(const PharmacistCounterState());
@@ -25,11 +28,13 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
   final GetPendingCounterOrdersUseCase _getPendingOrders;
   final SubmitCounterQuoteUseCase _submitQuoteUseCase;
   final ValidateCounterOtpUseCase _validateOtpUseCase;
+  final RealtimeDispatchRepository? _realtimeRepository;
   final bool _enableAutoRefresh;
   final Duration _autoRefreshInterval;
 
   Timer? _refreshTimer;
   Timer? _countdownTimer;
+  StreamSubscription<List<FlashOrder>>? _ordersSubscription;
   String? _activePharmacyId;
 
   /// Charge la liste des demandes de réservation pour l'officine
@@ -39,7 +44,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
       status: PharmacistCounterStatus.loading,
       clearError: true,
       clearSuccess: true,
-    ));
+    ),);
 
     final result = await _getPendingOrders(pharmacyId);
     result.fold(
@@ -48,7 +53,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
           status: PharmacistCounterStatus.failure,
           errorMessage: failure.message,
           failure: failure,
-        ));
+        ),);
       },
       (orders) {
         FlashOrder? updatedSelected;
@@ -67,9 +72,10 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
           orders: orders,
           selectedOrder: updatedSelected,
           selectedOrderWaveRemainingSeconds: remainingSeconds,
-        ));
+        ),);
 
         _setupAutoRefreshIfNeeded();
+        _subscribeToRealtimeOrders(pharmacyId);
       },
     );
   }
@@ -81,7 +87,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
       emit(state.copyWith(
         clearSelectedOrder: true,
         clearWaveRemaining: true,
-      ));
+      ),);
       return;
     }
 
@@ -89,7 +95,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
     emit(state.copyWith(
       selectedOrder: order,
       selectedOrderWaveRemainingSeconds: remaining,
-    ));
+    ),);
 
     if (_enableAutoRefresh && remaining > 0) {
       _startCountdownTimer();
@@ -120,7 +126,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
       status: PharmacistCounterStatus.submittingQuote,
       clearError: true,
       clearSuccess: true,
-    ));
+    ),);
 
     final result = await _submitQuoteUseCase(
       orderId: orderId,
@@ -140,7 +146,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
           status: PharmacistCounterStatus.failure,
           errorMessage: failure.message,
           failure: failure,
-        ));
+        ),);
       },
       (offer) {
         final updatedOrders = state.orders.map((order) {
@@ -163,7 +169,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
           selectedOrder: updatedSelected,
           lastSubmittedQuote: offer,
           successMessage: 'Devis soumis au patient avec succès.',
-        ));
+        ),);
       },
     );
   }
@@ -178,7 +184,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
       status: PharmacistCounterStatus.validatingOtp,
       clearError: true,
       clearSuccess: true,
-    ));
+    ),);
 
     final result = await _validateOtpUseCase(
       orderId: orderId,
@@ -192,7 +198,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
           status: PharmacistCounterStatus.failure,
           errorMessage: failure.message,
           failure: failure,
-        ));
+        ),);
       },
       (deliveredOrder) {
         final updatedOrders = state.orders.map((order) {
@@ -205,7 +211,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
           selectedOrder: deliveredOrder,
           lastValidatedOrder: deliveredOrder,
           successMessage: 'Code OTP validé. Médicaments remis au patient.',
-        ));
+        ),);
       },
     );
   }
@@ -215,7 +221,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
     emit(state.copyWith(
       filterStatus: filter,
       clearFilter: filter == null || filter.isEmpty,
-    ));
+    ),);
   }
 
   /// Réinitialise les messages de retour utilisateur et repasse en mode chargé
@@ -230,7 +236,76 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
       status: nextStatus,
       clearError: true,
       clearSuccess: true,
-    ));
+    ),);
+  }
+
+  /// Efface le signalement discret de nouvelle commande reçue
+  void clearNewOrderAlert() {
+    emit(state.copyWith(
+      hasNewOrderAlert: false,
+      newOrdersCount: 0,
+    ),);
+  }
+
+  void _subscribeToRealtimeOrders(String pharmacyId) {
+    if (_realtimeRepository == null) return;
+
+    _ordersSubscription?.cancel();
+    _ordersSubscription = _realtimeRepository
+        .watchPendingOrdersForPharmacy(pharmacyId)
+        .listen((incomingOrders) {
+      if (isClosed) return;
+      _handleRealtimeOrdersUpdate(pharmacyId, incomingOrders);
+    });
+  }
+
+  void _handleRealtimeOrdersUpdate(
+    String pharmacyId,
+    List<FlashOrder> incomingOrders,
+  ) {
+    final validOrders = incomingOrders.where((order) {
+      if (order.selectedOffer != null &&
+          order.selectedOffer!.pharmacyId != pharmacyId) {
+        return false;
+      }
+      if (order.status != FlashOrderStatus.dispatchingWave &&
+          order.selectedOffer?.pharmacyId != pharmacyId) {
+        return false;
+      }
+      return true;
+    }).toList();
+
+    final existingIds = state.orders.map((o) => o.id).toSet();
+    final newCount =
+        validOrders.where((o) => !existingIds.contains(o.id)).length;
+    final hasNew = newCount > 0;
+
+    FlashOrder? updatedSelected;
+    int? remainingSeconds;
+    var clearSelected = false;
+
+    if (state.selectedOrder != null) {
+      final selectedId = state.selectedOrder!.id;
+      final found = validOrders.where((o) => o.id == selectedId).firstOrNull;
+      if (found == null) {
+        _countdownTimer?.cancel();
+        clearSelected = true;
+      } else {
+        updatedSelected = found;
+        remainingSeconds = found.waveTimeRemainingSeconds;
+      }
+    }
+
+    emit(state.copyWith(
+      status: PharmacistCounterStatus.loaded,
+      orders: validOrders,
+      selectedOrder: updatedSelected,
+      clearSelectedOrder: clearSelected,
+      selectedOrderWaveRemainingSeconds: remainingSeconds,
+      clearWaveRemaining: clearSelected,
+      hasNewOrderAlert: hasNew || state.hasNewOrderAlert,
+      newOrdersCount: state.newOrdersCount + newCount,
+    ),);
   }
 
   void _setupAutoRefreshIfNeeded() {
@@ -269,6 +344,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
 
   @override
   Future<void> close() {
+    _ordersSubscription?.cancel();
     _refreshTimer?.cancel();
     _countdownTimer?.cancel();
     return super.close();

@@ -45,14 +45,14 @@ void main() {
     necessiteOrdonnance: true,
   );
 
-  final sampleItem = BasketItem(
+  const sampleItem = BasketItem(
     id: 'item-1',
     medication: sampleMedication,
     quantity: 2,
     hasPrescription: false,
   );
 
-  final sampleItemRx = BasketItem(
+  const sampleItemRx = BasketItem(
     id: 'item-2',
     medication: sampleMedicationRx,
     quantity: 1,
@@ -104,7 +104,7 @@ void main() {
       await tester.pumpWidget(buildTestableWidget(basketItems: const []));
       await tester.pumpAndSettle();
 
-      expect(find.text('Votre panier est vide. Recherchez un médicament pour l\'ajouter.'), findsOneWidget);
+      expect(find.text("Votre panier est vide. Recherchez un médicament pour l'ajouter."), findsOneWidget);
       expect(find.text(AppConfig.pricePolicyNotice), findsOneWidget);
     });
 

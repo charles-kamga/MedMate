@@ -191,7 +191,7 @@ void main() {
               proposesDelivery: any(named: 'proposesDelivery'),
               deliveryFeeCfa: any(named: 'deliveryFeeCfa'),
               estimatedDeliveryMinutes: any(named: 'estimatedDeliveryMinutes'),
-            )).thenAnswer((_) async => Right(testOfferAvailable));
+            ),).thenAnswer((_) async => Right(testOfferAvailable));
         return cubit;
       },
       act: (cubit) => cubit.submitQuote(
@@ -232,7 +232,7 @@ void main() {
               proposesDelivery: false,
               deliveryFeeCfa: 0,
               estimatedDeliveryMinutes: null,
-            )).thenAnswer((_) async => Right(testOfferConditional));
+            ),).thenAnswer((_) async => Right(testOfferConditional));
         return cubit;
       },
       act: (cubit) => cubit.submitQuote(
@@ -252,7 +252,7 @@ void main() {
         predicate<PharmacistCounterState>((state) {
           return state.status == PharmacistCounterStatus.quoteSubmitted &&
               state.lastSubmittedQuote == testOfferConditional &&
-              state.lastSubmittedQuote?.conditionRequirements.isNotEmpty == true;
+              (state.lastSubmittedQuote?.conditionRequirements.isNotEmpty ?? false);
         }),
       ],
     );
@@ -275,7 +275,7 @@ void main() {
               proposesDelivery: any(named: 'proposesDelivery'),
               deliveryFeeCfa: any(named: 'deliveryFeeCfa'),
               estimatedDeliveryMinutes: any(named: 'estimatedDeliveryMinutes'),
-            )).thenAnswer((_) async => Right(testOfferUnavailable));
+            ),).thenAnswer((_) async => Right(testOfferUnavailable));
         return cubit;
       },
       act: (cubit) => cubit.submitQuote(
@@ -315,28 +315,33 @@ void main() {
     });
 
     test('clearFeedback réinitialise statut et messages', () {
-      cubit.emit(const PharmacistCounterState(
-        status: PharmacistCounterStatus.failure,
-        errorMessage: 'Erreur',
-      ));
-      cubit.clearFeedback();
+      cubit
+        ..emit(
+          const PharmacistCounterState(
+            status: PharmacistCounterStatus.failure,
+            errorMessage: 'Erreur',
+          ),
+        )
+        ..clearFeedback();
       expect(cubit.state.status, PharmacistCounterStatus.loaded);
       expect(cubit.state.errorMessage, isNull);
     });
 
     test('setFilterStatus filtre correctement la liste', () {
-      cubit.emit(PharmacistCounterState(
-        status: PharmacistCounterStatus.loaded,
-        orders: [
-          testOrder1,
-          testOrder1.copyWith(
-            id: 'ORD-READY',
-            status: FlashOrderStatus.readyForPickup,
+      cubit
+        ..emit(
+          PharmacistCounterState(
+            status: PharmacistCounterStatus.loaded,
+            orders: [
+              testOrder1,
+              testOrder1.copyWith(
+                id: 'ORD-READY',
+                status: FlashOrderStatus.readyForPickup,
+              ),
+            ],
           ),
-        ],
-      ));
-
-      cubit.setFilterStatus('readyForPickup');
+        )
+        ..setFilterStatus('readyForPickup');
       expect(cubit.state.filteredOrders.length, 1);
       expect(cubit.state.filteredOrders.first.id, 'ORD-READY');
 

@@ -50,7 +50,7 @@ void main() {
   });
 
   group('MedicationCatalogCubit', () {
-    test('l\'état initial est MedicationCatalogInitial', () {
+    test("l'état initial est MedicationCatalogInitial", () {
       expect(cubit.state, equals(const MedicationCatalogInitial()));
       expect(cubit.state.isLoading, isFalse);
       expect(cubit.state.isError, isFalse);
@@ -87,12 +87,12 @@ void main() {
     );
 
     blocTest<MedicationCatalogCubit, MedicationCatalogState>(
-      'émet [MedicationCatalogLoading, MedicationCatalogError] en cas d\'échec',
+      "émet [MedicationCatalogLoading, MedicationCatalogError] en cas d'échec",
       setUp: () {
         when(() => mockSearchMedicationsUseCase('inconnu'))
             .thenAnswer((_) async => const Left(
                   ServerFailure('Erreur serveur catalogue indisponible'),
-                ));
+                ),);
       },
       build: () => cubit,
       act: (cubit) => cubit.search('inconnu'),
@@ -106,7 +106,7 @@ void main() {
     );
 
     blocTest<MedicationCatalogCubit, MedicationCatalogState>(
-      'clear() réinitialise l\'état à MedicationCatalogInitial',
+      "clear() réinitialise l'état à MedicationCatalogInitial",
       build: () => cubit,
       seed: () => const MedicationCatalogLoaded(sampleMedications),
       act: (cubit) => cubit.clear(),

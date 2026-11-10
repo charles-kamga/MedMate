@@ -149,7 +149,7 @@ void main() {
       await tester.tap(emergencyBtn);
       await tester.pump();
 
-      expect(find.text('Numéro d\'urgence Yaoundé : ${AppConfig.emergencyPhone}'), findsOneWidget);
+      expect(find.text("Numéro d'urgence Yaoundé : ${AppConfig.emergencyPhone}"), findsOneWidget);
     });
   });
 }

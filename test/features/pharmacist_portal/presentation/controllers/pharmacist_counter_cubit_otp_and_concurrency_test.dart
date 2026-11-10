@@ -70,6 +70,10 @@ void main() {
     isPickedUp: true,
   );
 
+  setUpAll(() {
+    registerFallbackValue(PharmacyAvailabilityType.fullyAvailable);
+  });
+
   setUp(() {
     mockGetPendingOrders = MockGetPendingCounterOrdersUseCase();
     mockSubmitQuoteUseCase = MockSubmitCounterQuoteUseCase();
@@ -101,7 +105,7 @@ void main() {
               proposesDelivery: any(named: 'proposesDelivery'),
               deliveryFeeCfa: any(named: 'deliveryFeeCfa'),
               estimatedDeliveryMinutes: any(named: 'estimatedDeliveryMinutes'),
-            )).thenAnswer((_) async => const Left(OrderAlreadyClaimedFailure()));
+            ),).thenAnswer((_) async => const Left(OrderAlreadyClaimedFailure()));
         return cubit;
       },
       act: (cubit) => cubit.submitQuote(
@@ -135,7 +139,7 @@ void main() {
               proposesDelivery: any(named: 'proposesDelivery'),
               deliveryFeeCfa: any(named: 'deliveryFeeCfa'),
               estimatedDeliveryMinutes: any(named: 'estimatedDeliveryMinutes'),
-            )).thenAnswer((_) async => const Left(WaveExpiredFailure()));
+            ),).thenAnswer((_) async => const Left(WaveExpiredFailure()));
         return cubit;
       },
       act: (cubit) => cubit.submitQuote(
@@ -169,7 +173,7 @@ void main() {
               orderId: testOrder1.id,
               pharmacyId: testPharmacyId,
               otpCode: '482910',
-            )).thenAnswer((_) async => Right(testDeliveredOrder));
+            ),).thenAnswer((_) async => Right(testDeliveredOrder));
         return cubit;
       },
       act: (cubit) => cubit.validateOtpAtCounter(
@@ -185,7 +189,7 @@ void main() {
         predicate<PharmacistCounterState>((state) {
           return state.status == PharmacistCounterStatus.otpSuccess &&
               state.lastValidatedOrder?.status == FlashOrderStatus.delivered &&
-              state.lastValidatedOrder?.isPickedUp == true;
+              (state.lastValidatedOrder?.isPickedUp ?? false);
         }),
       ],
     );
@@ -197,7 +201,7 @@ void main() {
               orderId: testOrder1.id,
               pharmacyId: testPharmacyId,
               otpCode: '000000',
-            )).thenAnswer((_) async => const Left(InvalidOtpFailure()));
+            ),).thenAnswer((_) async => const Left(InvalidOtpFailure()));
         return cubit;
       },
       act: (cubit) => cubit.validateOtpAtCounter(
@@ -223,7 +227,7 @@ void main() {
               orderId: testOrder1.id,
               pharmacyId: testPharmacyId,
               otpCode: '482910',
-            )).thenAnswer((_) async => const Left(ExpiredOtpFailure()));
+            ),).thenAnswer((_) async => const Left(ExpiredOtpFailure()));
         return cubit;
       },
       act: (cubit) => cubit.validateOtpAtCounter(
@@ -249,7 +253,7 @@ void main() {
               orderId: testOrder1.id,
               pharmacyId: testPharmacyId,
               otpCode: '482910',
-            )).thenAnswer((_) async => const Left(ConsumedOtpFailure()));
+            ),).thenAnswer((_) async => const Left(ConsumedOtpFailure()));
         return cubit;
       },
       act: (cubit) => cubit.validateOtpAtCounter(

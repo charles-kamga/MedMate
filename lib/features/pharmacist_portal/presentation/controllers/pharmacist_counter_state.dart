@@ -28,6 +28,8 @@ class PharmacistCounterState extends Equatable {
     this.lastSubmittedQuote,
     this.lastValidatedOrder,
     this.successMessage,
+    this.hasNewOrderAlert = false,
+    this.newOrdersCount = 0,
   });
 
   final PharmacistCounterStatus status;
@@ -40,6 +42,8 @@ class PharmacistCounterState extends Equatable {
   final PharmacyOffer? lastSubmittedQuote;
   final FlashOrder? lastValidatedOrder;
   final String? successMessage;
+  final bool hasNewOrderAlert;
+  final int newOrdersCount;
 
   // Getters utilitaires
   bool get isInitial => status == PharmacistCounterStatus.initial;
@@ -75,6 +79,8 @@ class PharmacistCounterState extends Equatable {
     FlashOrder? lastValidatedOrder,
     String? successMessage,
     bool clearSuccess = false,
+    bool? hasNewOrderAlert,
+    int? newOrdersCount,
   }) {
     return PharmacistCounterState(
       status: status ?? this.status,
@@ -92,6 +98,8 @@ class PharmacistCounterState extends Equatable {
       lastValidatedOrder: lastValidatedOrder ?? this.lastValidatedOrder,
       successMessage:
           clearSuccess ? null : (successMessage ?? this.successMessage),
+      hasNewOrderAlert: hasNewOrderAlert ?? this.hasNewOrderAlert,
+      newOrdersCount: newOrdersCount ?? this.newOrdersCount,
     );
   }
 
@@ -107,5 +115,7 @@ class PharmacistCounterState extends Equatable {
         lastSubmittedQuote,
         lastValidatedOrder,
         successMessage,
+        hasNewOrderAlert,
+        newOrdersCount,
       ];
 }

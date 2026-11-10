@@ -33,6 +33,7 @@ dependencies:
   # Sécurité & Stockage local chiffré (Offline-first)
   sqflite_sqlcipher: ^3.3.2
   flutter_secure_storage: ^9.2.2
+  crypto: ^3.0.6
 
   # Utilitaires & Idempotence
   uuid: ^4.5.1

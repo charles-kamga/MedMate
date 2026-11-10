@@ -73,4 +73,3 @@ class ConsumedOtpException implements Exception {
   @override
   String toString() => 'ConsumedOtpException: $message';
 }
-

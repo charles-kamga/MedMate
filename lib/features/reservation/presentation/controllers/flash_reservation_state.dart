@@ -23,6 +23,7 @@ class FlashReservationState extends Equatable {
     this.status = FlashReservationStatus.initial,
     this.errorMessage,
     this.confirmedReservation,
+    this.realtimeNotification,
   });
 
   final List<BasketItem> basketItems;
@@ -31,6 +32,7 @@ class FlashReservationState extends Equatable {
   final FlashReservationStatus status;
   final String? errorMessage;
   final Reservation? confirmedReservation;
+  final String? realtimeNotification;
 
   /// Getters utilitaires pour l'UI
   bool get isLoading => status == FlashReservationStatus.loading;
@@ -45,6 +47,8 @@ class FlashReservationState extends Equatable {
       basketItems.fold<int>(0, (sum, item) => sum + item.quantity);
   bool get canSubmit => basketItems.isNotEmpty && selectedLandmark != null;
   bool get hasActiveOrder => currentOrder != null;
+  bool get hasRealtimeNotification =>
+      realtimeNotification != null && realtimeNotification!.isNotEmpty;
 
   FlashReservationState copyWith({
     List<BasketItem>? basketItems,
@@ -55,6 +59,8 @@ class FlashReservationState extends Equatable {
     bool clearError = false,
     Reservation? confirmedReservation,
     bool clearReservation = false,
+    String? realtimeNotification,
+    bool clearNotification = false,
   }) {
     return FlashReservationState(
       basketItems: basketItems ?? this.basketItems,
@@ -65,6 +71,9 @@ class FlashReservationState extends Equatable {
       confirmedReservation: clearReservation
           ? null
           : (confirmedReservation ?? this.confirmedReservation),
+      realtimeNotification: clearNotification
+          ? null
+          : (realtimeNotification ?? this.realtimeNotification),
     );
   }
 
@@ -76,5 +85,6 @@ class FlashReservationState extends Equatable {
         status,
         errorMessage,
         confirmedReservation,
+        realtimeNotification,
       ];
 }

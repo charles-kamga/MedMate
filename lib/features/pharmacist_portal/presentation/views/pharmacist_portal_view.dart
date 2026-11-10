@@ -144,7 +144,7 @@ class _PharmacistPortalViewContentState extends State<_PharmacistPortalViewConte
         ),
         const VerticalDivider(width: 1, thickness: 1, color: AppColors.borderSubtle),
         Expanded(
-          child: Container(
+          child: ColoredBox(
             color: Colors.white,
             child: _buildActionPanel(state.selectedOrder),
           ),
@@ -157,7 +157,7 @@ class _PharmacistPortalViewContentState extends State<_PharmacistPortalViewConte
     return Column(
       children: [
         _buildTopBar(state),
-        Container(
+        ColoredBox(
           color: Colors.white,
           child: TabBar(
             controller: _tabController,
@@ -207,8 +207,13 @@ class _PharmacistPortalViewContentState extends State<_PharmacistPortalViewConte
                     items: _demoPharmacies.map((p) {
                       return DropdownMenuItem(
                         value: p['id'],
-                        child: Text('${p['name']} (${p['quarter']})',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                        child: Text(
+                          '${p['name']} (${p['quarter']})',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       );
                     }).toList(),
                     onChanged: _onPharmacyChanged,
@@ -244,7 +249,7 @@ class _PharmacistPortalViewContentState extends State<_PharmacistPortalViewConte
           return Padding(
             padding: const EdgeInsets.only(right: 6),
             child: ChoiceChip(
-              label: Text(f['label'] as String, style: const TextStyle(fontSize: 11)),
+              label: Text(f['label']!, style: const TextStyle(fontSize: 11)),
               selected: isSel,
               selectedColor: AppColors.primarySoft,
               labelStyle: TextStyle(
@@ -265,16 +270,21 @@ class _PharmacistPortalViewContentState extends State<_PharmacistPortalViewConte
     }
     final list = state.filteredOrders;
     if (list.isEmpty) {
-      return Center(
+      return const Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Icon(Icons.inbox_outlined, size: 40, color: AppColors.textTertiary),
               SizedBox(height: 8),
-              Text('Aucune demande dans cette file.',
-                  style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+              Text(
+                'Aucune demande dans cette file.',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ],
           ),
         ),
@@ -312,12 +322,12 @@ class _PharmacistPortalViewContentState extends State<_PharmacistPortalViewConte
 
   Widget _buildActionPanel(FlashOrder? order) {
     if (order == null) {
-      return Center(
+      return const Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Icon(Icons.touch_app_outlined, size: 48, color: AppColors.textTertiary),
               SizedBox(height: 12),
               Text(

@@ -67,7 +67,9 @@ class _CounterOtpValidationKeypadState extends State<CounterOtpValidationKeypad>
       },
       builder: (context, state) {
         final isLoading = state.isValidatingOtp;
-        final isSuccess = state.isOtpSuccess && state.lastValidatedOrder?.id == widget.orderId;
+        final isSuccess = state.isOtpSuccess &&
+            (state.lastValidatedOrder == null ||
+                state.lastValidatedOrder?.id == widget.orderId);
         final hasError = state.isFailure && state.errorMessage != null;
 
         return SingleChildScrollView(
@@ -299,11 +301,12 @@ class _CounterOtpValidationKeypadState extends State<CounterOtpValidationKeypad>
   Widget _buildValidateButton(bool isLoading, bool isSuccess) {
     final canSubmit = _otp.length == 6 && !isLoading && !isSuccess;
 
-    return SizedBox(
-      width: double.infinity,
+    return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 320),
-      height: 46,
-      child: ElevatedButton.icon(
+      child: SizedBox(
+        width: double.infinity,
+        height: 46,
+        child: ElevatedButton.icon(
         key: const ValueKey('btn_confirm_counter_otp'),
         style: ElevatedButton.styleFrom(
           backgroundColor: CounterOtpValidationKeypad.emerald,
@@ -326,6 +329,7 @@ class _CounterOtpValidationKeypadState extends State<CounterOtpValidationKeypad>
           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
