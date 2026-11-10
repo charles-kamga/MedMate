@@ -15,4 +15,13 @@ class AppConfig {
 
   /// Numéro d'urgence secours Yaoundé
   static const String emergencyPhone = '1510';
+
+  /// Construit l'URL souveraine OpenStreetMap pour localiser une officine ou repère
+  static String buildOsmSearchUrl({
+    required double latitude,
+    required double longitude,
+    String? label,
+  }) {
+    return 'https://www.openstreetmap.org/?mlat=$latitude&mlon=$longitude#map=16/$latitude/$longitude';
+  }
 }

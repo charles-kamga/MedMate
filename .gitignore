@@ -27,3 +27,6 @@ supabase/.temp
 *.iml
 .DS_Store
 Thumbs.db
+
+# Multi-agent internal artifacts
+.agents/teamwork/

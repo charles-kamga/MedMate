@@ -33,3 +33,43 @@ class LocationException implements Exception {
   @override
   String toString() => 'LocationException: $message';
 }
+
+class OrderAlreadyClaimedException implements Exception {
+  const OrderAlreadyClaimedException([this.message = 'Cette commande a déjà été attribuée à une autre officine.']);
+  final String message;
+
+  @override
+  String toString() => 'OrderAlreadyClaimedException: $message';
+}
+
+class WaveExpiredException implements Exception {
+  const WaveExpiredException([this.message = 'La fenêtre de réponse pour cette vague est expirée (2 min).']);
+  final String message;
+
+  @override
+  String toString() => 'WaveExpiredException: $message';
+}
+
+class InvalidOtpException implements Exception {
+  const InvalidOtpException([this.message = 'Code OTP invalide.']);
+  final String message;
+
+  @override
+  String toString() => 'InvalidOtpException: $message';
+}
+
+class ExpiredOtpException implements Exception {
+  const ExpiredOtpException([this.message = 'Code OTP expiré (délai de validité de 2 heures dépassé).']);
+  final String message;
+
+  @override
+  String toString() => 'ExpiredOtpException: $message';
+}
+
+class ConsumedOtpException implements Exception {
+  const ConsumedOtpException([this.message = 'Ce code OTP a déjà été consommé.']);
+  final String message;
+
+  @override
+  String toString() => 'ConsumedOtpException: $message';
+}
