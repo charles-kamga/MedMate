@@ -39,16 +39,21 @@ class PatientFlashFlowView extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded, color: AppColors.alert, size: 20),
+          const Icon(Icons.error_outline_rounded,
+              color: AppColors.alert, size: 20,),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.alert),
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.alert,),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.alert),
+            icon: const Icon(Icons.close_rounded,
+                size: 18, color: AppColors.alert,),
             onPressed: onDismiss,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
@@ -73,23 +78,32 @@ class PatientFlashFlowView extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
-                child: const Icon(Icons.flash_on_rounded, color: AppColors.primary, size: 22),
+                decoration: const BoxDecoration(
+                    color: AppColors.primarySoft, shape: BoxShape.circle,),
+                child: const Icon(Icons.flash_on_rounded,
+                    color: AppColors.primary, size: 22,),
               ),
               const SizedBox(width: 10),
               const Expanded(
                 child: Text(
                   'Comment fonctionne la recherche Flash ?',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: AppColors.textPrimary,),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          _buildIntroStep('1', 'Constituez votre panier', 'Ajoutez un ou plusieurs médicaments homologués.'),
-          _buildIntroStep('2', 'Sélectionnez votre repère', 'Indiquez votre carrefour ou quartier à Yaoundé.'),
-          _buildIntroStep('3', 'Diffusion par vagues', 'Afya Santé interroge 2 officines les plus proches toutes les 2 min.'),
-          _buildIntroStep('4', 'Comparaison & Retrait OTP', 'Choisissez la meilleure offre et retirez avec le code à 6 chiffres.'),
+          _buildIntroStep('1', 'Constituez votre panier',
+              'Ajoutez un ou plusieurs médicaments homologués.',),
+          _buildIntroStep('2', 'Sélectionnez votre repère',
+              'Indiquez votre carrefour ou quartier à Yaoundé.',),
+          _buildIntroStep('3', 'Diffusion par vagues',
+              'Afya Santé interroge 2 officines les plus proches toutes les 2 min.',),
+          _buildIntroStep('4', 'Comparaison & Retrait OTP',
+              'Choisissez la meilleure offre et retirez avec le code à 6 chiffres.',),
         ],
       ),
     );
@@ -105,16 +119,27 @@ class PatientFlashFlowView extends StatelessWidget {
             width: 22,
             height: 22,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
-            child: Text(step, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: AppColors.primary)),
+            decoration: const BoxDecoration(
+                color: AppColors.primarySoft, shape: BoxShape.circle,),
+            child: Text(step,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                    color: AppColors.primary,),),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: AppColors.textPrimary)),
-                Text(desc, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: AppColors.textPrimary,),),
+                Text(desc,
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.textSecondary,),),
               ],
             ),
           ),
@@ -133,7 +158,7 @@ class PatientFlashFlowView extends StatelessWidget {
         return LayoutBuilder(
           builder: (context, constraints) {
             final isDesktop = constraints.maxWidth >= 900;
-            return Container(
+            return ColoredBox(
               color: AppColors.background,
               child: isDesktop
                   ? _buildDesktopLayout(context, cubit, state)
@@ -145,16 +170,21 @@ class PatientFlashFlowView extends StatelessWidget {
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context, FlashReservationCubit cubit, FlashReservationState state) {
+  Widget _buildMobileLayout(BuildContext context, FlashReservationCubit cubit,
+      FlashReservationState state,) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (state.errorMessage != null)
-            _buildErrorBanner(state.errorMessage!, () => cubit.refreshFlashRequest()),
+            _buildErrorBanner(
+                state.errorMessage!, () => cubit.refreshFlashRequest(),),
           if (state.isConfirmed) ...[
-            ReservationOtpTicketCard(cubit: cubit, reservation: state.confirmedReservation, order: state.currentOrder),
+            ReservationOtpTicketCard(
+                cubit: cubit,
+                reservation: state.confirmedReservation,
+                order: state.currentOrder,),
           ] else ...[
             PatientBasketComposerCard(
               flashCubit: cubit,
@@ -168,11 +198,15 @@ class PatientFlashFlowView extends StatelessWidget {
               landmark: state.selectedLandmark,
               isLoading: state.isLoading,
               enableAnimation: enablePulseAnimation,
-              onPressed: state.canSubmit ? () => cubit.submitFlashRequest() : null,
+              onPressed:
+                  state.canSubmit ? () => cubit.submitFlashRequest() : null,
             ),
             if (state.isWaveActive || state.hasActiveOrder) ...[
               const SizedBox(height: 16),
-              WaveDispatchProgressCard(cubit: cubit, order: state.currentOrder, isLoading: state.isLoading),
+              WaveDispatchProgressCard(
+                  cubit: cubit,
+                  order: state.currentOrder,
+                  isLoading: state.isLoading,),
             ],
             if (state.hasOffers) ...[
               const SizedBox(height: 16),
@@ -192,14 +226,16 @@ class PatientFlashFlowView extends StatelessWidget {
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context, FlashReservationCubit cubit, FlashReservationState state) {
+  Widget _buildDesktopLayout(BuildContext context, FlashReservationCubit cubit,
+      FlashReservationState state,) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (state.errorMessage != null)
-            _buildErrorBanner(state.errorMessage!, () => cubit.refreshFlashRequest()),
+            _buildErrorBanner(
+                state.errorMessage!, () => cubit.refreshFlashRequest(),),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -220,7 +256,9 @@ class PatientFlashFlowView extends StatelessWidget {
                       landmark: state.selectedLandmark,
                       isLoading: state.isLoading,
                       enableAnimation: enablePulseAnimation,
-                      onPressed: state.canSubmit ? () => cubit.submitFlashRequest() : null,
+                      onPressed: state.canSubmit
+                          ? () => cubit.submitFlashRequest()
+                          : null,
                     ),
                   ],
                 ),
@@ -232,13 +270,25 @@ class PatientFlashFlowView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (state.isConfirmed) ...[
-                      ReservationOtpTicketCard(cubit: cubit, reservation: state.confirmedReservation, order: state.currentOrder),
+                      ReservationOtpTicketCard(
+                          cubit: cubit,
+                          reservation: state.confirmedReservation,
+                          order: state.currentOrder,),
                     ] else if (state.hasOffers) ...[
-                      WaveDispatchProgressCard(cubit: cubit, order: state.currentOrder, isLoading: state.isLoading),
+                      WaveDispatchProgressCard(
+                          cubit: cubit,
+                          order: state.currentOrder,
+                          isLoading: state.isLoading,),
                       const SizedBox(height: 16),
-                      PharmacyOffersComparisonList(cubit: cubit, offers: state.currentOrder?.offers, isLoading: state.isLoading),
+                      PharmacyOffersComparisonList(
+                          cubit: cubit,
+                          offers: state.currentOrder?.offers,
+                          isLoading: state.isLoading,),
                     ] else if (state.isWaveActive || state.hasActiveOrder) ...[
-                      WaveDispatchProgressCard(cubit: cubit, order: state.currentOrder, isLoading: state.isLoading),
+                      WaveDispatchProgressCard(
+                          cubit: cubit,
+                          order: state.currentOrder,
+                          isLoading: state.isLoading,),
                     ] else ...[
                       _buildIntroCard(),
                     ],

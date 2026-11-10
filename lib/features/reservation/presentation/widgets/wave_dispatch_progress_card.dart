@@ -54,8 +54,11 @@ class WaveDispatchProgressCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
-      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: text)),
+      decoration:
+          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
+      child: Text(label,
+          style: TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w600, color: text,),),
     );
   }
 
@@ -72,19 +75,26 @@ class WaveDispatchProgressCard extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(6),
-            decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
-            child: const Icon(Icons.local_pharmacy_outlined, size: 18, color: AppColors.primary),
+            decoration: const BoxDecoration(
+                color: AppColors.primarySoft, shape: BoxShape.circle,),
+            child: const Icon(Icons.local_pharmacy_outlined,
+                size: 18, color: AppColors.primary,),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(target.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary)),
+                Text(target.name,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AppColors.textPrimary,),),
                 const SizedBox(height: 2),
                 Text(
                   '${target.quarter} • ${target.distanceKm.toStringAsFixed(1)} km (Vague ${target.waveIndex})',
-                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                      fontSize: 11, color: AppColors.textSecondary,),
                 ),
               ],
             ),
@@ -130,32 +140,52 @@ class WaveDispatchProgressCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(10)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(10),),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.waves_rounded, size: 16, color: AppColors.primary),
+                    const Icon(Icons.waves_rounded,
+                        size: 16, color: AppColors.primary,),
                     const SizedBox(width: 6),
-                    Text('Vague $wave active', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: AppColors.primary)),
+                    Text('Vague $wave active',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: AppColors.primary,),),
                   ],
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: AppColors.secondarySoft, borderRadius: BorderRadius.circular(8)),
-                child: const Text('Round-Robin 2 officines', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.secondary)),
+                decoration: BoxDecoration(
+                    color: AppColors.secondarySoft,
+                    borderRadius: BorderRadius.circular(8),),
+                child: const Text('Round-Robin 2 officines',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.secondary,),),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             'Repère urbain : ${resolvedOrder.quarter}',
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.textPrimary),
+            style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: AppColors.textPrimary,),
           ),
           const SizedBox(height: 8),
           ClipRRect(
@@ -164,7 +194,8 @@ class WaveDispatchProgressCard extends StatelessWidget {
               value: progress,
               minHeight: 6,
               backgroundColor: AppColors.borderSubtle,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
             ),
           ),
           const SizedBox(height: 4),
@@ -172,12 +203,16 @@ class WaveDispatchProgressCard extends StatelessWidget {
             remaining > 0
                 ? 'Progression de la vague courante ($remaining s restantes)'
                 : 'Vague achevée — Vous pouvez escalader vers 2 autres officines',
-            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            style:
+                const TextStyle(fontSize: 11, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 14),
           Text(
             'Officines partenaires consultées (${resolvedOrder.targets.length})',
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
+            style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: AppColors.textPrimary,),
           ),
           const SizedBox(height: 8),
           ...resolvedOrder.targets.map(_buildPharmacyTile),
@@ -193,14 +228,19 @@ class WaveDispatchProgressCard extends StatelessWidget {
                     }
                   },
             icon: isLoading
-                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white,),)
                 : const Icon(Icons.speed_rounded, size: 20),
             label: Text('Solliciter 2 pharmacies de plus (Vague ${wave + 1})'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),),
               elevation: 0,
             ),
           ),
@@ -208,7 +248,10 @@ class WaveDispatchProgressCard extends StatelessWidget {
           const Text(
             'Dispatch éthique Afya Santé : respect du temps des pharmaciens par vagues de 2.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic, color: AppColors.textTertiary),
+            style: TextStyle(
+                fontSize: 10,
+                fontStyle: FontStyle.italic,
+                color: AppColors.textTertiary,),
           ),
         ],
       ),

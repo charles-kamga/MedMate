@@ -13,7 +13,8 @@ class EscalateDispatchWaveUseCase {
     final sanitizedId = orderId.trim();
     if (sanitizedId.isEmpty) {
       return Future.value(
-        const Left(ReservationFailure('Identifiant de commande manquant ou invalide.')),
+        const Left(ReservationFailure(
+            'Identifiant de commande manquant ou invalide.',),),
       );
     }
     return _repository.escalateDispatchWave(sanitizedId);

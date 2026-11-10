@@ -24,7 +24,8 @@ class SelectPharmacyOfferUseCase {
     final sanitizedPhone = patientPhone.trim();
     if (sanitizedPhone.isEmpty) {
       return Future.value(
-        const Left(ReservationFailure('Numéro de téléphone requis pour la réservation.')),
+        const Left(ReservationFailure(
+            'Numéro de téléphone requis pour la réservation.',),),
       );
     }
     return _repository.selectPharmacyOffer(

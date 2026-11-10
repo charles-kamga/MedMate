@@ -62,7 +62,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
   }) async {
     try {
       if (items.isEmpty) {
-        return const Left(ReservationFailure('Le panier de médicaments est vide.'));
+        return const Left(
+            ReservationFailure('Le panier de médicaments est vide.'),);
       }
 
       final now = DateTime.now();
@@ -97,7 +98,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
           phone: targets[1].phone,
           availabilityType: PharmacyAvailabilityType.conditional,
           quotedPriceCfa: 3400,
-          conditionRequirements: const ['Ordonnance physique originale requise'],
+          conditionRequirements: const [
+            'Ordonnance physique originale requise',
+          ],
           conditionNote: 'Vérification de l’ordonnance au comptoir',
           proposesDelivery: true,
           deliveryFeeCfa: 1000,
@@ -122,12 +125,14 @@ class ReservationRepositoryImpl implements ReservationRepository {
       _orders[orderId] = order;
       return Right(order);
     } catch (e) {
-      return Left(ServerFailure('Impossible d’initialiser la demande flash : $e'));
+      return Left(
+          ServerFailure('Impossible d’initialiser la demande flash : $e'),);
     }
   }
 
   @override
-  Future<Either<Failure, FlashOrder>> escalateDispatchWave(String orderId) async {
+  Future<Either<Failure, FlashOrder>> escalateDispatchWave(
+      String orderId,) async {
     try {
       final existingOrder = _orders[orderId];
       if (existingOrder == null) {
@@ -178,7 +183,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
   }
 
   @override
-  Future<Either<Failure, FlashOrder>> getFlashRequestById(String orderId) async {
+  Future<Either<Failure, FlashOrder>> getFlashRequestById(
+      String orderId,) async {
     final existingOrder = _orders[orderId];
     if (existingOrder == null) {
       return const Left(NotFoundFailure('Demande flash introuvable.'));
@@ -208,7 +214,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
       final medicationSummary = existingOrder.items
           .map((i) => '${i.medication.nomCommercial} (x${i.quantity})')
           .join(', ');
-      final totalQuantity = existingOrder.items.fold<int>(0, (sum, i) => sum + i.quantity);
+      final totalQuantity =
+          existingOrder.items.fold<int>(0, (sum, i) => sum + i.quantity);
 
       final reservation = Reservation(
         id: reservationId,
@@ -241,7 +248,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
       _orders[orderId] = updatedOrder;
       return Right(reservation);
     } catch (e) {
-      return Left(ReservationFailure('Échec de la validation de réservation : $e'));
+      return Left(
+          ReservationFailure('Échec de la validation de réservation : $e'),);
     }
   }
 }
