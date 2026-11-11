@@ -6,6 +6,7 @@ import 'core/network/network_info.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/flash_order/presentation/cubit/flash_order_cubit.dart';
+import 'features/flash_order/domain/entities/flash_order.dart';
 import 'features/home/presentation/views/main_navigation_screen.dart';
 import 'features/pharmacy_search/data/repositories/pharmacy_repository_impl.dart';
 import 'features/pharmacy_search/domain/repositories/pharmacy_repository.dart';
@@ -56,8 +57,12 @@ class MedMateApp extends StatelessWidget {
           networkInfo: const NetworkInfoImpl(),
         );
 
-    final resRepo = reservationRepository ?? ReservationRepositoryImpl();
-    final pharmaRepo = pharmacistPortalRepository ?? PharmacistPortalRepositoryImpl();
+    // Magasin de commandes partagé : Patient <-> Pharmacien (démo locale E2E)
+    final sharedOrders = <String, FlashOrder>{};
+    final resRepo = reservationRepository ??
+        ReservationRepositoryImpl(sharedOrders: sharedOrders);
+    final pharmaRepo = pharmacistPortalRepository ??
+        PharmacistPortalRepositoryImpl(sharedOrders: sharedOrders);
     final searchMedsUseCase = SearchMedicationsUseCase(repo);
 
     return MultiBlocProvider(

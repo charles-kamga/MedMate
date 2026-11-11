@@ -6,7 +6,7 @@ import 'package:medmate/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:medmate/features/auth/presentation/bloc/auth_state.dart';
 import 'package:medmate/features/auth/presentation/views/auth_view.dart';
 import 'package:medmate/features/flash_order/presentation/views/patient_request_wizard_view.dart';
-import 'package:medmate/features/flash_order/presentation/views/pharmacist_portal_view.dart';
+import 'package:medmate/features/pharmacist_portal/presentation/views/pharmacist_portal_view.dart';
 import 'package:medmate/features/patient_flow/presentation/views/auxiliary_tabs_views.dart';
 import 'package:medmate/features/patient_flow/presentation/views/patient_home_flow_view.dart';
 import 'package:medmate/features/pharmacy_search/presentation/views/pharmacy_map_view.dart';

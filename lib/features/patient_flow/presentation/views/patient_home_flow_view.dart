@@ -138,8 +138,9 @@ class _PatientHomeFlowViewState extends State<PatientHomeFlowView> {
   }
 
   Future<void> _openGoogleMaps(String pharmacyName) async {
-    final query = Uri.encodeComponent('$pharmacyName $_city Cameroun');
-    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+    final uri = Uri.parse(
+      AppConfig.buildOsmQueryUrl('$pharmacyName $_city Cameroun'),
+    );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (mounted) {

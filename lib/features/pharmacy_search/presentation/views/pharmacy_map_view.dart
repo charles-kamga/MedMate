@@ -3,8 +3,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/yaounde_landmarks.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/bento_card.dart';
 import '../../domain/entities/pharmacy.dart';
+import '../widgets/pharmacy_map_bottom_card.dart';
+import '../widgets/yaounde_landmark_filter_bar.dart';
 
 /// Vue cartographique interactive de Yaoundé (OpenStreetMap + Repères Urbains)
 class PharmacyMapView extends StatefulWidget {
@@ -217,129 +218,12 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
             ],
           ),
 
-          // 2. En-tête Flottant : Carrousel des Carrefours & Quartiers de Yaoundé
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: BentoCard(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    backgroundColor: Colors.white.withValues(alpha: 0.95),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.explore_rounded, color: AppColors.primary, size: 22),
-                        const SizedBox(width: 10),
-                        const Expanded(
-                          child: Text(
-                            'Repères & Carrefours de Yaoundé',
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.successSoft,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'PostGIS',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.success,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  height: 44,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: YaoundeLandmarks.list.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                      final landmark = YaoundeLandmarks.list[index];
-                      final isSelected = _selectedLandmark?.id == landmark.id;
-                      return ActionChip(
-                        elevation: isSelected ? 2 : 0,
-                        backgroundColor: isSelected ? AppColors.primary : Colors.white,
-                        label: Text(
-                          landmark.nom,
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
-                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                            fontSize: 13,
-                          ),
-                        ),
-                        avatar: Icon(
-                          Icons.place_rounded,
-                          size: 16,
-                          color: isSelected ? Colors.white : AppColors.secondary,
-                        ),
-                        side: BorderSide(
-                          color: isSelected ? AppColors.primary : AppColors.border,
-                        ),
-                        onPressed: () => _onSelectLandmark(landmark),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primarySoft,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Partenaires in-app (${_samplePharmacies.where((p) => p.isPartner).length})',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primary),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFCBD5E1)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFF94A3B8), shape: BoxShape.circle)),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Non-partenaires (${_samplePharmacies.where((p) => !p.isPartner).length})',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          // 2. En-tête : carrousel des carrefours de Yaoundé
+          YaoundeLandmarkFilterBar(
+            selectedLandmark: _selectedLandmark,
+            partnerCount: _samplePharmacies.where((p) => p.isPartner).length,
+            nonPartnerCount: _samplePharmacies.where((p) => !p.isPartner).length,
+            onSelect: _onSelectLandmark,
           ),
 
           // 3. Fiche Rétractable Bento en Bas d'Écran (Détails Pharmacie Sélectionnée)
@@ -356,151 +240,19 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
   }
 
   Widget _buildPharmacyDetailCard(Pharmacy pharmacy) {
-    return BentoCard(
-      backgroundColor: Colors.white,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  pharmacy.nom,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded, size: 20),
-                onPressed: () => setState(() => _selectedPharmacy = null),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: pharmacy.isPartner ? AppColors.primarySoft : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  pharmacy.isPartner ? '✓ PARTENAIRE AFYA SANTÉ' : 'NON PARTENAIRE (RECENSÉE)',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: pharmacy.isPartner ? AppColors.primary : const Color(0xFF64748B),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (pharmacy.estDeGarde)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondarySoft,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'DE GARDE',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondary),
-                  ),
-                ),
-            ],
-          ),
-          if (!pharmacy.isPartner) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: Color(0xFF64748B)),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Cette officine est recensée à titre d’information. Elle n’est pas partenaire et ne reçoit pas de requêtes directes via l’application.',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.3),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(Icons.navigation_outlined, size: 16, color: AppColors.secondary),
-              const SizedBox(width: 6),
-              Text(
-                '~${pharmacy.distanceMetres?.toStringAsFixed(0)} m du repère sélectionné',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-              const Spacer(),
-              Text(
-                pharmacy.licenceOnpc,
-                style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (pharmacy.isPartner) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.phone_rounded, size: 18),
-                    label: const Text('Appel Officine'),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Appel vers : ${pharmacy.telephoneGarde}')),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.flash_on_rounded, size: 18),
-                    label: const Text('Solliciter'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Cette officine recevra votre demande lors de la prochaine recherche.'),
-                          backgroundColor: AppColors.primary,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ] else ...[
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.phone_rounded, size: 18),
-                label: const Text('Appeler l’officine directement'),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Appel vers : ${pharmacy.telephoneGarde}')),
-                  );
-                },
-              ),
-            ),
-          ],
-        ],
+    void snack(String msg, {Color? bg}) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: bg),
+      );
+    }
+
+    return PharmacyMapBottomCard(
+      pharmacy: pharmacy,
+      onClose: () => setState(() => _selectedPharmacy = null),
+      onCall: () => snack('Appel vers : ${pharmacy.telephoneGarde}'),
+      onSolicit: () => snack(
+        'Cette officine recevra votre demande lors de la prochaine recherche.',
+        bg: AppColors.primary,
       ),
     );
   }

@@ -24,4 +24,10 @@ class AppConfig {
   }) {
     return 'https://www.openstreetmap.org/?mlat=$latitude&mlon=$longitude#map=16/$latitude/$longitude';
   }
+
+  /// Construit une URL de recherche textuelle OpenStreetMap (Zéro Google Maps)
+  static String buildOsmQueryUrl(String query) {
+    final encoded = Uri.encodeComponent(query);
+    return 'https://www.openstreetmap.org/search?query=$encoded';
+  }
 }

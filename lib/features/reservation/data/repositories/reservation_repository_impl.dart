@@ -10,10 +10,16 @@ import '../../domain/repositories/reservation_repository.dart';
 
 /// Implémentation opérationnelle du ReservationRepository
 class ReservationRepositoryImpl implements ReservationRepository {
-  ReservationRepositoryImpl({Random? random}) : _random = random ?? Random();
+  ReservationRepositoryImpl({
+    Random? random,
+    Map<String, FlashOrder>? sharedOrders,
+  })  : _random = random ?? Random(),
+        _orders = sharedOrders ?? {};
 
   final Random _random;
-  final Map<String, FlashOrder> _orders = {};
+
+  /// Magasin de commandes (partagé avec le portail pharmacien en démo E2E)
+  final Map<String, FlashOrder> _orders;
 
   /// Offres simulées de vague 1 pour alimenter la comparaison libre du patient
   static final List<DispatchedPharmacy> defaultWave1Pharmacies = [

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/bento_card.dart';
 import '../../../flash_order/presentation/cubit/flash_order_cubit.dart';
 import '../../domain/entities/medication.dart';
+import '../widgets/medication_catalog_item_card.dart';
 
 /// Vue du catalogue national homologué et recherche tolérante aux fautes
 class MedicationCatalogView extends StatefulWidget {
@@ -186,7 +186,11 @@ class _MedicationCatalogViewState extends State<MedicationCatalogView> {
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final medication = medications[index];
-                      return _buildMedicationCard(context, medication);
+                      return MedicationCatalogItemCard(
+                        medication: medication,
+                        onFlashRequest: () =>
+                            _showFlashRequestModal(context, medication),
+                      );
                     },
                   ),
           ),
@@ -216,104 +220,6 @@ class _MedicationCatalogViewState extends State<MedicationCatalogView> {
             _selectedCategory = label;
           });
         },
-      ),
-    );
-  }
-
-  Widget _buildMedicationCard(BuildContext context, Medication medication) {
-    return BentoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      medication.nomCommercial,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'DCI : ${medication.dci}',
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySoft,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${medication.prixHomologueCfa} FCFA',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    color: AppColors.primaryDark,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${medication.forme} • ${medication.dosage}',
-                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                ),
-              ),
-              if (medication.necessiteOrdonnance)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.warningSoft,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Ordonnance requise',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.warning),
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.successSoft,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Vente libre',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.success),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.bolt_rounded, size: 18),
-              label: const Text('Demande Flash Proximité (Ping 3-5 min)'),
-              onPressed: () => _showFlashRequestModal(context, medication),
-            ),
-          ),
-        ],
       ),
     );
   }

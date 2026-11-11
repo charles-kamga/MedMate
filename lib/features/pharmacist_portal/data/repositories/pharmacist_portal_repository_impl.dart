@@ -9,15 +9,19 @@ import '../../domain/repositories/pharmacist_portal_repository.dart';
 
 /// Implémentation in-memory robuste du référentiel comptoir pharmacien
 class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
-  PharmacistPortalRepositoryImpl({Map<String, FlashOrder>? initialOrders}) {
+  PharmacistPortalRepositoryImpl({
+    Map<String, FlashOrder>? initialOrders,
+    Map<String, FlashOrder>? sharedOrders,
+  }) : _orders = sharedOrders ?? {} {
     if (initialOrders != null) {
       _orders.addAll(initialOrders);
-    } else {
+    } else if (_orders.isEmpty) {
       _seedDefaultDemoOrders();
     }
   }
 
-  final Map<String, FlashOrder> _orders = {};
+  /// Magasin de commandes (partagé avec le parcours patient en démo E2E)
+  final Map<String, FlashOrder> _orders;
 
   @override
   Future<Either<Failure, List<FlashOrder>>> getPendingOrdersForPharmacy(
