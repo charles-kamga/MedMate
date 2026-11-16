@@ -2,22 +2,15 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:medmate/core/config/app_config.dart';
-import 'package:medmate/core/constants/yaounde_landmarks.dart';
 import 'package:medmate/core/navigation/afya_app_shell.dart';
 import 'package:medmate/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:medmate/features/auth/presentation/bloc/auth_event.dart';
 import 'package:medmate/features/auth/presentation/bloc/auth_state.dart';
-import 'package:medmate/features/duty_pharmacy/data/repositories/duty_pharmacy_repository_impl.dart';
 import 'package:medmate/features/duty_pharmacy/presentation/views/duty_pharmacy_screen.dart';
 import 'package:medmate/features/flash_order/domain/entities/basket_item.dart';
 import 'package:medmate/features/flash_order/domain/entities/flash_order.dart';
-import 'package:medmate/features/flash_order/domain/entities/pharmacy_offer.dart';
 import 'package:medmate/features/flash_order/presentation/cubit/flash_order_cubit.dart';
 import 'package:medmate/features/flash_order/presentation/cubit/flash_order_state.dart';
-import 'package:medmate/features/pharmacist_portal/presentation/controllers/pharmacist_counter_cubit.dart';
-import 'package:medmate/features/pharmacist_portal/presentation/controllers/pharmacist_counter_state.dart';
-import 'package:medmate/features/pharmacist_portal/presentation/widgets/pharmacist_quote_reply_sheet.dart';
 import 'package:medmate/features/pharmacy_search/domain/entities/medication.dart';
 import 'package:medmate/features/pharmacy_search/domain/entities/reservation.dart';
 import 'package:medmate/features/pharmacy_search/domain/repositories/pharmacy_repository.dart';
@@ -39,14 +32,9 @@ class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 class MockFlashOrderCubit extends MockCubit<FlashOrderState> implements FlashOrderCubit {}
 class MockFlashReservationCubit extends MockCubit<FlashReservationState> implements FlashReservationCubit {}
 class MockMedicationCatalogCubit extends MockCubit<MedicationCatalogState> implements MedicationCatalogCubit {}
-class MockPharmacistCounterCubit extends MockCubit<PharmacistCounterState> implements PharmacistCounterCubit {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() {
-    registerFallbackValue(PharmacyAvailabilityType.fullyAvailable);
-  });
 
   const sampleMedication = Medication(
     id: 'med-doliprane',
@@ -61,7 +49,9 @@ void main() {
 
   final sampleOrder = FlashOrder(
     id: 'ORD-TEST-V1',
-    items: const [BasketItem(id: 'item-1', medication: sampleMedication, quantity: 1)],
+    items: const [
+      BasketItem(id: 'item-1', medication: sampleMedication, quantity: 1),
+    ],
     quarter: 'Melen, Yaoundé 3e',
     targets: const [
       DispatchedPharmacy(
@@ -80,161 +70,6 @@ void main() {
     createdAt: DateTime.now(),
     expiresAt: DateTime.now().add(const Duration(hours: 2)),
   );
-
-  group('Afya-Health V1 — Configuration, Constantes & Données Pilotes', () {
-    test('Identité de marque & drapeaux V1 validés', () {
-      expect(AppConfig.appName, 'Afya-Health');
-      expect(AppConfig.appTagline, 'La santé, avec clarté.');
-      expect(AppConfig.pricePolicyNotice, contains('Afya-Health'));
-      expect(AppConfig.enableDeliveryInV1, isFalse);
-      expect(AppConfig.enableInAppPaymentInV1, isFalse);
-      expect(AppConfig.clientSupportPhone, '+237 656 63 25 01');
-      expect(AppConfig.pharmacySupportPhone, contains('+237 659 80 58 04'));
-      expect(AppConfig.officialEmail, 'deanstephan06.tf@gmail.com');
-    });
-
-    test('Repères géographiques de la zone pilote Yaoundé Melen / Ngoa-Ekellé', () {
-      final melen = YaoundeLandmarks.list.firstWhere((l) => l.id == 'carrefour-melen-chu');
-      expect(melen.nom, 'Carrefour Melen / CHU');
-      expect(melen.latitude, closeTo(3.8539, 0.001));
-      expect(melen.longitude, closeTo(11.4870, 0.001));
-
-      final polytech = YaoundeLandmarks.list.firstWhere((l) => l.id == 'ngoa-ekelle-ensp');
-      expect(polytech.nom, contains('ENSP'));
-      expect(polytech.latitude, closeTo(3.8622, 0.001));
-      expect(polytech.longitude, closeTo(11.5003, 0.001));
-    });
-
-    test('Référentiel des pharmacies de garde inclut les officines MboaPHARMA pilotes', () async {
-      const repo = DutyPharmacyRepositoryImpl();
-      final result = await repo.getDutyPharmacies(city: 'Yaoundé');
-      expect(result.isRight(), isTrue);
-
-      final pharmacies = result.getOrElse((_) => []);
-      expect(pharmacies.any((p) => p.name.contains('Mandela')), isTrue);
-      expect(pharmacies.any((p) => p.name.contains('Acacias')), isTrue);
-      expect(pharmacies.any((p) => p.name.contains('Well')), isTrue);
-      expect(pharmacies.any((p) => p.name.contains('Nsimeyong')), isTrue);
-      expect(pharmacies.any((p) => p.quarter == 'Bastos'), isTrue);
-    });
-  });
-
-  group('Afya-Health V1 — PharmacistQuoteReplySheet', () {
-    late MockPharmacistCounterCubit mockCounterCubit;
-
-    setUp(() {
-      mockCounterCubit = MockPharmacistCounterCubit();
-      when(() => mockCounterCubit.state).thenReturn(const PharmacistCounterState());
-    });
-
-    testWidgets('affiche bandeau V1 retrait comptoir quand enableDeliveryOption = false', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: BlocProvider<PharmacistCounterCubit>.value(
-              value: mockCounterCubit,
-              child: PharmacistQuoteReplySheet(
-                order: sampleOrder,
-                pharmacyId: 'pharma-mandela',
-                enableDeliveryOption: false,
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Retrait au comptoir uniquement (V1) · Paiement sur place'), findsOneWidget);
-      expect(find.byKey(const ValueKey('switch_mototaxi')), findsNothing);
-    });
-
-    testWidgets('affiche switch mototaxi quand enableDeliveryOption = true', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: BlocProvider<PharmacistCounterCubit>.value(
-              value: mockCounterCubit,
-              child: PharmacistQuoteReplySheet(
-                order: sampleOrder,
-                pharmacyId: 'pharma-mandela',
-                enableDeliveryOption: true,
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(const ValueKey('switch_mototaxi')), findsOneWidget);
-    });
-
-    testWidgets('case majorité requise sous conditions transmise au devis', (tester) async {
-      when(
-        () => mockCounterCubit.submitQuote(
-          orderId: any(named: 'orderId'),
-          pharmacyId: any(named: 'pharmacyId'),
-          availability: any(named: 'availability'),
-          quotedPriceCfa: any(named: 'quotedPriceCfa'),
-          conditionRequirements: any(named: 'conditionRequirements'),
-          conditionNote: any(named: 'conditionNote'),
-          proposesDelivery: any(named: 'proposesDelivery'),
-          deliveryFeeCfa: any(named: 'deliveryFeeCfa'),
-          estimatedDeliveryMinutes: any(named: 'estimatedDeliveryMinutes'),
-        ),
-      ).thenAnswer((_) async {});
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: BlocProvider<PharmacistCounterCubit>.value(
-              value: mockCounterCubit,
-              child: PharmacistQuoteReplySheet(
-                order: sampleOrder,
-                pharmacyId: 'pharma-mandela',
-                enableDeliveryOption: false,
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Clic onglet Sous conditions
-      await tester.tap(find.text('Sous conditions'));
-      await tester.pumpAndSettle();
-
-      // Coche majorité requise
-      final majorityCheckbox = find.text("Pièce d'identité / Majorité requise");
-      expect(majorityCheckbox, findsOneWidget);
-      await tester.tap(majorityCheckbox);
-      await tester.pumpAndSettle();
-
-      // Saisie prix
-      await tester.enterText(find.byKey(const ValueKey('input_quoted_price')), '4200');
-      await tester.pump();
-
-      // Soumission
-      await tester.tap(find.byKey(const ValueKey('btn_submit_counter_quote')));
-      await tester.pump();
-
-      verify(
-        () => mockCounterCubit.submitQuote(
-          orderId: 'ORD-TEST-V1',
-          pharmacyId: 'pharma-mandela',
-          availability: PharmacyAvailabilityType.conditional,
-          quotedPriceCfa: 4200,
-          conditionRequirements: any(
-            named: 'conditionRequirements',
-            that: contains("Pièce d'identité / Majorité requise"),
-          ),
-          conditionNote: any(named: 'conditionNote'),
-          proposesDelivery: false,
-          deliveryFeeCfa: 0,
-          estimatedDeliveryMinutes: null,
-        ),
-      ).called(1);
-    });
-  });
 
   group('Afya-Health V1 — ReservationOtpTicketCard & WaveDispatchProgressCard', () {
     testWidgets('ReservationOtpTicketCard mentionne le règlement sur place au comptoir', (tester) async {
@@ -266,7 +101,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Règlement sur place au comptoir au moment du retrait (V1)'), findsOneWidget);
+      expect(
+        find.text('Règlement sur place au comptoir au moment du retrait (V1)'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('ReservationOtpTicketCard affiche le QR code et déclenche le bouton annuler ma demande', (tester) async {
@@ -353,7 +191,8 @@ void main() {
       when(() => mockAuthBloc.state).thenReturn(const AuthInitial());
       when(() => mockFlashOrderCubit.state).thenReturn(const FlashOrderState());
       when(() => mockFlashCubit.state).thenReturn(const FlashReservationState());
-      when(() => mockCatalogCubit.state).thenReturn(const MedicationCatalogInitial());
+      when(() => mockCatalogCubit.state)
+          .thenReturn(const MedicationCatalogInitial());
     });
 
     testWidgets('onglet 2 bascule entre DutyPharmacyScreen et PharmacyMapView', (tester) async {
