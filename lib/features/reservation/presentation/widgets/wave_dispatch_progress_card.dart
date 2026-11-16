@@ -10,12 +10,14 @@ class WaveDispatchProgressCard extends StatelessWidget {
     super.key,
     this.order,
     this.onEscalate,
+    this.onOpenDutyPharmacies,
     this.isLoading = false,
     this.cubit,
   });
 
   final FlashOrder? order;
   final VoidCallback? onEscalate;
+  final VoidCallback? onOpenDutyPharmacies;
   final bool isLoading;
   final FlashReservationCubit? cubit;
 
@@ -244,9 +246,25 @@ class WaveDispatchProgressCard extends StatelessWidget {
               elevation: 0,
             ),
           ),
+          if (onOpenDutyPharmacies != null) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: onOpenDutyPharmacies,
+              icon: const Icon(Icons.nightlight_round, size: 18),
+              label: const Text('Pharmacies de garde les plus proches'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.secondary,
+                side: const BorderSide(color: AppColors.secondary),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 6),
           const Text(
-            'Dispatch éthique Afya Santé : respect du temps des pharmaciens par vagues de 2.',
+            'Dispatch éthique Afya-Health : respect du temps des pharmaciens par vagues de 2.',
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontSize: 10,

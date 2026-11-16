@@ -232,6 +232,30 @@ class ReservationOtpTicketCard extends StatelessWidget {
                               color: AppColors.primary,),),
                   ],
                 ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.point_of_sale_rounded, size: 16, color: AppColors.primary),
+                      SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Règlement sur place au comptoir au moment du retrait (V1)',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

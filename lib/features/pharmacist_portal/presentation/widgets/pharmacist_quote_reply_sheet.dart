@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/config/app_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../flash_order/domain/entities/flash_order.dart';
 import '../../../flash_order/domain/entities/pharmacy_offer.dart';
@@ -13,12 +14,14 @@ class PharmacistQuoteReplySheet extends StatefulWidget {
     super.key,
     this.onQuoteSubmitted,
     this.isEmbedded = false,
+    this.enableDeliveryOption = AppConfig.enableDeliveryInV1,
   });
 
   final FlashOrder order;
   final String pharmacyId;
   final VoidCallback? onQuoteSubmitted;
   final bool isEmbedded;
+  final bool enableDeliveryOption;
   static const Color emerald = Color(0xFF10B981);
   static const Color amber = Color(0xFFF59E0B);
 
@@ -34,6 +37,7 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
   late final TextEditingController _minsCtrl;
   bool _reqPrescription = true;
   bool _dciSub = false;
+  bool _reqMajority = false;
   bool _delivery = false;
   String _unavReason = 'Rupture de stock temporaire';
   final _formKey = GlobalKey<FormState>();
@@ -69,10 +73,13 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
     if (_availability == PharmacyAvailabilityType.conditional || _availability == PharmacyAvailabilityType.partiallyAvailable) {
       if (_reqPrescription) conditions.add('Ordonnance originale requise');
       if (_dciSub) conditions.add('Substitution équivalente DCI homologuée / dosage alternatif');
+      if (_reqMajority) conditions.add("Pièce d'identité / Majorité requise");
     }
     final note = _availability == PharmacyAvailabilityType.unavailable
         ? _unavReason
         : (_noteCtrl.text.trim().isNotEmpty ? _noteCtrl.text.trim() : null);
+
+    final deliveryActive = widget.enableDeliveryOption && _delivery;
 
     context.read<PharmacistCounterCubit>().submitQuote(
           orderId: widget.order.id,
@@ -81,9 +88,9 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
           quotedPriceCfa: price,
           conditionRequirements: conditions,
           conditionNote: note,
-          proposesDelivery: _delivery,
-          deliveryFeeCfa: _delivery ? (int.tryParse(_feeCtrl.text) ?? 1000) : 0,
-          estimatedDeliveryMinutes: _delivery ? (int.tryParse(_minsCtrl.text) ?? 30) : null,
+          proposesDelivery: deliveryActive,
+          deliveryFeeCfa: deliveryActive ? (int.tryParse(_feeCtrl.text) ?? 1000) : 0,
+          estimatedDeliveryMinutes: deliveryActive ? (int.tryParse(_minsCtrl.text) ?? 30) : null,
         );
     widget.onQuoteSubmitted?.call();
   }
@@ -212,6 +219,14 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
             value: _dciSub,
             onChanged: (v) => setState(() => _dciSub = v ?? false),
           ),
+          CheckboxListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            activeColor: PharmacistQuoteReplySheet.amber,
+            title: const Text("Pièce d'identité / Majorité requise", style: TextStyle(fontSize: 11)),
+            value: _reqMajority,
+            onChanged: (v) => setState(() => _reqMajority = v ?? false),
+          ),
           TextFormField(
             controller: _noteCtrl,
             decoration: InputDecoration(
@@ -278,6 +293,34 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
   }
 
   Widget _buildDeliveryBox() {
+    if (!widget.enableDeliveryOption) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.primarySoft,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.storefront_rounded, color: AppColors.primary, size: 18),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Retrait au comptoir uniquement (V1) · Paiement sur place',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Material(
       color: AppColors.surfaceVariant,
       shape: RoundedRectangleBorder(

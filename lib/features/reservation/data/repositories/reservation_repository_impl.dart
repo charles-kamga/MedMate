@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:fpdart/fpdart.dart';
+import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/yaounde_landmarks.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/basket_item.dart';
@@ -26,7 +27,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
     const DispatchedPharmacy(
       id: 'pharma-soleil',
       name: 'Pharmacie du Soleil',
-      quarter: 'Carrefour Warda',
+      quarter: 'Carrefour Warda (Proche Melen)',
       distanceKm: 0.4,
       phone: '+237 677 12 34 56',
       waveIndex: 1,
@@ -45,18 +46,54 @@ class ReservationRepositoryImpl implements ReservationRepository {
   static final List<DispatchedPharmacy> defaultWave2Pharmacies = [
     const DispatchedPharmacy(
       id: 'pharma-obili',
-      name: "Pharmacie d'Obili",
+      name: 'Pharmacie Chapelle Obili',
       quarter: 'Carrefour Obili',
       distanceKm: 1.8,
-      phone: '+237 655 44 33 22',
+      phone: '+237 695 33 22 11',
       waveIndex: 2,
     ),
     const DispatchedPharmacy(
       id: 'pharma-acacia',
-      name: 'Pharmacie Acacia Biyem-Assi',
-      quarter: 'Carrefour Acacia',
+      name: 'Pharmacie des Acacias',
+      quarter: 'Biyem-Assi Centre',
       distanceKm: 2.4,
-      phone: '+237 670 99 88 77',
+      phone: '+237 671 03 89 45',
+      waveIndex: 2,
+    ),
+  ];
+
+  /// Référentiel des officines de la zone pilote Yaoundé Melen / Ngoa-Ekellé / Obili / Biyem-Assi
+  static final List<DispatchedPharmacy> pilotPharmacies = [
+    const DispatchedPharmacy(
+      id: 'pharma-mandela',
+      name: 'Pharmacie Mandela Face CHU',
+      quarter: 'Face CHU (Melen)',
+      distanceKm: 0.5,
+      phone: '+237 242 79 29 85',
+      waveIndex: 1,
+    ),
+    const DispatchedPharmacy(
+      id: 'pharma-melen-8',
+      name: 'Pharmacie Melen 8',
+      quarter: 'Melen',
+      distanceKm: 0.7,
+      phone: '+237 242 79 29 00',
+      waveIndex: 1,
+    ),
+    const DispatchedPharmacy(
+      id: 'pharma-obili',
+      name: 'Pharmacie Chapelle Obili',
+      quarter: 'Carrefour Obili',
+      distanceKm: 1.2,
+      phone: '+237 695 33 22 11',
+      waveIndex: 2,
+    ),
+    const DispatchedPharmacy(
+      id: 'pharma-acacia',
+      name: 'Pharmacie des Acacias',
+      quarter: 'Biyem-Assi Centre',
+      distanceKm: 1.8,
+      phone: '+237 671 03 89 45',
       waveIndex: 2,
     ),
   ];
@@ -108,9 +145,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
             'Ordonnance physique originale requise',
           ],
           conditionNote: 'Vérification de l’ordonnance au comptoir',
-          proposesDelivery: true,
-          deliveryFeeCfa: 1000,
-          estimatedDeliveryMinutes: 25,
+          proposesDelivery: AppConfig.enableDeliveryInV1,
+          deliveryFeeCfa: AppConfig.enableDeliveryInV1 ? 1000 : 0,
+          estimatedDeliveryMinutes: AppConfig.enableDeliveryInV1 ? 25 : null,
           submittedAt: now,
         ),
       ];
@@ -165,9 +202,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
         phone: wave2Targets[0].phone,
         availabilityType: PharmacyAvailabilityType.fullyAvailable,
         quotedPriceCfa: 2900,
-        proposesDelivery: true,
-        deliveryFeeCfa: 1500,
-        estimatedDeliveryMinutes: 35,
+        proposesDelivery: AppConfig.enableDeliveryInV1,
+        deliveryFeeCfa: AppConfig.enableDeliveryInV1 ? 1500 : 0,
+        estimatedDeliveryMinutes: AppConfig.enableDeliveryInV1 ? 35 : null,
         submittedAt: now,
       );
 

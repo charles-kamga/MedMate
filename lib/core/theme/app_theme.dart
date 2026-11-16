@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Thème complet Material 3 & Bento Design System pour MedMate
+/// Thème complet Material 3 & Bento Design System pour MedMate (Afya-Health)
 class AppTheme {
   const AppTheme._();
 
@@ -10,7 +10,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+      fontFamily: GoogleFonts.montserrat().fontFamily,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         onPrimary: Colors.white,
@@ -38,7 +38,7 @@ class AppTheme {
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: AppColors.border),
         ),
       ),
@@ -47,15 +47,15 @@ class AppTheme {
         fillColor: AppColors.surfaceVariant,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.transparent),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         hintStyle: const TextStyle(color: AppColors.textTertiary, fontSize: 14),
@@ -67,7 +67,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           minimumSize: const Size(48, 52), // Respect cible tactile >= 48dp
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
           elevation: 0,
           textStyle: const TextStyle(
@@ -83,7 +83,7 @@ class AppTheme {
           minimumSize: const Size(48, 52),
           side: const BorderSide(color: AppColors.border, width: 1.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
             fontSize: 15,
