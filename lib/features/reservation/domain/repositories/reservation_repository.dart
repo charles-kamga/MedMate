@@ -26,4 +26,7 @@ abstract class ReservationRepository {
     required PharmacyOffer offer,
     required String patientPhone,
   });
+
+  /// Annule une demande flash avant sa validation au comptoir
+  Future<Either<Failure, FlashOrder>> cancelFlashRequest(String orderId);
 }

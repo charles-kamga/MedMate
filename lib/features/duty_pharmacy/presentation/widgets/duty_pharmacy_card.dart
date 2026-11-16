@@ -17,6 +17,8 @@ class DutyPharmacyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasPhone = pharmacy.phone.trim().isNotEmpty;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -38,7 +40,7 @@ class DutyPharmacyCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: _buildInfo()),
+              Expanded(child: _buildInfo(hasPhone)),
               const SizedBox(width: 8),
               _buildDistanceBadge(),
             ],
@@ -48,7 +50,8 @@ class DutyPharmacyCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: onCall,
+                  key: const ValueKey('btn_call_duty_pharmacy'),
+                  onPressed: hasPhone ? onCall : null,
                   icon: const Icon(Icons.phone_in_talk, size: 16),
                   label: const Text(
                     'Appeler',
@@ -93,7 +96,7 @@ class DutyPharmacyCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfo() {
+  Widget _buildInfo(bool hasPhone) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -118,6 +121,15 @@ class DutyPharmacyCard extends StatelessWidget {
         Text(
           pharmacy.hours,
           style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          hasPhone ? pharmacy.phone : 'Numéro non communiqué',
+          style: TextStyle(
+            fontSize: 12,
+            fontStyle: hasPhone ? FontStyle.normal : FontStyle.italic,
+            color: hasPhone ? AppColors.textSecondary : AppColors.textTertiary,
+          ),
         ),
       ],
     );

@@ -33,11 +33,7 @@ class PharmacistPortalView extends StatelessWidget {
   Widget build(BuildContext context) {
     try {
       BlocProvider.of<PharmacistCounterCubit>(context);
-      return _PharmacistPortalViewContent(
-        initialPharmacyId: initialPharmacyId,
-        enableAlertCycle: enableAlertCycle,
-        onPlayAlertSound: onPlayAlertSound,
-      );
+      return _PharmacistPortalViewContent(initialPharmacyId: initialPharmacyId, enableAlertCycle: enableAlertCycle, onPlayAlertSound: onPlayAlertSound);
     } catch (_) {
       final repo = PharmacistPortalRepositoryImpl();
       return BlocProvider<PharmacistCounterCubit>(
@@ -46,11 +42,7 @@ class PharmacistPortalView extends StatelessWidget {
           submitQuoteUseCase: SubmitCounterQuoteUseCase(repo),
           validateOtpUseCase: ValidateCounterOtpUseCase(repo),
         )..loadPendingOrders(initialPharmacyId),
-        child: _PharmacistPortalViewContent(
-          initialPharmacyId: initialPharmacyId,
-          enableAlertCycle: enableAlertCycle,
-          onPlayAlertSound: onPlayAlertSound,
-        ),
+        child: _PharmacistPortalViewContent(initialPharmacyId: initialPharmacyId, enableAlertCycle: enableAlertCycle, onPlayAlertSound: onPlayAlertSound),
       );
     }
   }
@@ -245,14 +237,8 @@ class _PharmacistPortalViewContentState
             unselectedLabelColor: AppColors.textSecondary,
             indicatorColor: AppColors.primary,
             tabs: [
-              Tab(
-                icon: const Icon(Icons.inbox_rounded, size: 18),
-                text: 'Demandes (${state.filteredOrders.length})',
-              ),
-              const Tab(
-                icon: Icon(Icons.touch_app_rounded, size: 18),
-                text: 'Traitement & Retrait',
-              ),
+              Tab(icon: const Icon(Icons.inbox_rounded, size: 18), text: 'Demandes (${state.filteredOrders.length})'),
+              const Tab(icon: Icon(Icons.touch_app_rounded, size: 18), text: 'Traitement & Retrait'),
             ],
           ),
         ),
@@ -357,16 +343,25 @@ class _PharmacistPortalViewContentState
             children: [
               Icon(Icons.touch_app_outlined, size: 48, color: AppColors.textTertiary),
               SizedBox(height: 12),
-              Text(
-                'Sélectionnez une commande dans la file',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
-              ),
+              Text('Sélectionnez une commande dans la file', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
               SizedBox(height: 4),
-              Text(
-                'Vous pourrez émettre votre offre chiffrée ou valider le retrait OTP.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-              ),
+              Text('Vous pourrez émettre votre offre chiffrée ou valider le retrait OTP.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (order.status == FlashOrderStatus.cancelled) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.cancel_outlined, size: 48, color: AppColors.alert),
+              SizedBox(height: 12),
+              Text('Cette commande a été annulée par le patient.', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.alert)),
             ],
           ),
         ),

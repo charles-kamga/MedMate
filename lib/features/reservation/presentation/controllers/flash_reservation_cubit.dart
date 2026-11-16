@@ -7,6 +7,7 @@ import '../../../flash_order/domain/entities/pharmacy_offer.dart';
 import '../../../pharmacy_search/domain/entities/medication.dart';
 import '../../../realtime_dispatch/domain/repositories/realtime_dispatch_repository.dart';
 import '../../domain/repositories/reservation_repository.dart';
+import '../../domain/usecases/cancel_flash_request.dart';
 import '../../domain/usecases/escalate_dispatch_wave.dart';
 import '../../domain/usecases/select_pharmacy_offer.dart';
 import '../../domain/usecases/submit_flash_request.dart';
@@ -19,12 +20,15 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
     required EscalateDispatchWaveUseCase escalateDispatchWaveUseCase,
     required SelectPharmacyOfferUseCase selectPharmacyOfferUseCase,
     required ReservationRepository reservationRepository,
+    CancelFlashRequestUseCase? cancelFlashRequestUseCase,
     RealtimeDispatchRepository? realtimeRepository,
     bool enableAutoEscalation = false,
     Duration autoEscalationDuration = const Duration(seconds: 120),
   })  : _submitFlashRequestUseCase = submitFlashRequestUseCase,
         _escalateDispatchWaveUseCase = escalateDispatchWaveUseCase,
         _selectPharmacyOfferUseCase = selectPharmacyOfferUseCase,
+        _cancelFlashRequestUseCase = cancelFlashRequestUseCase ??
+            CancelFlashRequestUseCase(reservationRepository),
         _reservationRepository = reservationRepository,
         _realtimeRepository = realtimeRepository ??
             (reservationRepository is RealtimeDispatchRepository
@@ -37,6 +41,7 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
   final SubmitFlashRequestUseCase _submitFlashRequestUseCase;
   final EscalateDispatchWaveUseCase _escalateDispatchWaveUseCase;
   final SelectPharmacyOfferUseCase _selectPharmacyOfferUseCase;
+  final CancelFlashRequestUseCase _cancelFlashRequestUseCase;
   final ReservationRepository _reservationRepository;
   final RealtimeDispatchRepository? _realtimeRepository;
   final bool _enableAutoEscalation;
@@ -344,9 +349,18 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
   }
 
   /// Annule la réservation active ou la recherche en cours avant validation au comptoir
-  void cancelReservation() {
-    _offersSubscription?.cancel();
-    _orderSubscription?.cancel();
+  Future<void> cancelReservation() async {
+    final currentOrder = state.currentOrder;
+    if (currentOrder != null) {
+      final result = await _cancelFlashRequestUseCase(currentOrder.id);
+      if (result.isLeft()) {
+        result.fold((f) => emit(state.copyWith(errorMessage: f.message)), (_) {});
+        return;
+      }
+    }
+
+    await _offersSubscription?.cancel();
+    await _orderSubscription?.cancel();
     _escalationTimer?.cancel();
     emit(
       state.copyWith(

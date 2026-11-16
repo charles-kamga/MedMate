@@ -52,10 +52,12 @@ class ReservationOtpTicketCard extends StatelessWidget {
   }
 
   void _handleCall(BuildContext context, String phone) {
+    final sanitized = phone.trim();
+    if (sanitized.isEmpty) return;
     onCallPharmacy != null
-        ? onCallPharmacy!(phone)
+        ? onCallPharmacy!(sanitized)
         : ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Appel officine : $phone'),
+            content: Text('Appel officine : $sanitized'),
             backgroundColor: AppColors.secondary,),);
   }
 
@@ -89,7 +91,7 @@ class ReservationOtpTicketCard extends StatelessWidget {
     }
 
     final isExpired = res.isExpired;
-    final phone = resolvedOrder?.selectedOffer?.phone ?? '+237 677 12 34 56';
+    final phone = resolvedOrder?.selectedOffer?.phone.trim() ?? '';
     final totalAmount = resolvedOrder?.selectedOffer?.grandTotalCfa;
 
     return Container(
@@ -133,6 +135,15 @@ class ReservationOtpTicketCard extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
                             color: AppColors.primary,),),
+                    const SizedBox(height: 2),
+                    Text(
+                      phone.isEmpty ? 'Numéro non communiqué' : phone,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontStyle: phone.isEmpty ? FontStyle.italic : FontStyle.normal,
+                        color: phone.isEmpty ? AppColors.textTertiary : AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -187,14 +198,8 @@ class ReservationOtpTicketCard extends StatelessWidget {
                     data:
                         '{"otp":"${res.codeRetraitOtp}","reservationId":"${res.id}","pharmacyId":"${res.pharmacyId}"}',
                     size: 100,
-                    eyeStyle: const QrEyeStyle(
-                      eyeShape: QrEyeShape.square,
-                      color: AppColors.primaryDark,
-                    ),
-                    dataModuleStyle: const QrDataModuleStyle(
-                      dataModuleShape: QrDataModuleShape.square,
-                      color: AppColors.primaryDark,
-                    ),
+                    eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: AppColors.primaryDark),
+                    dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: AppColors.primaryDark),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -306,8 +311,7 @@ class ReservationOtpTicketCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
@@ -315,14 +319,14 @@ class ReservationOtpTicketCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () => _handleCall(context, phone),
+                  key: const ValueKey('btn_call_pharmacy'),
+                  onPressed: phone.isEmpty ? null : () => _handleCall(context, phone),
                   icon: const Icon(Icons.phone_rounded, size: 18),
                   label: const Text('Appeler'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     elevation: 0,
                   ),
@@ -332,34 +336,20 @@ class ReservationOtpTicketCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           TextButton.icon(
-            onPressed: () => onNewSearch != null
-                ? onNewSearch!()
-                : _getCubit(context)?.reset(),
+            onPressed: () => onNewSearch != null ? onNewSearch!() : _getCubit(context)?.reset(),
             icon: const Icon(Icons.refresh_rounded, size: 18),
             label: const Text('Effectuer une nouvelle recherche'),
-            style:
-                TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
+            style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
           ),
           if (resolvedOrder == null ||
-              (resolvedOrder.status != FlashOrderStatus.delivered &&
-                  !resolvedOrder.isPickedUp)) ...[
+              (resolvedOrder.status != FlashOrderStatus.delivered && !resolvedOrder.isPickedUp)) ...[
             TextButton.icon(
               key: const ValueKey('btn_cancel_reservation'),
-              onPressed: () {
-                if (onCancel != null) {
-                  onCancel!();
-                } else {
-                  _getCubit(context)?.cancelReservation();
-                }
-              },
+              onPressed: () => _handleCancel(context),
               icon: const Icon(Icons.cancel_outlined, size: 16, color: AppColors.alert),
               label: const Text(
                 'Annuler ma demande',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.alert,
-                ),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.alert),
               ),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.alert,
@@ -370,5 +360,31 @@ class ReservationOtpTicketCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _handleCancel(BuildContext context) {
+    if (onCancel != null) {
+      onCancel!();
+      return;
+    }
+    showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Annuler la demande ?', style: TextStyle(fontWeight: FontWeight.w700)),
+        content: const Text('Êtes-vous sûr de vouloir annuler votre demande ? Les pharmacies ciblées seront prévenues.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogCtx).pop(false), child: const Text('Non, conserver')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.alert, foregroundColor: Colors.white),
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            child: const Text('Oui, annuler'),
+          ),
+        ],
+      ),
+    ).then((confirmed) {
+      if ((confirmed ?? false) && context.mounted) {
+        _getCubit(context)?.cancelReservation();
+      }
+    });
   }
 }

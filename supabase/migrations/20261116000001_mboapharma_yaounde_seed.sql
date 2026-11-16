@@ -293,7 +293,7 @@ INSERT INTO public.pharmacies (
     (SELECT id FROM q WHERE nom = 'Melen'),
     ST_SetSRID(ST_MakePoint(11.486503, 3.850888), 4326)::geography,
     'Melen 8, Axe Melen - Mini Ferme',
-    '+237242792900',
+    '',
     NULL,
     true,
     false

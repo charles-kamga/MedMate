@@ -35,6 +35,7 @@ enum FlashOrderStatus {
   readyForPickup,
   delivered,
   expired,
+  cancelled,
 }
 
 /// Pharmacie contactée lors du dispatch en vagues (2 pharmacies partenaires par vague)

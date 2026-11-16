@@ -228,6 +228,9 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
       if (order != null && order.status == FlashOrderStatus.accepted) {
         return const Left(ServerFailure('Cette commande a déjà été acceptée par un confrère'));
       }
+      if (order != null && order.status == FlashOrderStatus.cancelled) {
+        return const Left(ServerFailure('Cette commande a été annulée'));
+      }
 
       final offer = PharmacyOffer(
         id: _uuid.v4(),
@@ -275,6 +278,10 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
         return const Left(ServerFailure('Commande introuvable au comptoir'));
       }
 
+      if (order.status == FlashOrderStatus.cancelled) {
+        return const Left(ServerFailure('Cette commande a été annulée par le patient'));
+      }
+
       if (order.isPickedUp || order.status == FlashOrderStatus.delivered) {
         return const Left(ServerFailure('Cette commande a déjà été retirée au comptoir'));
       }
@@ -316,6 +323,27 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
       return Right(deliveredOrder);
     } catch (e) {
       return Left(ServerFailure('Erreur de validation OTP au comptoir: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, FlashOrder>> cancelFlashRequest(String orderId) async {
+    try {
+      final existing = _ordersCache[orderId];
+      if (existing == null) {
+        return const Left(ServerFailure('Commande introuvable pour annulation'));
+      }
+      if (existing.status == FlashOrderStatus.delivered || existing.isPickedUp) {
+        return const Left(ServerFailure("Impossible d'annuler une commande déjà délivrée."));
+      }
+      final cancelled = existing.copyWith(
+        status: FlashOrderStatus.cancelled,
+      );
+      _ordersCache[orderId] = cancelled;
+      await realtimeDataSource.updateOrderStatus(orderId, FlashOrderStatus.cancelled);
+      return Right(cancelled);
+    } catch (e) {
+      return Left(ServerFailure("Erreur lors de l'annulation de la commande: $e"));
     }
   }
 

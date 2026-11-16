@@ -29,6 +29,7 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
   ) async {
     try {
       final list = _orders.values.where((order) {
+        if (order.status == FlashOrderStatus.cancelled) return false;
         final isTargeted = order.targets.any((t) => t.id == pharmacyId);
         final isAssigned = order.selectedOffer?.pharmacyId == pharmacyId;
         return isTargeted || isAssigned;
@@ -57,6 +58,9 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
       final order = _orders[orderId];
       if (order == null) {
         return const Left(NotFoundFailure('Demande flash introuvable.'));
+      }
+      if (order.status == FlashOrderStatus.cancelled) {
+        return const Left(ValidationFailure('Cette demande flash a été annulée par le patient.'));
       }
 
       // Vérification du ciblage de l'officine
@@ -148,6 +152,9 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
       if (order == null) {
         return const Left(NotFoundFailure('Demande de retrait introuvable.'));
       }
+      if (order.status == FlashOrderStatus.cancelled) {
+        return const Left(ValidationFailure('Cette commande a été annulée par le patient.'));
+      }
 
       // Vérification du format à 6 chiffres
       final otpRegex = RegExp(r'^\d{6}$');
@@ -238,6 +245,7 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
       necessiteOrdonnance: true,
     );
 
+    // DÉMO — données fictives
     const targetSoleil = DispatchedPharmacy(
       id: 'pharma-soleil',
       name: 'Pharmacie du Soleil',
@@ -248,6 +256,7 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
       status: PharmacistReplyType.waiting,
     );
 
+    // DÉMO — données fictives
     const targetCentre = DispatchedPharmacy(
       id: 'pharma-centre',
       name: 'Grande Pharmacie du Centre',
@@ -273,12 +282,12 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
       name: 'Pharmacie Melen 8',
       quarter: 'Melen',
       distanceKm: 0.7,
-      phone: '+237 242 79 29 00',
+      phone: '',
       waveIndex: 1,
       status: PharmacistReplyType.waiting,
     );
 
-    // 1. Demande en attente (Vague 1 en cours - 95s restantes)
+    // 1. Demande en attente (Vague 1 en cours - 95s restantes, 2 officines par vague)
     final order1 = FlashOrder(
       id: 'ORD-YAO-101',
       items: const [
@@ -292,7 +301,7 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
         ),
       ],
       quarter: '${landmarkWarda.nom}, ${landmarkWarda.quartier}',
-      targets: const [targetSoleil, targetCentre, targetMandela, targetMelen8],
+      targets: const [targetSoleil, targetCentre],
       currentWave: 1,
       waveTimeRemainingSeconds: 95,
       status: FlashOrderStatus.dispatchingWave,
@@ -332,7 +341,23 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
       expiresAt: now.add(const Duration(minutes: 100)),
     );
 
+    // 3. Demande de la zone pilote Melen ciblant Mandela et Melen 8
+    final order3 = FlashOrder(
+      id: 'ORD-YAO-103',
+      items: const [
+        BasketItem(id: 'item-4', medication: medParacetamol, quantity: 1),
+      ],
+      quarter: 'Carrefour Melen / CHU, Melen',
+      targets: const [targetMandela, targetMelen8],
+      currentWave: 1,
+      waveTimeRemainingSeconds: 110,
+      status: FlashOrderStatus.dispatchingWave,
+      createdAt: now.subtract(const Duration(seconds: 10)),
+      expiresAt: now.add(const Duration(hours: 2)),
+    );
+
     _orders[order1.id] = order1;
     _orders[order2.id] = order2;
+    _orders[order3.id] = order3;
   }
 }

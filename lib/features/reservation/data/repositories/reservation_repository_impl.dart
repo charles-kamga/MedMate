@@ -25,6 +25,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
   /// Offres simulées de vague 1 pour alimenter la comparaison libre du patient
   static final List<DispatchedPharmacy> defaultWave1Pharmacies = [
     const DispatchedPharmacy(
+      // DÉMO — données fictives
       id: 'pharma-soleil',
       name: 'Pharmacie du Soleil',
       quarter: 'Carrefour Warda (Proche Melen)',
@@ -33,6 +34,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       waveIndex: 1,
     ),
     const DispatchedPharmacy(
+      // DÉMO — données fictives
       id: 'pharma-centre',
       name: 'Grande Pharmacie du Centre',
       quarter: 'Poste Centrale',
@@ -77,7 +79,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       name: 'Pharmacie Melen 8',
       quarter: 'Melen',
       distanceKm: 0.7,
-      phone: '+237 242 79 29 00',
+      phone: '',
       waveIndex: 1,
     ),
     const DispatchedPharmacy(
@@ -181,6 +183,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
       if (existingOrder == null) {
         return const Left(NotFoundFailure('Demande flash introuvable.'));
       }
+      if (existingOrder.status == FlashOrderStatus.cancelled) {
+        return const Left(ValidationFailure('Cette commande a été annulée.'));
+      }
 
       if (existingOrder.currentWave >= 2) {
         return Right(existingOrder);
@@ -246,6 +251,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
       if (existingOrder == null) {
         return const Left(NotFoundFailure('Demande flash introuvable.'));
       }
+      if (existingOrder.status == FlashOrderStatus.cancelled) {
+        return const Left(ValidationFailure('Cette commande a été annulée.'));
+      }
 
       final now = DateTime.now();
       final expiresAt = now.add(const Duration(hours: 2));
@@ -293,6 +301,29 @@ class ReservationRepositoryImpl implements ReservationRepository {
     } catch (e) {
       return Left(
           ReservationFailure('Échec de la validation de réservation : $e'),);
+    }
+  }
+
+  @override
+  Future<Either<Failure, FlashOrder>> cancelFlashRequest(String orderId) async {
+    try {
+      final existingOrder = _orders[orderId];
+      if (existingOrder == null) {
+        return const Left(NotFoundFailure('Demande flash introuvable.'));
+      }
+      if (existingOrder.status == FlashOrderStatus.delivered ||
+          existingOrder.isPickedUp) {
+        return const Left(
+          ValidationFailure("Impossible d'annuler une commande déjà délivrée."),
+        );
+      }
+      final updatedOrder = existingOrder.copyWith(
+        status: FlashOrderStatus.cancelled,
+      );
+      _orders[orderId] = updatedOrder;
+      return Right(updatedOrder);
+    } catch (e) {
+      return Left(ReservationFailure("Échec de l'annulation : $e"));
     }
   }
 }

@@ -177,6 +177,17 @@ class PharmacyOffersComparisonList extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                             fontSize: 12, color: AppColors.textSecondary,),),
+                    const SizedBox(height: 2),
+                    Text(
+                      offer.phone.trim().isEmpty ? 'Numéro non communiqué' : offer.phone,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontStyle: offer.phone.trim().isEmpty ? FontStyle.italic : FontStyle.normal,
+                        color: offer.phone.trim().isEmpty ? AppColors.textTertiary : AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),

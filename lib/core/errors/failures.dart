@@ -106,3 +106,11 @@ final class ConsumedOtpFailure extends Failure {
     super.code = 'CONSUMED_OTP',
   ]);
 }
+
+/// Échec de validation métier (règles de transition ou paramètres invalides)
+final class ValidationFailure extends Failure {
+  const ValidationFailure([
+    super.message = 'Données ou statut non conformes pour cette opération.',
+    super.code = 'VALIDATION_ERROR',
+  ]);
+}

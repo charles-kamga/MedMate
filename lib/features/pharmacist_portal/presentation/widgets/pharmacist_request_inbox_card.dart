@@ -63,10 +63,7 @@ class PharmacistRequestInboxCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.border,
-                width: isSelected ? 2 : 1,
-              ),
+              border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: isSelected ? 2 : 1),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: isSelected ? 0.06 : 0.02),
@@ -160,40 +157,16 @@ class PharmacistRequestInboxCard extends StatelessWidget {
   }
 
   Widget _buildStatusBadge() {
-    Color bg;
-    Color fg;
-    String label;
-
-    switch (order.status) {
-      case FlashOrderStatus.dispatchingWave:
-        bg = const Color(0xFFEFF6FF);
-        fg = AppColors.secondary;
-        label = 'Vague ${order.currentWave} active';
-      case FlashOrderStatus.offersReceived:
-        bg = const Color(0xFFEFF6FF);
-        fg = AppColors.secondary;
-        label = 'Offres reçues';
-      case FlashOrderStatus.accepted:
-        bg = _amberSoft;
-        fg = const Color(0xFFB45309);
-        label = 'Offre retenue';
-      case FlashOrderStatus.readyForPickup:
-        bg = const Color(0xFFEAF7F0);
-        fg = _emerald;
-        label = 'Prêt pour retrait';
-      case FlashOrderStatus.delivered:
-        bg = const Color(0xFFEAF7F0);
-        fg = AppColors.primary;
-        label = 'Délivré au comptoir';
-      case FlashOrderStatus.expired:
-        bg = AppColors.alertSoft;
-        fg = AppColors.alert;
-        label = 'Expiré';
-      case FlashOrderStatus.idle:
-        bg = AppColors.surfaceVariant;
-        fg = AppColors.textSecondary;
-        label = 'En attente';
-    }
+    final (bg, fg, label) = switch (order.status) {
+      FlashOrderStatus.dispatchingWave => (const Color(0xFFEFF6FF), AppColors.secondary, 'Vague ${order.currentWave} active'),
+      FlashOrderStatus.offersReceived => (const Color(0xFFEFF6FF), AppColors.secondary, 'Offres reçues'),
+      FlashOrderStatus.accepted => (_amberSoft, const Color(0xFFB45309), 'Offre retenue'),
+      FlashOrderStatus.readyForPickup => (const Color(0xFFEAF7F0), _emerald, 'Prêt pour retrait'),
+      FlashOrderStatus.delivered => (const Color(0xFFEAF7F0), AppColors.primary, 'Délivré au comptoir'),
+      FlashOrderStatus.expired => (AppColors.alertSoft, AppColors.alert, 'Expiré'),
+      FlashOrderStatus.cancelled => (AppColors.alertSoft, AppColors.alert, 'Annulée'),
+      FlashOrderStatus.idle => (AppColors.surfaceVariant, AppColors.textSecondary, 'En attente'),
+    };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -215,30 +188,53 @@ class PharmacistRequestInboxCard extends StatelessWidget {
   }
 
   Widget _buildLandmarkRow() {
-    return Row(
+    final phone = order.phoneNumber?.trim();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.location_on_rounded, size: 15, color: AppColors.secondary),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            order.quarter,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+        Row(
+          children: [
+            const Icon(Icons.location_on_rounded, size: 15, color: AppColors.secondary),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                order.quarter,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ),
-          ),
+            Text(
+              '${order.items.length} produit(s)',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ],
         ),
-        Text(
-          '${order.items.length} produit(s)',
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textTertiary,
+        if (order.phoneNumber != null) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.phone_outlined, size: 13, color: AppColors.textSecondary),
+              const SizedBox(width: 4),
+              Text(
+                phone == null || phone.isEmpty ? 'Numéro non communiqué' : phone,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontStyle: phone == null || phone.isEmpty ? FontStyle.italic : FontStyle.normal,
+                  color: phone == null || phone.isEmpty ? AppColors.textTertiary : AppColors.textSecondary,
+                ),
+              ),
+            ],
           ),
-        ),
+        ],
       ],
     );
   }
