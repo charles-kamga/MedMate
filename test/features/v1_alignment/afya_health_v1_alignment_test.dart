@@ -269,6 +269,49 @@ void main() {
       expect(find.text('Règlement sur place au comptoir au moment du retrait (V1)'), findsOneWidget);
     });
 
+    testWidgets('ReservationOtpTicketCard affiche le QR code et déclenche le bouton annuler ma demande', (tester) async {
+      final now = DateTime.now();
+      final reservation = Reservation(
+        id: 'RES-002',
+        clientReservationId: 'ORD-002',
+        pharmacyId: 'pharma-mandela',
+        pharmacyName: 'Pharmacie Mandela Face CHU',
+        medicationId: 'med-doliprane',
+        medicationName: 'Doliprane 1000mg',
+        quantite: 1,
+        codeRetraitOtp: '123456',
+        statut: ReservationStatus.confirmed,
+        createdAt: now,
+        expiresAt: now.add(const Duration(hours: 2)),
+      );
+
+      var cancelTriggered = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ReservationOtpTicketCard(
+                reservation: reservation,
+                onCancel: () => cancelTriggered = true,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('qr_code_otp_ticket')), findsOneWidget);
+      final cancelBtn = find.byKey(const ValueKey('btn_cancel_reservation'));
+      expect(cancelBtn, findsOneWidget);
+
+      await tester.ensureVisible(cancelBtn);
+      await tester.tap(cancelBtn);
+      await tester.pumpAndSettle();
+
+      expect(cancelTriggered, isTrue);
+    });
+
     testWidgets('WaveDispatchProgressCard affiche et actionne bouton de recours pharmacies de garde', (tester) async {
       var dutyOpened = false;
 

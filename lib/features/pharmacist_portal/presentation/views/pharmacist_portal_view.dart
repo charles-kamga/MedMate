@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../flash_order/domain/entities/flash_order.dart';
@@ -9,23 +11,33 @@ import '../../domain/usecases/validate_counter_otp.dart';
 import '../controllers/pharmacist_counter_cubit.dart';
 import '../controllers/pharmacist_counter_state.dart';
 import '../widgets/counter_otp_validation_keypad.dart';
+import '../widgets/pharmacist_portal_top_bar.dart';
 import '../widgets/pharmacist_quote_reply_sheet.dart';
 import '../widgets/pharmacist_request_inbox_card.dart';
+import '../widgets/pharmacist_urgent_alert_banner.dart';
 
 /// Vue principale responsive du portail comptoir pharmacien (< 400 lignes).
 class PharmacistPortalView extends StatelessWidget {
   const PharmacistPortalView({
     super.key,
     this.initialPharmacyId = 'pharma-soleil',
+    this.enableAlertCycle = true,
+    this.onPlayAlertSound,
   });
 
   final String initialPharmacyId;
+  final bool enableAlertCycle;
+  final VoidCallback? onPlayAlertSound;
 
   @override
   Widget build(BuildContext context) {
     try {
       BlocProvider.of<PharmacistCounterCubit>(context);
-      return _PharmacistPortalViewContent(initialPharmacyId: initialPharmacyId);
+      return _PharmacistPortalViewContent(
+        initialPharmacyId: initialPharmacyId,
+        enableAlertCycle: enableAlertCycle,
+        onPlayAlertSound: onPlayAlertSound,
+      );
     } catch (_) {
       final repo = PharmacistPortalRepositoryImpl();
       return BlocProvider<PharmacistCounterCubit>(
@@ -34,30 +46,41 @@ class PharmacistPortalView extends StatelessWidget {
           submitQuoteUseCase: SubmitCounterQuoteUseCase(repo),
           validateOtpUseCase: ValidateCounterOtpUseCase(repo),
         )..loadPendingOrders(initialPharmacyId),
-        child: _PharmacistPortalViewContent(initialPharmacyId: initialPharmacyId),
+        child: _PharmacistPortalViewContent(
+          initialPharmacyId: initialPharmacyId,
+          enableAlertCycle: enableAlertCycle,
+          onPlayAlertSound: onPlayAlertSound,
+        ),
       );
     }
   }
 }
 
 class _PharmacistPortalViewContent extends StatefulWidget {
-  const _PharmacistPortalViewContent({required this.initialPharmacyId});
+  const _PharmacistPortalViewContent({
+    required this.initialPharmacyId,
+    required this.enableAlertCycle,
+    this.onPlayAlertSound,
+  });
+
   final String initialPharmacyId;
+  final bool enableAlertCycle;
+  final VoidCallback? onPlayAlertSound;
 
   @override
-  State<_PharmacistPortalViewContent> createState() => _PharmacistPortalViewContentState();
+  State<_PharmacistPortalViewContent> createState() =>
+      _PharmacistPortalViewContentState();
 }
 
-class _PharmacistPortalViewContentState extends State<_PharmacistPortalViewContent>
+class _PharmacistPortalViewContentState
+    extends State<_PharmacistPortalViewContent>
     with SingleTickerProviderStateMixin {
   late String _activePharmacyId;
   TabController? _tabController;
-
-  static const List<Map<String, String>> _demoPharmacies = [
-    {'id': 'pharma-soleil', 'name': 'Pharmacie du Soleil', 'quarter': 'Carrefour Warda'},
-    {'id': 'pharma-centre', 'name': 'Grande Pharmacie du Centre', 'quarter': 'Poste Centrale'},
-    {'id': 'pharma-obili', 'name': "Pharmacie d'Obili", 'quarter': 'Carrefour Obili'},
-  ];
+  Timer? _alertTimer;
+  int _alertCycleCount = 0;
+  bool _isUrgentAlertActive = false;
+  final Set<String> _acknowledgedOrderIds = {};
 
   @override
   void initState() {
@@ -65,17 +88,80 @@ class _PharmacistPortalViewContentState extends State<_PharmacistPortalViewConte
     _activePharmacyId = widget.initialPharmacyId;
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final cubit = context.read<PharmacistCounterCubit>();
       if (cubit.state.isInitial) {
         cubit.loadPendingOrders(_activePharmacyId);
+      } else {
+        _checkUrgentOrders(cubit.state);
       }
     });
   }
 
   @override
   void dispose() {
+    _alertTimer?.cancel();
+    _alertTimer = null;
     _tabController?.dispose();
     super.dispose();
+  }
+
+  void _checkUrgentOrders(PharmacistCounterState state) {
+    final hasUnack = state.orders.any(
+      (o) =>
+          o.status == FlashOrderStatus.dispatchingWave &&
+          !_acknowledgedOrderIds.contains(o.id),
+    );
+    if (hasUnack && !_isUrgentAlertActive) {
+      _triggerUrgentAlert();
+    } else if (!hasUnack && _isUrgentAlertActive) {
+      _stopUrgentAlert();
+    }
+  }
+
+  void _playAlert() {
+    if (widget.onPlayAlertSound != null) {
+      widget.onPlayAlertSound!();
+    } else {
+      SystemSound.play(SystemSoundType.alert);
+    }
+  }
+
+  void _triggerUrgentAlert() {
+    _alertTimer?.cancel();
+    setState(() {
+      _isUrgentAlertActive = true;
+      _alertCycleCount = 0;
+    });
+    _playAlert();
+    if (widget.enableAlertCycle) {
+      _alertTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+        _alertCycleCount++;
+        if (_alertCycleCount >= 4) {
+          timer.cancel();
+          _alertTimer = null;
+        } else {
+          _playAlert();
+        }
+      });
+    }
+  }
+
+  void _stopUrgentAlert() {
+    _alertTimer?.cancel();
+    _alertTimer = null;
+    if (_isUrgentAlertActive) {
+      setState(() => _isUrgentAlertActive = false);
+    }
+  }
+
+  void _acknowledgeAlert(List<FlashOrder> orders) {
+    for (final o in orders) {
+      if (o.status == FlashOrderStatus.dispatchingWave) {
+        _acknowledgedOrderIds.add(o.id);
+      }
+    }
+    _stopUrgentAlert();
   }
 
   void _onPharmacyChanged(String? newId) {
@@ -85,34 +171,28 @@ class _PharmacistPortalViewContentState extends State<_PharmacistPortalViewConte
     }
   }
 
+  void _showSnackBar(BuildContext context, String msg, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PharmacistCounterCubit, PharmacistCounterState>(
       listener: (context, state) {
+        _checkUrgentOrders(state);
+
         if (state.isFailure && state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage!),
-              backgroundColor: AppColors.alert,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          _showSnackBar(context, state.errorMessage!, AppColors.alert);
         } else if (state.isQuoteSubmitted && state.successMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.successMessage!),
-              backgroundColor: const Color(0xFF10B981),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          _showSnackBar(context, state.successMessage!, const Color(0xFF10B981));
         } else if (state.isOtpSuccess && state.successMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.successMessage!),
-              backgroundColor: const Color(0xFF10B981),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          _showSnackBar(context, state.successMessage!, const Color(0xFF10B981));
         }
       },
       builder: (context, state) {
@@ -190,77 +270,24 @@ class _PharmacistPortalViewContentState extends State<_PharmacistPortalViewConte
   }
 
   Widget _buildTopBar(PharmacistCounterState state) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      color: Colors.white,
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.storefront_rounded, color: AppColors.primary, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _activePharmacyId,
-                    isExpanded: true,
-                    items: _demoPharmacies.map((p) {
-                      return DropdownMenuItem(
-                        value: p['id'],
-                        child: Text(
-                          '${p['name']} (${p['quarter']})',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: _onPharmacyChanged,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh_rounded, size: 20, color: AppColors.textSecondary),
-                tooltip: 'Actualiser la file',
-                onPressed: () => context.read<PharmacistCounterCubit>().loadPendingOrders(_activePharmacyId),
-              ),
-            ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        PharmacistPortalTopBar(
+          activePharmacyId: _activePharmacyId,
+          onPharmacyChanged: _onPharmacyChanged,
+          onRefresh: () => context
+              .read<PharmacistCounterCubit>()
+              .loadPendingOrders(_activePharmacyId),
+          onFilterChanged: (status) =>
+              context.read<PharmacistCounterCubit>().setFilterStatus(status),
+          state: state,
+        ),
+        if (_isUrgentAlertActive)
+          PharmacistUrgentAlertBanner(
+            onAcknowledge: () => _acknowledgeAlert(state.orders),
           ),
-          _buildFilterChips(state),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChips(PharmacistCounterState state) {
-    final filters = [
-      {'label': 'Toutes', 'status': null},
-      {'label': 'Vague active', 'status': 'dispatchingWave'},
-      {'label': 'À retirer', 'status': 'readyForPickup'},
-      {'label': 'Délivrées', 'status': 'delivered'},
-    ];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: filters.map((f) {
-          final isSel = state.filterStatus == f['status'];
-          return Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: ChoiceChip(
-              label: Text(f['label']!, style: const TextStyle(fontSize: 11)),
-              selected: isSel,
-              selectedColor: AppColors.primarySoft,
-              labelStyle: TextStyle(
-                color: isSel ? AppColors.primary : AppColors.textSecondary,
-                fontWeight: isSel ? FontWeight.w800 : FontWeight.w500,
-              ),
-              onSelected: (_) => context.read<PharmacistCounterCubit>().setFilterStatus(f['status']),
-            ),
-          );
-        }).toList(),
-      ),
+      ],
     );
   }
 

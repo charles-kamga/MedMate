@@ -194,5 +194,68 @@ void main() {
 
       expect(addedMed, equals(sampleMedication));
     });
+
+    testWidgets('allows adding custom medication freely when catalog is empty', (tester) async {
+      when(() => mockCatalogCubit.state).thenReturn(const MedicationCatalogLoaded([]));
+      when(() => mockCatalogCubit.search(any())).thenAnswer((_) async {});
+      when(() => mockCatalogCubit.clear()).thenReturn(null);
+
+      Medication? addedMed;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          onAddMedication: (m) => addedMed = m,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Vitamine C 1000mg');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Aucun médicament homologué trouvé.'), findsOneWidget);
+      expect(find.text('Ajouter « Vitamine C 1000mg » à ma demande'), findsOneWidget);
+      expect(find.text('Ordonnance à présenter au comptoir'), findsOneWidget);
+
+      // Activer l'ordonnance
+      await tester.tap(find.text('Ordonnance à présenter au comptoir'));
+      await tester.pumpAndSettle();
+
+      // Ajouter le médicament libre
+      await tester.tap(find.byKey(const ValueKey('btn_add_custom_medication')));
+      await tester.pumpAndSettle();
+
+      expect(addedMed, isNotNull);
+      expect(addedMed!.nomCommercial, equals('Vitamine C 1000mg'));
+      expect(addedMed!.necessiteOrdonnance, isTrue);
+    });
+
+    testWidgets('shows custom medication option alongside matching catalog results', (tester) async {
+      when(() => mockCatalogCubit.state).thenReturn(const MedicationCatalogLoaded([sampleMedication]));
+      when(() => mockCatalogCubit.search(any())).thenAnswer((_) async {});
+      when(() => mockCatalogCubit.clear()).thenReturn(null);
+
+      Medication? addedMed;
+
+      await tester.pumpWidget(
+        buildTestableWidget(
+          onAddMedication: (m) => addedMed = m,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Para');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Paracétamol 500 mg'), findsOneWidget);
+      expect(find.text('Ajouter « Para » à ma demande'), findsOneWidget);
+
+      // Ajouter en saisie libre sans ordonnance
+      await tester.tap(find.byKey(const ValueKey('btn_add_custom_medication')));
+      await tester.pumpAndSettle();
+
+      expect(addedMed, isNotNull);
+      expect(addedMed!.nomCommercial, equals('Para'));
+      expect(addedMed!.necessiteOrdonnance, isFalse);
+    });
   });
 }

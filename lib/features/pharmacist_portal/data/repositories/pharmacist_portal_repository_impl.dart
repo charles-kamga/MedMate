@@ -258,6 +258,26 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
       status: PharmacistReplyType.waiting,
     );
 
+    const targetMandela = DispatchedPharmacy(
+      id: 'pharma-mandela',
+      name: 'Pharmacie Mandela (Face CHU)',
+      quarter: 'Face CHU (Melen)',
+      distanceKm: 0.5,
+      phone: '+237 242 79 29 85',
+      waveIndex: 1,
+      status: PharmacistReplyType.waiting,
+    );
+
+    const targetMelen8 = DispatchedPharmacy(
+      id: 'pharma-melen-8',
+      name: 'Pharmacie Melen 8',
+      quarter: 'Melen',
+      distanceKm: 0.7,
+      phone: '+237 242 79 29 00',
+      waveIndex: 1,
+      status: PharmacistReplyType.waiting,
+    );
+
     // 1. Demande en attente (Vague 1 en cours - 95s restantes)
     final order1 = FlashOrder(
       id: 'ORD-YAO-101',
@@ -272,7 +292,7 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
         ),
       ],
       quarter: '${landmarkWarda.nom}, ${landmarkWarda.quartier}',
-      targets: const [targetSoleil, targetCentre],
+      targets: const [targetSoleil, targetCentre, targetMandela, targetMelen8],
       currentWave: 1,
       waveTimeRemainingSeconds: 95,
       status: FlashOrderStatus.dispatchingWave,

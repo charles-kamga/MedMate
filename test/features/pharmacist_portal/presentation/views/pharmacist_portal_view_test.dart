@@ -160,5 +160,67 @@ void main() {
 
       expect(find.byType(PharmacistPortalView), findsOneWidget);
     });
+
+    testWidgets('déclenche le son et affiche le badge alerte urgente qui se dissipe lors de l’acquittement',
+        (tester) async {
+      tester.view.physicalSize = const Size(900, 700);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      var soundCount = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BlocProvider<PharmacistCounterCubit>.value(
+            value: mockCubit,
+            child: PharmacistPortalView(
+              initialPharmacyId: 'pharma-soleil',
+              enableAlertCycle: false, // évite un timer pendant en fin de test
+              onPlayAlertSound: () => soundCount++,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Le listener réagit à sampleOrderWaiting (dispatchingWave)
+      expect(find.text('Nouvelle demande urgente'), findsOneWidget);
+      expect(soundCount, equals(1));
+
+      // Clic sur Acquitter
+      final ackBtn = find.byKey(const ValueKey('btn_acknowledge_alert'));
+      expect(ackBtn, findsOneWidget);
+      await tester.tap(ackBtn);
+      await tester.pump();
+
+      expect(find.text('Nouvelle demande urgente'), findsNothing);
+    });
+
+    testWidgets('dropdown contient les officines Mandela (Face CHU) et Melen 8',
+        (tester) async {
+      tester.view.physicalSize = const Size(900, 700);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BlocProvider<PharmacistCounterCubit>.value(
+            value: mockCubit,
+            child: const PharmacistPortalView(
+              initialPharmacyId: 'pharma-soleil',
+              enableAlertCycle: false,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Ouverture du dropdown
+      await tester.tap(find.textContaining('Pharmacie du Soleil'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Pharmacie Mandela (Face CHU)'), findsWidgets);
+      expect(find.textContaining('Pharmacie Melen 8'), findsWidgets);
+    });
   });
 }

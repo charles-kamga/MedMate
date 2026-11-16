@@ -341,6 +341,7 @@ void main() {
       // Clic sur nouvelle recherche
       final newSearchBtn = find.text('Effectuer une nouvelle recherche');
       expect(newSearchBtn, findsOneWidget);
+      await tester.ensureVisible(newSearchBtn);
       await tester.tap(newSearchBtn);
       await tester.pumpAndSettle();
 

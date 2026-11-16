@@ -25,6 +25,22 @@ class AppConfig {
   static const bool enableDeliveryInV1 = false;
   static const bool enableInAppPaymentInV1 = false;
 
+  /// Paramètres d'environnement Supabase configurables par --dart-define
+  static const String supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: 'http://localhost:54321',
+  );
+
+  static const String supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: 'anon-dummy-key',
+  );
+
+  static const bool useRealtimeBackend = bool.fromEnvironment(
+    'USE_REALTIME_BACKEND',
+    defaultValue: false,
+  );
+
   /// Construit l'URL souveraine OpenStreetMap pour localiser une officine ou repère
   static String buildOsmSearchUrl({
     required double latitude,

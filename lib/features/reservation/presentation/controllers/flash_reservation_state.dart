@@ -54,6 +54,7 @@ class FlashReservationState extends Equatable {
     List<BasketItem>? basketItems,
     YaoundeLandmark? selectedLandmark,
     FlashOrder? currentOrder,
+    bool clearOrder = false,
     FlashReservationStatus? status,
     String? errorMessage,
     bool clearError = false,
@@ -65,7 +66,7 @@ class FlashReservationState extends Equatable {
     return FlashReservationState(
       basketItems: basketItems ?? this.basketItems,
       selectedLandmark: selectedLandmark ?? this.selectedLandmark,
-      currentOrder: currentOrder ?? this.currentOrder,
+      currentOrder: clearOrder ? null : (currentOrder ?? this.currentOrder),
       status: status ?? this.status,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       confirmedReservation: clearReservation

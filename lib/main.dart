@@ -6,9 +6,15 @@ import 'core/navigation/afya_app_shell.dart';
 import 'core/network/network_info.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
-import 'features/flash_order/presentation/cubit/flash_order_cubit.dart';
 import 'features/flash_order/domain/entities/flash_order.dart';
+import 'features/flash_order/presentation/cubit/flash_order_cubit.dart';
 import 'features/home/presentation/views/main_navigation_screen.dart';
+import 'features/pharmacist_portal/data/repositories/pharmacist_portal_repository_impl.dart';
+import 'features/pharmacist_portal/domain/repositories/pharmacist_portal_repository.dart';
+import 'features/pharmacist_portal/domain/usecases/get_pending_counter_orders.dart';
+import 'features/pharmacist_portal/domain/usecases/submit_counter_quote.dart';
+import 'features/pharmacist_portal/domain/usecases/validate_counter_otp.dart';
+import 'features/pharmacist_portal/presentation/controllers/pharmacist_counter_cubit.dart';
 import 'features/pharmacy_search/data/repositories/pharmacy_repository_impl.dart';
 import 'features/pharmacy_search/domain/repositories/pharmacy_repository.dart';
 import 'features/pharmacy_search/domain/usecases/request_reservation.dart';
@@ -16,12 +22,11 @@ import 'features/pharmacy_search/domain/usecases/search_medications.dart';
 import 'features/pharmacy_search/domain/usecases/search_pharmacies.dart';
 import 'features/pharmacy_search/presentation/bloc/pharmacy_search_bloc.dart';
 import 'features/pharmacy_search/presentation/controllers/medication_catalog_cubit.dart';
-import 'features/pharmacist_portal/data/repositories/pharmacist_portal_repository_impl.dart';
-import 'features/pharmacist_portal/domain/repositories/pharmacist_portal_repository.dart';
-import 'features/pharmacist_portal/domain/usecases/get_pending_counter_orders.dart';
-import 'features/pharmacist_portal/domain/usecases/submit_counter_quote.dart';
-import 'features/pharmacist_portal/domain/usecases/validate_counter_otp.dart';
-import 'features/pharmacist_portal/presentation/controllers/pharmacist_counter_cubit.dart';
+import 'features/realtime_dispatch/data/datasources/adaptive_polling_fallback_manager.dart';
+import 'features/realtime_dispatch/data/datasources/supabase_realtime_datasource.dart';
+import 'features/realtime_dispatch/data/datasources/yaounde_topological_router.dart';
+import 'features/realtime_dispatch/data/repositories/realtime_dispatch_repository_impl.dart';
+import 'features/realtime_dispatch/domain/repositories/realtime_dispatch_repository.dart';
 import 'features/reservation/data/repositories/reservation_repository_impl.dart';
 import 'features/reservation/domain/repositories/reservation_repository.dart';
 import 'features/reservation/domain/usecases/escalate_dispatch_wave.dart';
@@ -41,7 +46,7 @@ class MedMateApp extends StatelessWidget {
     this.pharmacyRepository,
     this.reservationRepository,
     this.pharmacistPortalRepository,
-    this.useAfyaAppShell = false,
+    this.useAfyaAppShell = true,
   });
 
   final bool enableNetworkTiles;
@@ -54,16 +59,41 @@ class MedMateApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final repo = pharmacyRepository ??
         PharmacyRepositoryImpl(
-          supabaseClient: SupabaseClient('http://localhost:54321', 'anon-dummy-key'),
+          supabaseClient: SupabaseClient(
+            AppConfig.supabaseUrl,
+            AppConfig.supabaseAnonKey,
+          ),
           networkInfo: const NetworkInfoImpl(),
         );
 
-    // Magasin de commandes partagé : Patient <-> Pharmacien (démo locale E2E)
-    final sharedOrders = <String, FlashOrder>{};
-    final resRepo = reservationRepository ??
-        ReservationRepositoryImpl(sharedOrders: sharedOrders);
-    final pharmaRepo = pharmacistPortalRepository ??
-        PharmacistPortalRepositoryImpl(sharedOrders: sharedOrders);
+    final ReservationRepository resRepo;
+    final PharmacistPortalRepository pharmaRepo;
+    RealtimeDispatchRepository? realtimeRepo;
+
+    if (AppConfig.useRealtimeBackend) {
+      final client = SupabaseClient(
+        AppConfig.supabaseUrl,
+        AppConfig.supabaseAnonKey,
+      );
+      final realtime = RealtimeDispatchRepositoryImpl(
+        realtimeDataSource: SupabaseRealtimeDataSourceImpl(
+          supabaseClient: client,
+          fallbackManager: AdaptivePollingFallbackManager(),
+        ),
+        router: YaoundeTopologicalRouter(),
+      );
+      realtimeRepo = realtime;
+      resRepo = reservationRepository ?? realtime;
+      pharmaRepo = pharmacistPortalRepository ?? realtime;
+    } else {
+      // Magasin de commandes partagé : Patient <-> Pharmacien (démo locale E2E)
+      final sharedOrders = <String, FlashOrder>{};
+      resRepo = reservationRepository ??
+          ReservationRepositoryImpl(sharedOrders: sharedOrders);
+      pharmaRepo = pharmacistPortalRepository ??
+          PharmacistPortalRepositoryImpl(sharedOrders: sharedOrders);
+    }
+
     final searchMedsUseCase = SearchMedicationsUseCase(repo);
 
     return MultiBlocProvider(
@@ -92,6 +122,7 @@ class MedMateApp extends StatelessWidget {
             escalateDispatchWaveUseCase: EscalateDispatchWaveUseCase(resRepo),
             selectPharmacyOfferUseCase: SelectPharmacyOfferUseCase(resRepo),
             reservationRepository: resRepo,
+            realtimeRepository: realtimeRepo,
           ),
         ),
         BlocProvider<PharmacistCounterCubit>(
@@ -99,6 +130,7 @@ class MedMateApp extends StatelessWidget {
             getPendingOrders: GetPendingCounterOrdersUseCase(pharmaRepo),
             submitQuoteUseCase: SubmitCounterQuoteUseCase(pharmaRepo),
             validateOtpUseCase: ValidateCounterOtpUseCase(pharmaRepo),
+            realtimeRepository: realtimeRepo,
           ),
         ),
       ],

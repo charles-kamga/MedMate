@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../pharmacy_search/domain/entities/reservation.dart';
 import '../../domain/entities/flash_order.dart';
 import '../controllers/flash_reservation_cubit.dart';
 
-/// Ticket récapitulatif de réservation avec Code OTP à 6 chiffres (< 280 lignes).
+/// Ticket récapitulatif de réservation avec Code OTP à 6 chiffres et QR Code.
 class ReservationOtpTicketCard extends StatelessWidget {
   const ReservationOtpTicketCard({
     super.key,
     this.reservation,
     this.order,
     this.onNewSearch,
+    this.onCancel,
     this.onOpenOsmRoute,
     this.onCallPharmacy,
     this.cubit,
@@ -22,6 +24,7 @@ class ReservationOtpTicketCard extends StatelessWidget {
   final Reservation? reservation;
   final FlashOrder? order;
   final VoidCallback? onNewSearch;
+  final VoidCallback? onCancel;
   final void Function(String osmUrl)? onOpenOsmRoute;
   final void Function(String phone)? onCallPharmacy;
   final FlashReservationCubit? cubit;
@@ -156,18 +159,45 @@ class ReservationOtpTicketCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
             decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.borderSubtle),),
+              color: AppColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.borderSubtle),
+            ),
             child: Column(
               children: [
-                const Text('CODE DE RETRAIT AU COMPTOIR',
-                    style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 1.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,),),
-                const SizedBox(height: 8),
+                const Text(
+                  'CODE DE RETRAIT AU COMPTOIR',
+                  style: TextStyle(
+                    fontSize: 11,
+                    letterSpacing: 1.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.borderSubtle),
+                  ),
+                  child: QrImageView(
+                    key: const ValueKey('qr_code_otp_ticket'),
+                    data:
+                        '{"otp":"${res.codeRetraitOtp}","reservationId":"${res.id}","pharmacyId":"${res.pharmacyId}"}',
+                    size: 100,
+                    eyeStyle: const QrEyeStyle(
+                      eyeShape: QrEyeShape.square,
+                      color: AppColors.primaryDark,
+                    ),
+                    dataModuleStyle: const QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
@@ -176,15 +206,19 @@ class ReservationOtpTicketCard extends StatelessWidget {
                       child: Text(
                         res.codeRetraitOtp,
                         style: const TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 6,
-                            color: AppColors.primaryDark,),
+                          fontSize: 30,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 6,
+                          color: AppColors.primaryDark,
+                        ),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.copy_rounded,
-                          size: 20, color: AppColors.primary,),
+                      icon: const Icon(
+                        Icons.copy_rounded,
+                        size: 20,
+                        color: AppColors.primary,
+                      ),
                       tooltip: 'Copier le code OTP',
                       onPressed: () => _copyOtp(context, res.codeRetraitOtp),
                     ),
@@ -192,11 +226,13 @@ class ReservationOtpTicketCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                    "Valable jusqu'à ${_formatTime(res.expiresAt)} (2 heures)",
-                    style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,),),
+                  "Valable jusqu'à ${_formatTime(res.expiresAt)} (2 heures)",
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -304,6 +340,33 @@ class ReservationOtpTicketCard extends StatelessWidget {
             style:
                 TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
           ),
+          if (resolvedOrder == null ||
+              (resolvedOrder.status != FlashOrderStatus.delivered &&
+                  !resolvedOrder.isPickedUp)) ...[
+            TextButton.icon(
+              key: const ValueKey('btn_cancel_reservation'),
+              onPressed: () {
+                if (onCancel != null) {
+                  onCancel!();
+                } else {
+                  _getCubit(context)?.cancelReservation();
+                }
+              },
+              icon: const Icon(Icons.cancel_outlined, size: 16, color: AppColors.alert),
+              label: const Text(
+                'Annuler ma demande',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.alert,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.alert,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ],
         ],
       ),
     );

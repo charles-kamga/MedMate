@@ -23,5 +23,11 @@ void main() {
       expect(url, contains('mlon=11.52'));
       expect(url, contains('#map=16/3.8667/11.52'));
     });
+
+    test('expose les variables d’environnement Supabase par défaut', () {
+      expect(AppConfig.supabaseUrl, equals('http://localhost:54321'));
+      expect(AppConfig.supabaseAnonKey, equals('anon-dummy-key'));
+      expect(AppConfig.useRealtimeBackend, isFalse);
+    });
   });
 }

@@ -343,6 +343,22 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
     emit(state.copyWith(clearNotification: true));
   }
 
+  /// Annule la réservation active ou la recherche en cours avant validation au comptoir
+  void cancelReservation() {
+    _offersSubscription?.cancel();
+    _orderSubscription?.cancel();
+    _escalationTimer?.cancel();
+    emit(
+      state.copyWith(
+        status: FlashReservationStatus.initial,
+        clearError: true,
+        clearNotification: true,
+        clearOrder: true,
+        clearReservation: true,
+      ),
+    );
+  }
+
   /// Réinitialise l'ensemble du flux de réservation
   void reset() {
     _offersSubscription?.cancel();
