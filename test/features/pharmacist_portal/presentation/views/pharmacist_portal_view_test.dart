@@ -222,5 +222,103 @@ void main() {
       expect(find.textContaining('Pharmacie Mandela (Face CHU)'), findsWidgets);
       expect(find.textContaining('Pharmacie Melen 8'), findsWidgets);
     });
+
+    testWidgets('cycle complet 30s/2min : 4 sonneries puis arrêt audio et bandeau maintenu jusqu’à acquittement',
+        (tester) async {
+      tester.view.physicalSize = const Size(900, 700);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      var soundCount = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BlocProvider<PharmacistCounterCubit>.value(
+            value: mockCubit,
+            child: PharmacistPortalView(
+              initialPharmacyId: 'pharma-soleil',
+              enableAlertCycle: true,
+              onPlayAlertSound: () => soundCount++,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // t = 0s : 1er déclenchement
+      expect(soundCount, equals(1));
+      expect(find.text('Nouvelle demande urgente'), findsOneWidget);
+
+      // t = 30s : 2e déclenchement
+      await tester.pump(const Duration(seconds: 30));
+      expect(soundCount, equals(2));
+
+      // t = 60s : 3e déclenchement
+      await tester.pump(const Duration(seconds: 30));
+      expect(soundCount, equals(3));
+
+      // t = 90s : 4e déclenchement
+      await tester.pump(const Duration(seconds: 30));
+      expect(soundCount, equals(4));
+
+      // t = 120s : cycle audio terminé, aucun 5e déclenchement
+      await tester.pump(const Duration(seconds: 30));
+      expect(soundCount, equals(4));
+
+      // Le bandeau visuel reste présent après 120s tant qu'il n'est pas acquitté
+      expect(find.text('Nouvelle demande urgente'), findsOneWidget);
+
+      // Acquittement final
+      final ackBtn = find.byKey(const ValueKey('btn_acknowledge_alert'));
+      await tester.tap(ackBtn);
+      await tester.pump();
+
+      expect(find.text('Nouvelle demande urgente'), findsNothing);
+    });
+
+    testWidgets('acquittement précoce à 45s stoppe immédiatement les rappels sonores et le timer',
+        (tester) async {
+      tester.view.physicalSize = const Size(900, 700);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      var soundCount = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BlocProvider<PharmacistCounterCubit>.value(
+            value: mockCubit,
+            child: PharmacistPortalView(
+              initialPharmacyId: 'pharma-soleil',
+              enableAlertCycle: true,
+              onPlayAlertSound: () => soundCount++,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // t = 0s
+      expect(soundCount, equals(1));
+
+      // t = 30s : 2e déclenchement
+      await tester.pump(const Duration(seconds: 30));
+      expect(soundCount, equals(2));
+
+      // t = 45s : avance de 15s supplémentaire
+      await tester.pump(const Duration(seconds: 15));
+      expect(soundCount, equals(2));
+
+      // Acquittement anticipé à 45s
+      final ackBtn = find.byKey(const ValueKey('btn_acknowledge_alert'));
+      await tester.tap(ackBtn);
+      await tester.pump();
+
+      expect(find.text('Nouvelle demande urgente'), findsNothing);
+
+      // Avance de 60s supplémentaires : aucun nouveau son déclenché
+      await tester.pump(const Duration(seconds: 60));
+      expect(soundCount, equals(2));
+    });
   });
 }

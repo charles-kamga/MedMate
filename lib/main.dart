@@ -34,29 +34,20 @@ import 'features/reservation/domain/usecases/select_pharmacy_offer.dart';
 import 'features/reservation/domain/usecases/submit_flash_request.dart';
 import 'features/reservation/presentation/controllers/flash_reservation_cubit.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MedMateApp());
-}
-
-class MedMateApp extends StatelessWidget {
-  const MedMateApp({
-    super.key,
-    this.enableNetworkTiles = true,
-    this.pharmacyRepository,
-    this.reservationRepository,
-    this.pharmacistPortalRepository,
-    this.useAfyaAppShell = true,
+/// Conteneur des dépendances racine de l'application
+class AppDependencies {
+  const AppDependencies({
+    required this.pharmacyRepository,
+    required this.reservationRepository,
+    required this.pharmacistPortalRepository,
+    this.realtimeRepository,
   });
 
-  final bool enableNetworkTiles;
-  final PharmacyRepository? pharmacyRepository;
-  final ReservationRepository? reservationRepository;
-  final PharmacistPortalRepository? pharmacistPortalRepository;
-  final bool useAfyaAppShell;
-
-  @override
-  Widget build(BuildContext context) {
+  factory AppDependencies.build({
+    PharmacyRepository? pharmacyRepository,
+    ReservationRepository? reservationRepository,
+    PharmacistPortalRepository? pharmacistPortalRepository,
+  }) {
     final repo = pharmacyRepository ??
         PharmacyRepositoryImpl(
           supabaseClient: SupabaseClient(
@@ -93,6 +84,76 @@ class MedMateApp extends StatelessWidget {
       pharmaRepo = pharmacistPortalRepository ??
           PharmacistPortalRepositoryImpl(sharedOrders: sharedOrders);
     }
+
+    return AppDependencies(
+      pharmacyRepository: repo,
+      reservationRepository: resRepo,
+      pharmacistPortalRepository: pharmaRepo,
+      realtimeRepository: realtimeRepo,
+    );
+  }
+
+  final PharmacyRepository pharmacyRepository;
+  final ReservationRepository reservationRepository;
+  final PharmacistPortalRepository pharmacistPortalRepository;
+  final RealtimeDispatchRepository? realtimeRepository;
+}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (AppConfig.useRealtimeBackend) {
+    await Supabase.initialize(
+      url: AppConfig.supabaseUrl,
+      // ignore: deprecated_member_use
+      anonKey: AppConfig.supabaseAnonKey,
+    );
+  }
+  final dependencies = AppDependencies.build();
+  runApp(MedMateApp(dependencies: dependencies));
+}
+
+class MedMateApp extends StatefulWidget {
+  const MedMateApp({
+    super.key,
+    this.enableNetworkTiles = true,
+    this.dependencies,
+    this.pharmacyRepository,
+    this.reservationRepository,
+    this.pharmacistPortalRepository,
+    this.useAfyaAppShell = true,
+  });
+
+  final bool enableNetworkTiles;
+  final AppDependencies? dependencies;
+  final PharmacyRepository? pharmacyRepository;
+  final ReservationRepository? reservationRepository;
+  final PharmacistPortalRepository? pharmacistPortalRepository;
+  final bool useAfyaAppShell;
+
+  @override
+  State<MedMateApp> createState() => _MedMateAppState();
+}
+
+class _MedMateAppState extends State<MedMateApp> {
+  late final AppDependencies _dependencies;
+
+  @override
+  void initState() {
+    super.initState();
+    _dependencies = widget.dependencies ??
+        AppDependencies.build(
+          pharmacyRepository: widget.pharmacyRepository,
+          reservationRepository: widget.reservationRepository,
+          pharmacistPortalRepository: widget.pharmacistPortalRepository,
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final repo = _dependencies.pharmacyRepository;
+    final resRepo = _dependencies.reservationRepository;
+    final pharmaRepo = _dependencies.pharmacistPortalRepository;
+    final realtimeRepo = _dependencies.realtimeRepository;
 
     final searchMedsUseCase = SearchMedicationsUseCase(repo);
 
@@ -138,9 +199,9 @@ class MedMateApp extends StatelessWidget {
         title: AppConfig.appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        home: useAfyaAppShell
-            ? AfyaAppShell(enableNetworkTiles: enableNetworkTiles)
-            : MainNavigationScreen(enableNetworkTiles: enableNetworkTiles),
+        home: widget.useAfyaAppShell
+            ? AfyaAppShell(enableNetworkTiles: widget.enableNetworkTiles)
+            : MainNavigationScreen(enableNetworkTiles: widget.enableNetworkTiles),
       ),
     );
   }

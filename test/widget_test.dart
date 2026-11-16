@@ -166,4 +166,21 @@ void main() {
     expect(find.text('Rappels'), findsOneWidget);
     expect(find.text('De quels médicaments avez-vous besoin ?'), findsOneWidget);
   });
+
+  testWidgets('Test injection déterministe via AppDependencies',
+      (WidgetTester tester) async {
+    final customDeps = AppDependencies.build(
+      pharmacyRepository: mockRepository,
+    );
+
+    await tester.pumpWidget(
+      MedMateApp(
+        enableNetworkTiles: false,
+        dependencies: customDeps,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AfyaAppShell), findsOneWidget);
+  });
 }
