@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -41,34 +42,39 @@ class AppDependencies {
     required this.reservationRepository,
     required this.pharmacistPortalRepository,
     this.realtimeRepository,
+    this.localOrdersStream,
   });
 
   factory AppDependencies.build({
+    SupabaseClient? supabaseClient,
     PharmacyRepository? pharmacyRepository,
     ReservationRepository? reservationRepository,
     PharmacistPortalRepository? pharmacistPortalRepository,
+    RealtimeDispatchRepository? realtimeRepository,
   }) {
+    final needsClient = pharmacyRepository == null ||
+        (AppConfig.useRealtimeBackend && realtimeRepository == null);
+    final resolvedClient =
+        needsClient ? _resolveSupabaseClient(supabaseClient) : null;
+
     final repo = pharmacyRepository ??
         PharmacyRepositoryImpl(
-          supabaseClient: SupabaseClient(
-            AppConfig.supabaseUrl,
-            AppConfig.supabaseAnonKey,
-          ),
+          supabaseClient: resolvedClient!,
           networkInfo: const NetworkInfoImpl(),
         );
 
     final ReservationRepository resRepo;
     final PharmacistPortalRepository pharmaRepo;
-    RealtimeDispatchRepository? realtimeRepo;
+    var realtimeRepo = realtimeRepository;
+    Stream<void>? localOrdersStream;
 
-    if (AppConfig.useRealtimeBackend) {
-      final client = SupabaseClient(
-        AppConfig.supabaseUrl,
-        AppConfig.supabaseAnonKey,
-      );
+    if (realtimeRepo != null) {
+      resRepo = reservationRepository ?? realtimeRepo;
+      pharmaRepo = pharmacistPortalRepository ?? realtimeRepo;
+    } else if (AppConfig.useRealtimeBackend) {
       final realtime = RealtimeDispatchRepositoryImpl(
         realtimeDataSource: SupabaseRealtimeDataSourceImpl(
-          supabaseClient: client,
+          supabaseClient: resolvedClient!,
           fallbackManager: AdaptivePollingFallbackManager(),
         ),
         router: YaoundeTopologicalRouter(),
@@ -79,8 +85,17 @@ class AppDependencies {
     } else {
       // Magasin de commandes partagé : Patient <-> Pharmacien (démo locale E2E)
       final sharedOrders = <String, FlashOrder>{};
+      final ordersController = StreamController<void>.broadcast();
+      localOrdersStream = ordersController.stream;
       resRepo = reservationRepository ??
-          ReservationRepositoryImpl(sharedOrders: sharedOrders);
+          ReservationRepositoryImpl(
+            sharedOrders: sharedOrders,
+            onOrdersChanged: () {
+              if (!ordersController.isClosed) {
+                ordersController.add(null);
+              }
+            },
+          );
       pharmaRepo = pharmacistPortalRepository ??
           PharmacistPortalRepositoryImpl(sharedOrders: sharedOrders);
     }
@@ -90,6 +105,7 @@ class AppDependencies {
       reservationRepository: resRepo,
       pharmacistPortalRepository: pharmaRepo,
       realtimeRepository: realtimeRepo,
+      localOrdersStream: localOrdersStream,
     );
   }
 
@@ -97,6 +113,19 @@ class AppDependencies {
   final ReservationRepository reservationRepository;
   final PharmacistPortalRepository pharmacistPortalRepository;
   final RealtimeDispatchRepository? realtimeRepository;
+  final Stream<void>? localOrdersStream;
+
+  static SupabaseClient _resolveSupabaseClient([SupabaseClient? provided]) {
+    if (provided != null) return provided;
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return SupabaseClient(
+        AppConfig.supabaseUrl,
+        AppConfig.supabaseAnonKey,
+      );
+    }
+  }
 }
 
 Future<void> main() async {
@@ -104,8 +133,7 @@ Future<void> main() async {
   if (AppConfig.useRealtimeBackend) {
     await Supabase.initialize(
       url: AppConfig.supabaseUrl,
-      // ignore: deprecated_member_use
-      anonKey: AppConfig.supabaseAnonKey,
+      publishableKey: AppConfig.supabaseAnonKey,
     );
   }
   final dependencies = AppDependencies.build();
@@ -120,6 +148,7 @@ class MedMateApp extends StatefulWidget {
     this.pharmacyRepository,
     this.reservationRepository,
     this.pharmacistPortalRepository,
+    this.realtimeRepository,
     this.useAfyaAppShell = true,
   });
 
@@ -128,6 +157,7 @@ class MedMateApp extends StatefulWidget {
   final PharmacyRepository? pharmacyRepository;
   final ReservationRepository? reservationRepository;
   final PharmacistPortalRepository? pharmacistPortalRepository;
+  final RealtimeDispatchRepository? realtimeRepository;
   final bool useAfyaAppShell;
 
   @override
@@ -145,6 +175,7 @@ class _MedMateAppState extends State<MedMateApp> {
           pharmacyRepository: widget.pharmacyRepository,
           reservationRepository: widget.reservationRepository,
           pharmacistPortalRepository: widget.pharmacistPortalRepository,
+          realtimeRepository: widget.realtimeRepository,
         );
   }
 
@@ -192,6 +223,7 @@ class _MedMateAppState extends State<MedMateApp> {
             submitQuoteUseCase: SubmitCounterQuoteUseCase(pharmaRepo),
             validateOtpUseCase: ValidateCounterOtpUseCase(pharmaRepo),
             realtimeRepository: realtimeRepo,
+            localOrdersStream: _dependencies.localOrdersStream,
           ),
         ),
       ],
@@ -201,7 +233,9 @@ class _MedMateAppState extends State<MedMateApp> {
         theme: AppTheme.lightTheme,
         home: widget.useAfyaAppShell
             ? AfyaAppShell(enableNetworkTiles: widget.enableNetworkTiles)
-            : MainNavigationScreen(enableNetworkTiles: widget.enableNetworkTiles),
+            : MainNavigationScreen(
+                enableNetworkTiles: widget.enableNetworkTiles,
+              ),
       ),
     );
   }

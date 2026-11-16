@@ -206,7 +206,8 @@ class FlashOrder extends Equatable {
       quarter: quarter ?? this.quarter,
       targets: targets ?? this.targets,
       currentWave: currentWave ?? this.currentWave,
-      waveTimeRemainingSeconds: waveTimeRemainingSeconds ?? this.waveTimeRemainingSeconds,
+      waveTimeRemainingSeconds:
+          waveTimeRemainingSeconds ?? this.waveTimeRemainingSeconds,
       offers: offers ?? this.offers,
       selectedOffer: selectedOffer ?? this.selectedOffer,
       status: status ?? this.status,

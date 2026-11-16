@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import '../../../../core/constants/yaounde_landmarks.dart';
 import '../../../flash_order/domain/entities/basket_item.dart';
 import '../../../flash_order/domain/entities/flash_order.dart';
+import '../../../pharmacy_search/domain/entities/medication.dart';
 import '../../../pharmacy_search/domain/entities/reservation.dart';
 
 /// Statut de la machine d'état du parcours de réservation flash
@@ -49,6 +50,57 @@ class FlashReservationState extends Equatable {
   bool get hasActiveOrder => currentOrder != null;
   bool get hasRealtimeNotification =>
       realtimeNotification != null && realtimeNotification!.isNotEmpty;
+
+  /// Retourne un nouvel état avec le médicament ajouté ou incrémenté
+  FlashReservationState withAddedItem(
+    Medication medication, {
+    int quantity = 1,
+    String? note,
+  }) {
+    final existingIndex =
+        basketItems.indexWhere((i) => i.medication.id == medication.id);
+    if (existingIndex >= 0) {
+      final existingItem = basketItems[existingIndex];
+      final updatedList = List<BasketItem>.from(basketItems);
+      updatedList[existingIndex] = existingItem.copyWith(
+        quantity: existingItem.quantity + quantity,
+        prescriptionNote: note ?? existingItem.prescriptionNote,
+      );
+      return copyWith(basketItems: updatedList);
+    }
+    final newItem = BasketItem(
+      id: 'item-${medication.id}-${DateTime.now().millisecondsSinceEpoch}',
+      medication: medication,
+      quantity: quantity,
+      hasPrescription: medication.necessiteOrdonnance,
+      prescriptionNote: note,
+    );
+    return copyWith(basketItems: [...basketItems, newItem]);
+  }
+
+  /// Retourne un nouvel état synchronisé avec une mise à jour temps réel de commande
+  FlashReservationState withOrderRealtimeUpdate(FlashOrder orderUpdate) {
+    String? notification;
+    if (orderUpdate.status == FlashOrderStatus.readyForPickup) {
+      notification = 'Votre réservation est validée et prête à être retirée !';
+    } else if (orderUpdate.status == FlashOrderStatus.delivered ||
+        orderUpdate.isPickedUp) {
+      notification = "Commande délivrée et clôturée par l'officine.";
+    }
+
+    final resolvedStatus = orderUpdate.offers.isNotEmpty &&
+            status != FlashReservationStatus.reservationConfirmed
+        ? FlashReservationStatus.offersReceived
+        : (status == FlashReservationStatus.initial
+            ? FlashReservationStatus.waveActive
+            : status);
+
+    return copyWith(
+      currentOrder: orderUpdate,
+      status: resolvedStatus,
+      realtimeNotification: notification,
+    );
+  }
 
   FlashReservationState copyWith({
     List<BasketItem>? basketItems,

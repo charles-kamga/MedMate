@@ -304,7 +304,7 @@ INSERT INTO public.pharmacies (
     (SELECT id FROM q WHERE nom = 'Obili'),
     ST_SetSRID(ST_MakePoint(11.493457, 3.850930), 4326)::geography,
     'Face Chapelle Obili, Carrefour Obili',
-    '+237695332211',
+    '',
     NULL,
     true,
     false
@@ -315,7 +315,7 @@ INSERT INTO public.pharmacies (
     (SELECT id FROM q WHERE nom = 'Biyem-Assi'),
     ST_SetSRID(ST_MakePoint(11.485264, 3.837717), 4326)::geography,
     'Biyem-Assi Montée',
-    '+237242041500',
+    '',
     NULL,
     true,
     false

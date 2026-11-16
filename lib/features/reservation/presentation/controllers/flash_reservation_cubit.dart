@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/yaounde_landmarks.dart';
-import '../../../flash_order/domain/entities/basket_item.dart';
 import '../../../flash_order/domain/entities/flash_order.dart';
 import '../../../flash_order/domain/entities/pharmacy_offer.dart';
 import '../../../pharmacy_search/domain/entities/medication.dart';
@@ -47,6 +46,9 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
   final bool _enableAutoEscalation;
   final Duration _autoEscalationDuration;
 
+  /// Accès au repository temps réel injecté
+  RealtimeDispatchRepository? get realtimeRepository => _realtimeRepository;
+
   StreamSubscription<List<PharmacyOffer>>? _offersSubscription;
   StreamSubscription<FlashOrder>? _orderSubscription;
   Timer? _escalationTimer;
@@ -58,28 +60,7 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
     String? note,
   }) {
     if (quantity <= 0) return;
-
-    final existingIndex =
-        state.basketItems.indexWhere((i) => i.medication.id == medication.id);
-
-    if (existingIndex >= 0) {
-      final existingItem = state.basketItems[existingIndex];
-      final updatedList = List<BasketItem>.from(state.basketItems);
-      updatedList[existingIndex] = existingItem.copyWith(
-        quantity: existingItem.quantity + quantity,
-        prescriptionNote: note ?? existingItem.prescriptionNote,
-      );
-      emit(state.copyWith(basketItems: updatedList));
-    } else {
-      final newItem = BasketItem(
-        id: 'item-${medication.id}-${DateTime.now().millisecondsSinceEpoch}',
-        medication: medication,
-        quantity: quantity,
-        hasPrescription: medication.necessiteOrdonnance,
-        prescriptionNote: note,
-      );
-      emit(state.copyWith(basketItems: [...state.basketItems, newItem]));
-    }
+    emit(state.withAddedItem(medication, quantity: quantity, note: note));
   }
 
   /// Supprime un article du panier par son identifiant unique
@@ -125,27 +106,33 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
   /// Soumet la demande de recherche flash sans choisir de pharmacie d'avance
   Future<void> submitFlashRequest() async {
     if (state.basketItems.isEmpty) {
-      emit(state.copyWith(
-        status: FlashReservationStatus.failure,
-        errorMessage: 'Le panier de médicaments est vide.',
-      ),);
+      emit(
+        state.copyWith(
+          status: FlashReservationStatus.failure,
+          errorMessage: 'Le panier de médicaments est vide.',
+        ),
+      );
       return;
     }
 
     final landmark = state.selectedLandmark;
     if (landmark == null) {
-      emit(state.copyWith(
-        status: FlashReservationStatus.failure,
-        errorMessage:
-            'Veuillez sélectionner un repère urbain (carrefour ou quartier).',
-      ),);
+      emit(
+        state.copyWith(
+          status: FlashReservationStatus.failure,
+          errorMessage:
+              'Veuillez sélectionner un repère urbain (carrefour ou quartier).',
+        ),
+      );
       return;
     }
 
-    emit(state.copyWith(
-      status: FlashReservationStatus.loading,
-      clearError: true,
-    ),);
+    emit(
+      state.copyWith(
+        status: FlashReservationStatus.loading,
+        clearError: true,
+      ),
+    );
 
     final result = await _submitFlashRequestUseCase(
       items: state.basketItems,
@@ -153,19 +140,23 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
     );
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: FlashReservationStatus.failure,
-        errorMessage: failure.message,
-      ),),
+      (failure) => emit(
+        state.copyWith(
+          status: FlashReservationStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
       (order) {
         final status = order.offers.isNotEmpty
             ? FlashReservationStatus.offersReceived
             : FlashReservationStatus.waveActive;
-        emit(state.copyWith(
-          status: status,
-          currentOrder: order,
-          clearError: true,
-        ),);
+        emit(
+          state.copyWith(
+            status: status,
+            currentOrder: order,
+            clearError: true,
+          ),
+        );
         _subscribeToRealtimeOrder(order.id);
         _startAutoEscalationTimer();
       },
@@ -176,34 +167,42 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
   Future<void> escalateWave() async {
     final currentOrder = state.currentOrder;
     if (currentOrder == null) {
-      emit(state.copyWith(
-        status: FlashReservationStatus.failure,
-        errorMessage: 'Aucune recherche active à escalader.',
-      ),);
+      emit(
+        state.copyWith(
+          status: FlashReservationStatus.failure,
+          errorMessage: 'Aucune recherche active à escalader.',
+        ),
+      );
       return;
     }
 
-    emit(state.copyWith(
-      status: FlashReservationStatus.loading,
-      clearError: true,
-    ),);
+    emit(
+      state.copyWith(
+        status: FlashReservationStatus.loading,
+        clearError: true,
+      ),
+    );
 
     final result = await _escalateDispatchWaveUseCase(currentOrder.id);
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: FlashReservationStatus.failure,
-        errorMessage: failure.message,
-      ),),
+      (failure) => emit(
+        state.copyWith(
+          status: FlashReservationStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
       (updatedOrder) {
         final status = updatedOrder.offers.isNotEmpty
             ? FlashReservationStatus.offersReceived
             : FlashReservationStatus.waveActive;
-        emit(state.copyWith(
-          status: status,
-          currentOrder: updatedOrder,
-          clearError: true,
-        ),);
+        emit(
+          state.copyWith(
+            status: status,
+            currentOrder: updatedOrder,
+            clearError: true,
+          ),
+        );
         _startAutoEscalationTimer();
       },
     );
@@ -216,17 +215,21 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
   }) async {
     final currentOrder = state.currentOrder;
     if (currentOrder == null) {
-      emit(state.copyWith(
-        status: FlashReservationStatus.failure,
-        errorMessage: 'Aucune demande active sélectionnée.',
-      ),);
+      emit(
+        state.copyWith(
+          status: FlashReservationStatus.failure,
+          errorMessage: 'Aucune demande active sélectionnée.',
+        ),
+      );
       return;
     }
 
-    emit(state.copyWith(
-      status: FlashReservationStatus.loading,
-      clearError: true,
-    ),);
+    emit(
+      state.copyWith(
+        status: FlashReservationStatus.loading,
+        clearError: true,
+      ),
+    );
 
     final result = await _selectPharmacyOfferUseCase(
       orderId: currentOrder.id,
@@ -235,18 +238,22 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
     );
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: FlashReservationStatus.failure,
-        errorMessage: failure.message,
-      ),),
+      (failure) => emit(
+        state.copyWith(
+          status: FlashReservationStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
       (reservation) {
         _escalationTimer?.cancel();
-        emit(state.copyWith(
-          status: FlashReservationStatus.reservationConfirmed,
-          confirmedReservation: reservation,
-          currentOrder: currentOrder.copyWith(selectedOffer: offer),
-          clearError: true,
-        ),);
+        emit(
+          state.copyWith(
+            status: FlashReservationStatus.reservationConfirmed,
+            confirmedReservation: reservation,
+            currentOrder: currentOrder.copyWith(selectedOffer: offer),
+            clearError: true,
+          ),
+        );
       },
     );
   }
@@ -259,21 +266,25 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
     final result = await _reservationRepository.getFlashRequestById(targetId);
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: FlashReservationStatus.failure,
-        errorMessage: failure.message,
-      ),),
+      (failure) => emit(
+        state.copyWith(
+          status: FlashReservationStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
       (refreshedOrder) {
         final status = refreshedOrder.offers.isNotEmpty
             ? FlashReservationStatus.offersReceived
             : (state.status == FlashReservationStatus.initial
                 ? FlashReservationStatus.waveActive
                 : state.status);
-        emit(state.copyWith(
-          currentOrder: refreshedOrder,
-          status: status,
-          clearError: true,
-        ),);
+        emit(
+          state.copyWith(
+            currentOrder: refreshedOrder,
+            status: status,
+            clearError: true,
+          ),
+        );
         _subscribeToRealtimeOrder(refreshedOrder.id);
       },
     );
@@ -283,7 +294,8 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
     if (_realtimeRepository == null) return;
 
     _offersSubscription?.cancel();
-    _offersSubscription = _realtimeRepository.watchOffersForOrder(orderId).listen(
+    _offersSubscription =
+        _realtimeRepository.watchOffersForOrder(orderId).listen(
       (offers) {
         if (isClosed) return;
         final currentOrder = state.currentOrder;
@@ -293,11 +305,13 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
                   state.status != FlashReservationStatus.reservationConfirmed
               ? FlashReservationStatus.offersReceived
               : state.status;
-          emit(state.copyWith(
-            currentOrder: updatedOrder,
-            status: status,
-            clearError: true,
-          ),);
+          emit(
+            state.copyWith(
+              currentOrder: updatedOrder,
+              status: status,
+              clearError: true,
+            ),
+          );
         }
       },
     );
@@ -306,26 +320,7 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
     _orderSubscription = _realtimeRepository.watchFlashOrder(orderId).listen(
       (orderUpdate) {
         if (isClosed) return;
-        String? notification;
-        if (orderUpdate.status == FlashOrderStatus.readyForPickup) {
-          notification = 'Votre réservation est validée et prête à être retirée !';
-        } else if (orderUpdate.status == FlashOrderStatus.delivered ||
-            orderUpdate.isPickedUp) {
-          notification = "Commande délivrée et clôturée par l'officine.";
-        }
-
-        final status = orderUpdate.offers.isNotEmpty &&
-                state.status != FlashReservationStatus.reservationConfirmed
-            ? FlashReservationStatus.offersReceived
-            : (state.status == FlashReservationStatus.initial
-                ? FlashReservationStatus.waveActive
-                : state.status);
-
-        emit(state.copyWith(
-          currentOrder: orderUpdate,
-          status: status,
-          realtimeNotification: notification,
-        ),);
+        emit(state.withOrderRealtimeUpdate(orderUpdate));
       },
     );
   }
@@ -354,7 +349,10 @@ class FlashReservationCubit extends Cubit<FlashReservationState> {
     if (currentOrder != null) {
       final result = await _cancelFlashRequestUseCase(currentOrder.id);
       if (result.isLeft()) {
-        result.fold((f) => emit(state.copyWith(errorMessage: f.message)), (_) {});
+        result.fold(
+          (f) => emit(state.copyWith(errorMessage: f.message)),
+          (_) {},
+        );
         return;
       }
     }

@@ -64,7 +64,7 @@ class DutyPharmacyRepositoryImpl implements DutyPharmacyRepository {
       longitude: 11.494335,
       isPartner: true,
     ),
-    // Préservé pour tests existants (Bastos)
+    // DÉMO — données fictives (préservé pour tests existants Bastos)
     DutyPharmacyItem(
       name: 'Pharmacie de Bastos',
       quarter: 'Bastos',
@@ -136,7 +136,7 @@ class DutyPharmacyRepositoryImpl implements DutyPharmacyRepository {
       longitude: 11.5620,
       isPartner: false,
     ),
-    // Douala
+    // DÉMO — données fictives (Douala)
     DutyPharmacyItem(
       name: 'Pharmacie d’Akwa',
       quarter: 'Boulevard de la Liberté',
@@ -157,8 +157,7 @@ class DutyPharmacyRepositoryImpl implements DutyPharmacyRepository {
   Future<Either<Failure, List<DutyPharmacyItem>>> getDutyPharmacies({
     required String city,
   }) async {
-    final items =
-        defaultDutyPharmacies.where((p) => p.city == city).toList();
+    final items = defaultDutyPharmacies.where((p) => p.city == city).toList();
     return Right(items);
   }
 }

@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medmate/core/config/app_config.dart';
 import 'package:medmate/core/navigation/afya_app_shell.dart';
 import 'package:medmate/features/duty_pharmacy/presentation/views/duty_pharmacy_screen.dart';
+import 'package:medmate/features/pharmacist_portal/presentation/controllers/pharmacist_counter_cubit.dart';
 import 'package:medmate/features/pharmacist_portal/presentation/views/pharmacist_portal_view.dart';
 import 'package:medmate/features/pharmacy_search/domain/repositories/pharmacy_repository.dart';
+import 'package:medmate/features/realtime_dispatch/domain/repositories/realtime_dispatch_repository.dart';
+import 'package:medmate/features/reservation/presentation/controllers/flash_reservation_cubit.dart';
 import 'package:medmate/features/reservation/presentation/widgets/patient_basket_composer_card.dart';
 import 'package:medmate/main.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockPharmacyRepository extends Mock implements PharmacyRepository {}
+
+class MockRealtimeDispatchRepository extends Mock
+    implements RealtimeDispatchRepository {}
 
 void main() {
   late MockPharmacyRepository mockRepository;
@@ -164,14 +171,24 @@ void main() {
 
     expect(find.text('Mes recherches'), findsOneWidget);
     expect(find.text('Rappels'), findsOneWidget);
-    expect(find.text('De quels médicaments avez-vous besoin ?'), findsOneWidget);
+    expect(
+      find.text('De quels médicaments avez-vous besoin ?'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('Test injection déterministe via AppDependencies',
+  testWidgets(
+      'Test injection déterministe de RealtimeDispatchRepository via AppDependencies reçue par les deux Cubits',
       (WidgetTester tester) async {
+    final mockRealtimeRepo = MockRealtimeDispatchRepository();
     final customDeps = AppDependencies.build(
       pharmacyRepository: mockRepository,
+      realtimeRepository: mockRealtimeRepo,
     );
+
+    expect(customDeps.realtimeRepository, same(mockRealtimeRepo));
+    expect(customDeps.reservationRepository, same(mockRealtimeRepo));
+    expect(customDeps.pharmacistPortalRepository, same(mockRealtimeRepo));
 
     await tester.pumpWidget(
       MedMateApp(
@@ -181,6 +198,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(AfyaAppShell), findsOneWidget);
+    final shellCtx = tester.element(find.byType(AfyaAppShell));
+    final flashCubit = shellCtx.read<FlashReservationCubit>();
+    final pharmacistCubit = shellCtx.read<PharmacistCounterCubit>();
+
+    expect(flashCubit.realtimeRepository, same(mockRealtimeRepo));
+    expect(pharmacistCubit.realtimeRepository, same(mockRealtimeRepo));
   });
 }

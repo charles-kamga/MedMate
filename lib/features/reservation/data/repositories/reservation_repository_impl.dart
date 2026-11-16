@@ -14,13 +14,18 @@ class ReservationRepositoryImpl implements ReservationRepository {
   ReservationRepositoryImpl({
     Random? random,
     Map<String, FlashOrder>? sharedOrders,
+    void Function()? onOrdersChanged,
   })  : _random = random ?? Random(),
-        _orders = sharedOrders ?? {};
+        _orders = sharedOrders ?? {},
+        _onOrdersChanged = onOrdersChanged;
 
   final Random _random;
 
   /// Magasin de commandes (partagé avec le portail pharmacien en démo E2E)
   final Map<String, FlashOrder> _orders;
+
+  /// Callback de notification réactive en mode démo partagé
+  final void Function()? _onOrdersChanged;
 
   /// Offres simulées de vague 1 pour alimenter la comparaison libre du patient
   static final List<DispatchedPharmacy> defaultWave1Pharmacies = [
@@ -51,7 +56,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       name: 'Pharmacie Chapelle Obili',
       quarter: 'Carrefour Obili',
       distanceKm: 1.8,
-      phone: '+237 695 33 22 11',
+      phone: '',
       waveIndex: 2,
     ),
     const DispatchedPharmacy(
@@ -87,7 +92,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       name: 'Pharmacie Chapelle Obili',
       quarter: 'Carrefour Obili',
       distanceKm: 1.2,
-      phone: '+237 695 33 22 11',
+      phone: '',
       waveIndex: 2,
     ),
     const DispatchedPharmacy(
@@ -108,7 +113,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
     try {
       if (items.isEmpty) {
         return const Left(
-            ReservationFailure('Le panier de médicaments est vide.'),);
+          ReservationFailure('Le panier de médicaments est vide.'),
+        );
       }
 
       final now = DateTime.now();
@@ -168,16 +174,19 @@ class ReservationRepositoryImpl implements ReservationRepository {
       );
 
       _orders[orderId] = order;
+      _onOrdersChanged?.call();
       return Right(order);
     } catch (e) {
       return Left(
-          ServerFailure('Impossible d’initialiser la demande flash : $e'),);
+        ServerFailure('Impossible d’initialiser la demande flash : $e'),
+      );
     }
   }
 
   @override
   Future<Either<Failure, FlashOrder>> escalateDispatchWave(
-      String orderId,) async {
+    String orderId,
+  ) async {
     try {
       final existingOrder = _orders[orderId];
       if (existingOrder == null) {
@@ -224,6 +233,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       );
 
       _orders[orderId] = escalatedOrder;
+      _onOrdersChanged?.call();
       return Right(escalatedOrder);
     } catch (e) {
       return Left(ServerFailure('Erreur lors de l’escalade de vague : $e'));
@@ -232,7 +242,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
   @override
   Future<Either<Failure, FlashOrder>> getFlashRequestById(
-      String orderId,) async {
+    String orderId,
+  ) async {
     final existingOrder = _orders[orderId];
     if (existingOrder == null) {
       return const Left(NotFoundFailure('Demande flash introuvable.'));
@@ -297,10 +308,12 @@ class ReservationRepositoryImpl implements ReservationRepository {
       );
 
       _orders[orderId] = updatedOrder;
+      _onOrdersChanged?.call();
       return Right(reservation);
     } catch (e) {
       return Left(
-          ReservationFailure('Échec de la validation de réservation : $e'),);
+        ReservationFailure('Échec de la validation de réservation : $e'),
+      );
     }
   }
 
@@ -321,6 +334,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
         status: FlashOrderStatus.cancelled,
       );
       _orders[orderId] = updatedOrder;
+      _onOrdersChanged?.call();
       return Right(updatedOrder);
     } catch (e) {
       return Left(ReservationFailure("Échec de l'annulation : $e"));

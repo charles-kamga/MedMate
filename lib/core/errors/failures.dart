@@ -70,7 +70,8 @@ final class ReservationFailure extends Failure {
 /// Échec lorsqu'une commande a déjà été acceptée/attribuée à une autre officine
 final class OrderAlreadyClaimedFailure extends Failure {
   const OrderAlreadyClaimedFailure([
-    super.message = 'Cette demande a déjà été acceptée par une autre officine de la vague.',
+    super.message =
+        'Cette demande a déjà été acceptée par une autre officine de la vague.',
     super.code = 'ORDER_ALREADY_CLAIMED',
   ]);
 }
@@ -78,7 +79,8 @@ final class OrderAlreadyClaimedFailure extends Failure {
 /// Échec lorsque le délai de vague (2 min) est dépassé
 final class WaveExpiredFailure extends Failure {
   const WaveExpiredFailure([
-    super.message = 'Le délai de réponse de 2 minutes pour cette vague est expiré.',
+    super.message =
+        'Le délai de réponse de 2 minutes pour cette vague est expiré.',
     super.code = 'WAVE_EXPIRED',
   ]);
 }
@@ -86,7 +88,8 @@ final class WaveExpiredFailure extends Failure {
 /// Échec lorsque le code OTP saisi est non conforme ou incorrect
 final class InvalidOtpFailure extends Failure {
   const InvalidOtpFailure([
-    super.message = 'Code de retrait OTP invalide. Veuillez vérifier les 6 chiffres.',
+    super.message =
+        'Code de retrait OTP invalide. Veuillez vérifier les 6 chiffres.',
     super.code = 'INVALID_OTP',
   ]);
 }
@@ -94,7 +97,8 @@ final class InvalidOtpFailure extends Failure {
 /// Échec lorsque le code OTP a dépassé son TTL de 2 heures
 final class ExpiredOtpFailure extends Failure {
   const ExpiredOtpFailure([
-    super.message = 'Ce code de retrait a expiré (validité de 2 heures dépassée).',
+    super.message =
+        'Ce code de retrait a expiré (validité de 2 heures dépassée).',
     super.code = 'EXPIRED_OTP',
   ]);
 }

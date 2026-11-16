@@ -10,9 +10,8 @@ import '../../domain/usecases/submit_counter_quote.dart';
 import '../../domain/usecases/validate_counter_otp.dart';
 import '../controllers/pharmacist_counter_cubit.dart';
 import '../controllers/pharmacist_counter_state.dart';
-import '../widgets/counter_otp_validation_keypad.dart';
+import '../widgets/pharmacist_counter_action_panel.dart';
 import '../widgets/pharmacist_portal_top_bar.dart';
-import '../widgets/pharmacist_quote_reply_sheet.dart';
 import '../widgets/pharmacist_request_inbox_card.dart';
 import '../widgets/pharmacist_urgent_alert_banner.dart';
 
@@ -33,7 +32,11 @@ class PharmacistPortalView extends StatelessWidget {
   Widget build(BuildContext context) {
     try {
       BlocProvider.of<PharmacistCounterCubit>(context);
-      return _PharmacistPortalViewContent(initialPharmacyId: initialPharmacyId, enableAlertCycle: enableAlertCycle, onPlayAlertSound: onPlayAlertSound);
+      return _PharmacistPortalViewContent(
+        initialPharmacyId: initialPharmacyId,
+        enableAlertCycle: enableAlertCycle,
+        onPlayAlertSound: onPlayAlertSound,
+      );
     } catch (_) {
       final repo = PharmacistPortalRepositoryImpl();
       return BlocProvider<PharmacistCounterCubit>(
@@ -42,7 +45,11 @@ class PharmacistPortalView extends StatelessWidget {
           submitQuoteUseCase: SubmitCounterQuoteUseCase(repo),
           validateOtpUseCase: ValidateCounterOtpUseCase(repo),
         )..loadPendingOrders(initialPharmacyId),
-        child: _PharmacistPortalViewContent(initialPharmacyId: initialPharmacyId, enableAlertCycle: enableAlertCycle, onPlayAlertSound: onPlayAlertSound),
+        child: _PharmacistPortalViewContent(
+          initialPharmacyId: initialPharmacyId,
+          enableAlertCycle: enableAlertCycle,
+          onPlayAlertSound: onPlayAlertSound,
+        ),
       );
     }
   }
@@ -182,9 +189,17 @@ class _PharmacistPortalViewContentState
         if (state.isFailure && state.errorMessage != null) {
           _showSnackBar(context, state.errorMessage!, AppColors.alert);
         } else if (state.isQuoteSubmitted && state.successMessage != null) {
-          _showSnackBar(context, state.successMessage!, const Color(0xFF10B981));
+          _showSnackBar(
+            context,
+            state.successMessage!,
+            const Color(0xFF10B981),
+          );
         } else if (state.isOtpSuccess && state.successMessage != null) {
-          _showSnackBar(context, state.successMessage!, const Color(0xFF10B981));
+          _showSnackBar(
+            context,
+            state.successMessage!,
+            const Color(0xFF10B981),
+          );
         }
       },
       builder: (context, state) {
@@ -193,7 +208,9 @@ class _PharmacistPortalViewContentState
             final isDesktop = constraints.maxWidth >= 900;
             return Scaffold(
               backgroundColor: AppColors.background,
-              body: isDesktop ? _buildSplitDesktop(state) : _buildMobileTabs(state),
+              body: isDesktop
+                  ? _buildSplitDesktop(state)
+                  : _buildMobileTabs(state),
             );
           },
         );
@@ -214,11 +231,18 @@ class _PharmacistPortalViewContentState
             ],
           ),
         ),
-        const VerticalDivider(width: 1, thickness: 1, color: AppColors.borderSubtle),
+        const VerticalDivider(
+          width: 1,
+          thickness: 1,
+          color: AppColors.borderSubtle,
+        ),
         Expanded(
           child: ColoredBox(
             color: Colors.white,
-            child: _buildActionPanel(state.selectedOrder),
+            child: PharmacistCounterActionPanel(
+              order: state.selectedOrder,
+              activePharmacyId: _activePharmacyId,
+            ),
           ),
         ),
       ],
@@ -237,8 +261,14 @@ class _PharmacistPortalViewContentState
             unselectedLabelColor: AppColors.textSecondary,
             indicatorColor: AppColors.primary,
             tabs: [
-              Tab(icon: const Icon(Icons.inbox_rounded, size: 18), text: 'Demandes (${state.filteredOrders.length})'),
-              const Tab(icon: Icon(Icons.touch_app_rounded, size: 18), text: 'Traitement & Retrait'),
+              Tab(
+                icon: const Icon(Icons.inbox_rounded, size: 18),
+                text: 'Demandes (${state.filteredOrders.length})',
+              ),
+              const Tab(
+                icon: Icon(Icons.touch_app_rounded, size: 18),
+                text: 'Traitement & Retrait',
+              ),
             ],
           ),
         ),
@@ -247,7 +277,10 @@ class _PharmacistPortalViewContentState
             controller: _tabController,
             children: [
               _buildInboxList(state, isDesktop: false),
-              _buildActionPanel(state.selectedOrder),
+              PharmacistCounterActionPanel(
+                order: state.selectedOrder,
+                activePharmacyId: _activePharmacyId,
+              ),
             ],
           ),
         ),
@@ -277,7 +310,10 @@ class _PharmacistPortalViewContentState
     );
   }
 
-  Widget _buildInboxList(PharmacistCounterState state, {required bool isDesktop}) {
+  Widget _buildInboxList(
+    PharmacistCounterState state, {
+    required bool isDesktop,
+  }) {
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -289,7 +325,11 @@ class _PharmacistPortalViewContentState
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.inbox_outlined, size: 40, color: AppColors.textTertiary),
+              Icon(
+                Icons.inbox_outlined,
+                size: 40,
+                color: AppColors.textTertiary,
+              ),
               SizedBox(height: 8),
               Text(
                 'Aucune demande dans cette file.',
@@ -330,63 +370,6 @@ class _PharmacistPortalViewContentState
           },
         );
       },
-    );
-  }
-
-  Widget _buildActionPanel(FlashOrder? order) {
-    if (order == null) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.touch_app_outlined, size: 48, color: AppColors.textTertiary),
-              SizedBox(height: 12),
-              Text('Sélectionnez une commande dans la file', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
-              SizedBox(height: 4),
-              Text('Vous pourrez émettre votre offre chiffrée ou valider le retrait OTP.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (order.status == FlashOrderStatus.cancelled) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.cancel_outlined, size: 48, color: AppColors.alert),
-              SizedBox(height: 12),
-              Text('Cette commande a été annulée par le patient.', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.alert)),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final isReadyOrAccepted = order.status == FlashOrderStatus.readyForPickup ||
-        order.status == FlashOrderStatus.accepted;
-
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          if (isReadyOrAccepted)
-            CounterOtpValidationKeypad(
-              orderId: order.id,
-              pharmacyId: _activePharmacyId,
-            )
-          else
-            PharmacistQuoteReplySheet(
-              order: order,
-              pharmacyId: _activePharmacyId,
-              isEmbedded: true,
-            ),
-        ],
-      ),
     );
   }
 }

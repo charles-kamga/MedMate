@@ -1,11 +1,25 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medmate/core/constants/yaounde_landmarks.dart';
 import 'package:medmate/features/flash_order/domain/entities/basket_item.dart';
 import 'package:medmate/features/flash_order/domain/entities/flash_order.dart';
 import 'package:medmate/features/flash_order/domain/entities/pharmacy_offer.dart';
 import 'package:medmate/features/pharmacist_portal/data/repositories/pharmacist_portal_repository_impl.dart';
+import 'package:medmate/features/pharmacist_portal/domain/usecases/get_pending_counter_orders.dart';
+import 'package:medmate/features/pharmacist_portal/domain/usecases/submit_counter_quote.dart';
+import 'package:medmate/features/pharmacist_portal/domain/usecases/validate_counter_otp.dart';
+import 'package:medmate/features/pharmacist_portal/presentation/controllers/pharmacist_counter_cubit.dart';
+import 'package:medmate/features/pharmacist_portal/presentation/views/pharmacist_portal_view.dart';
 import 'package:medmate/features/pharmacy_search/domain/entities/medication.dart';
 import 'package:medmate/features/reservation/data/repositories/reservation_repository_impl.dart';
+import 'package:medmate/features/reservation/domain/usecases/cancel_flash_request.dart';
+import 'package:medmate/features/reservation/domain/usecases/escalate_dispatch_wave.dart';
+import 'package:medmate/features/reservation/domain/usecases/select_pharmacy_offer.dart';
+import 'package:medmate/features/reservation/domain/usecases/submit_flash_request.dart';
+import 'package:medmate/features/reservation/presentation/controllers/flash_reservation_cubit.dart';
+import 'package:medmate/features/reservation/presentation/controllers/flash_reservation_state.dart';
 
 void main() {
   const sampleMed = Medication(
@@ -24,7 +38,9 @@ void main() {
     orElse: () => YaoundeLandmarks.list.first,
   );
 
-  group('Intégration Bout-en-Bout — Propagation Annulation Patient <-> Pharmacien', () {
+  group(
+      'Intégration Bout-en-Bout — Propagation Annulation Patient <-> Pharmacien',
+      () {
     late Map<String, FlashOrder> sharedStore;
     late ReservationRepositoryImpl patientRepo;
     late PharmacistPortalRepositoryImpl pharmacistRepo;
@@ -32,7 +48,8 @@ void main() {
     setUp(() {
       sharedStore = <String, FlashOrder>{};
       patientRepo = ReservationRepositoryImpl(sharedOrders: sharedStore);
-      pharmacistRepo = PharmacistPortalRepositoryImpl(sharedOrders: sharedStore);
+      pharmacistRepo =
+          PharmacistPortalRepositoryImpl(sharedOrders: sharedStore);
     });
 
     test(
@@ -121,12 +138,15 @@ void main() {
       );
     });
 
-    test('refus d’annulation si la commande a déjà été retirée au comptoir (delivered)',
+    test(
+        'refus d’annulation si la commande a déjà été retirée au comptoir (delivered)',
         () async {
       // 1. Commande déjà livrée
       final deliveredOrder = FlashOrder(
         id: 'ORD-DELIVERED',
-        items: const [BasketItem(id: 'b-2', medication: sampleMed, quantity: 1)],
+        items: const [
+          BasketItem(id: 'b-2', medication: sampleMed, quantity: 1),
+        ],
         quarter: 'Melen',
         targets: const [],
         status: FlashOrderStatus.delivered,
@@ -137,7 +157,8 @@ void main() {
       sharedStore[deliveredOrder.id] = deliveredOrder;
 
       // 2. Tentative d'annulation
-      final cancelResult = await patientRepo.cancelFlashRequest(deliveredOrder.id);
+      final cancelResult =
+          await patientRepo.cancelFlashRequest(deliveredOrder.id);
       expect(cancelResult.isLeft(), isTrue);
       cancelResult.fold(
         (failure) => expect(
@@ -146,6 +167,154 @@ void main() {
         ),
         (_) => fail('L’annulation aurait dû être refusée'),
       );
+    });
+
+    test(
+        'FlashReservationCubit.cancelReservation : succès réinitialise à initial et propage cancelled dans sharedStore',
+        () async {
+      final cubit = FlashReservationCubit(
+        submitFlashRequestUseCase: SubmitFlashRequestUseCase(patientRepo),
+        escalateDispatchWaveUseCase: EscalateDispatchWaveUseCase(patientRepo),
+        selectPharmacyOfferUseCase: SelectPharmacyOfferUseCase(patientRepo),
+        cancelFlashRequestUseCase: CancelFlashRequestUseCase(patientRepo),
+        reservationRepository: patientRepo,
+      )
+        ..addItem(sampleMed, quantity: 1)
+        ..selectLandmark(sampleLandmark);
+      await cubit.submitFlashRequest();
+
+      final activeOrder = cubit.state.currentOrder;
+      expect(activeOrder, isNotNull);
+
+      await cubit.cancelReservation();
+
+      expect(cubit.state.status, equals(FlashReservationStatus.initial));
+      expect(cubit.state.currentOrder, isNull);
+      expect(cubit.state.confirmedReservation, isNull);
+      expect(
+        sharedStore[activeOrder!.id]?.status,
+        equals(FlashOrderStatus.cancelled),
+      );
+
+      await cubit.close();
+    });
+
+    test(
+        'FlashReservationCubit.cancelReservation : échec conserve la commande et émet errorMessage',
+        () async {
+      final cubit = FlashReservationCubit(
+        submitFlashRequestUseCase: SubmitFlashRequestUseCase(patientRepo),
+        escalateDispatchWaveUseCase: EscalateDispatchWaveUseCase(patientRepo),
+        selectPharmacyOfferUseCase: SelectPharmacyOfferUseCase(patientRepo),
+        cancelFlashRequestUseCase: CancelFlashRequestUseCase(patientRepo),
+        reservationRepository: patientRepo,
+      )
+        ..addItem(sampleMed, quantity: 1)
+        ..selectLandmark(sampleLandmark);
+      await cubit.submitFlashRequest();
+
+      final activeOrder = cubit.state.currentOrder!;
+      // Simule la délivrance au comptoir entre-temps
+      sharedStore[activeOrder.id] = activeOrder.copyWith(
+        status: FlashOrderStatus.delivered,
+        isPickedUp: true,
+      );
+
+      await cubit.cancelReservation();
+
+      // La commande n'est pas effacée et le message d'erreur est présent
+      expect(cubit.state.currentOrder, isNotNull);
+      expect(
+        cubit.state.errorMessage,
+        contains("Impossible d'annuler une commande déjà délivrée"),
+      );
+
+      await cubit.close();
+    });
+
+    testWidgets(
+        "commande urgente annulée par le patient -> l'alerte du portail pharmacien s'arrête d'elle-même",
+        (tester) async {
+      tester.view.physicalSize = const Size(900, 700);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final ordersController = StreamController<void>.broadcast();
+      addTearDown(ordersController.close);
+
+      final customStore = <String, FlashOrder>{
+        'ORD-URG-1': FlashOrder(
+          id: 'ORD-URG-1',
+          items: const [
+            BasketItem(id: 'b-urg', medication: sampleMed, quantity: 1),
+          ],
+          quarter: 'Carrefour Warda',
+          targets: const [
+            DispatchedPharmacy(
+              id: 'pharma-soleil',
+              name: 'Pharmacie du Soleil',
+              quarter: 'Warda',
+              distanceKm: 0.4,
+              phone: '+237 677 12 34 56',
+              waveIndex: 1,
+            ),
+          ],
+          status: FlashOrderStatus.dispatchingWave,
+          createdAt: DateTime.now(),
+          expiresAt: DateTime.now().add(const Duration(hours: 2)),
+        ),
+      };
+
+      final reactivePatientRepo = ReservationRepositoryImpl(
+        sharedOrders: customStore,
+        onOrdersChanged: () {
+          if (!ordersController.isClosed) {
+            ordersController.add(null);
+          }
+        },
+      );
+      final reactivePharmaRepo = PharmacistPortalRepositoryImpl(
+        sharedOrders: customStore,
+      );
+
+      final pharmaCubit = PharmacistCounterCubit(
+        getPendingOrders: GetPendingCounterOrdersUseCase(reactivePharmaRepo),
+        submitQuoteUseCase: SubmitCounterQuoteUseCase(reactivePharmaRepo),
+        validateOtpUseCase: ValidateCounterOtpUseCase(reactivePharmaRepo),
+        localOrdersStream: ordersController.stream,
+      );
+      addTearDown(pharmaCubit.close);
+
+      var soundCount = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BlocProvider<PharmacistCounterCubit>.value(
+            value: pharmaCubit,
+            child: PharmacistPortalView(
+              initialPharmacyId: 'pharma-soleil',
+              enableAlertCycle: true,
+              onPlayAlertSound: () => soundCount++,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // L'alerte urgente est active au départ (t = 0s)
+      expect(find.text('Nouvelle demande urgente'), findsOneWidget);
+      expect(soundCount, equals(1));
+
+      // Le patient annule sa commande : le flux réactif notifie immédiatement le portail
+      await reactivePatientRepo.cancelFlashRequest('ORD-URG-1');
+      await tester.pumpAndSettle();
+
+      // Le bandeau disparaît et le timer sonore est arrêté sans intervention manuelle
+      expect(find.text('Nouvelle demande urgente'), findsNothing);
+
+      // Avance de 60s : aucune sonnerie supplémentaire
+      await tester.pump(const Duration(seconds: 60));
+      expect(soundCount, equals(1));
     });
   });
 }

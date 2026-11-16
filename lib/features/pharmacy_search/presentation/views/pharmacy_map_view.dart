@@ -22,7 +22,7 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
   YaoundeLandmark? _selectedLandmark;
   Pharmacy? _selectedPharmacy;
 
-  // Officines témoins réelles de Yaoundé
+  // DÉMO — données fictives (officines témoins pour carte interactive)
   static const List<Pharmacy> _samplePharmacies = [
     Pharmacy(
       id: 'pharmacy-centre',
@@ -153,7 +153,8 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
             children: [
               if (widget.enableNetworkTiles)
                 TileLayer(
-                  urlTemplate: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
+                  urlTemplate:
+                      'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
                   subdomains: const ['a', 'b', 'c'],
                   userAgentPackageName: 'cm.medmate.medmate',
                 ),
@@ -162,7 +163,10 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
                   // Marqueur du repère sélectionné (Carrefour de Yaoundé)
                   if (_selectedLandmark != null)
                     Marker(
-                      point: LatLng(_selectedLandmark!.latitude, _selectedLandmark!.longitude),
+                      point: LatLng(
+                        _selectedLandmark!.latitude,
+                        _selectedLandmark!.longitude,
+                      ),
                       width: 50,
                       height: 50,
                       child: Container(
@@ -171,7 +175,11 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
                           shape: BoxShape.circle,
                         ),
                         child: const Center(
-                          child: Icon(Icons.my_location_rounded, color: AppColors.secondary, size: 28),
+                          child: Icon(
+                            Icons.my_location_rounded,
+                            color: AppColors.secondary,
+                            size: 28,
+                          ),
                         ),
                       ),
                     ),
@@ -189,11 +197,15 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
                           duration: const Duration(milliseconds: 200),
                           decoration: BoxDecoration(
                             color: isPartner
-                                ? (pharmacy.estDeGarde ? AppColors.success : AppColors.primary)
+                                ? (pharmacy.estDeGarde
+                                    ? AppColors.success
+                                    : AppColors.primary)
                                 : const Color(0xFF64748B),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isPartner ? Colors.white : const Color(0xFFCBD5E1),
+                              color: isPartner
+                                  ? Colors.white
+                                  : const Color(0xFFCBD5E1),
                               width: isSelected ? 3 : 2,
                             ),
                             boxShadow: [
@@ -205,7 +217,9 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
                             ],
                           ),
                           child: Icon(
-                            isPartner ? Icons.local_pharmacy_rounded : Icons.storefront_outlined,
+                            isPartner
+                                ? Icons.local_pharmacy_rounded
+                                : Icons.storefront_outlined,
                             color: Colors.white,
                             size: isPartner ? 24 : 20,
                           ),
@@ -222,7 +236,8 @@ class _PharmacyMapViewState extends State<PharmacyMapView> {
           YaoundeLandmarkFilterBar(
             selectedLandmark: _selectedLandmark,
             partnerCount: _samplePharmacies.where((p) => p.isPartner).length,
-            nonPartnerCount: _samplePharmacies.where((p) => !p.isPartner).length,
+            nonPartnerCount:
+                _samplePharmacies.where((p) => !p.isPartner).length,
             onSelect: _onSelectLandmark,
           ),
 

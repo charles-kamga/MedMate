@@ -1,9 +1,16 @@
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medmate/features/flash_order/domain/entities/flash_order.dart';
 import 'package:medmate/features/flash_order/domain/entities/pharmacy_offer.dart';
 import 'package:medmate/features/pharmacy_search/domain/entities/reservation.dart';
+import 'package:medmate/features/reservation/presentation/controllers/flash_reservation_cubit.dart';
+import 'package:medmate/features/reservation/presentation/controllers/flash_reservation_state.dart';
 import 'package:medmate/features/reservation/presentation/widgets/reservation_otp_ticket_card.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockFlashReservationCubit extends MockCubit<FlashReservationState>
+    implements FlashReservationCubit {}
 
 void main() {
   final now = DateTime.now();
@@ -25,6 +32,7 @@ void main() {
   Widget buildWidget({
     required Reservation reservation,
     FlashOrder? order,
+    FlashReservationCubit? cubit,
     VoidCallback? onCancel,
     void Function(String)? onCallPharmacy,
   }) {
@@ -34,6 +42,7 @@ void main() {
           child: ReservationOtpTicketCard(
             reservation: reservation,
             order: order,
+            cubit: cubit,
             onCancel: onCancel,
             onCallPharmacy: onCallPharmacy,
           ),
@@ -42,8 +51,11 @@ void main() {
     );
   }
 
-  group('ReservationOtpTicketCard — Fallback Téléphone & Confirmation Annulation', () {
-    testWidgets('affiche « Numéro non communiqué » et désactive le bouton appeler si téléphone vide',
+  group(
+      'ReservationOtpTicketCard — Fallback Téléphone & Confirmation Annulation',
+      () {
+    testWidgets(
+        'affiche « Numéro non communiqué » et désactive le bouton appeler si téléphone vide',
         (tester) async {
       final orderWithEmptyPhone = FlashOrder(
         id: 'ORD-TEST-001',
@@ -81,7 +93,8 @@ void main() {
       expect(callBtn.onPressed, isNull);
     });
 
-    testWidgets('affiche le numéro et active le bouton appeler lorsque téléphone présent',
+    testWidgets(
+        'affiche le numéro et active le bouton appeler lorsque téléphone présent',
         (tester) async {
       var callTriggeredWith = '';
 
@@ -124,10 +137,18 @@ void main() {
       expect(callTriggeredWith, equals('+237 242 79 29 85'));
     });
 
-    testWidgets('affiche dialogue de confirmation d’annulation si onCancel est null',
+    testWidgets(
+        'dialogue de confirmation d’annulation : Non conserve, Oui appelle cancelReservation',
         (tester) async {
+      final mockCubit = MockFlashReservationCubit();
+      when(() => mockCubit.state).thenReturn(const FlashReservationState());
+      when(mockCubit.cancelReservation).thenAnswer((_) async {});
+
       await tester.pumpWidget(
-        buildWidget(reservation: sampleReservation),
+        buildWidget(
+          reservation: sampleReservation,
+          cubit: mockCubit,
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -148,12 +169,16 @@ void main() {
       await tester.tap(find.text('Non, conserver'));
       await tester.pumpAndSettle();
 
-      expect(
-        find.text(
-          'Êtes-vous sûr de vouloir annuler votre demande ? Les pharmacies ciblées seront prévenues.',
-        ),
-        findsNothing,
-      );
+      verifyNever(mockCubit.cancelReservation);
+
+      // Nouvelle ouverture et confirmation via « Oui, annuler »
+      await tester.tap(cancelBtn);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Oui, annuler'));
+      await tester.pumpAndSettle();
+
+      verify(mockCubit.cancelReservation).called(1);
     });
   });
 }

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import '../../../../core/constants/yaounde_landmarks.dart';
+import '../../../flash_order/domain/entities/flash_order.dart';
 
 /// Vague de dispatching géospatial selon l'isochrone urbain de Yaoundé
 enum DispatchWaveTier {
@@ -296,7 +297,9 @@ class YaoundeTopologicalRouter {
       final minutes = directCorridors[destinationId]!;
       final tier = minutes <= 5
           ? DispatchWaveTier.wave1Immediate
-          : (minutes <= 15 ? DispatchWaveTier.wave2Arterial : DispatchWaveTier.wave3Extended);
+          : (minutes <= 15
+              ? DispatchWaveTier.wave2Arterial
+              : DispatchWaveTier.wave3Extended);
       return TopologicalRouteResult(
         originLandmarkId: originId,
         destinationLandmarkId: destinationId,
@@ -330,7 +333,8 @@ class YaoundeTopologicalRouter {
     final eligible = <String>[];
     for (final landmark in yaoundeLandmarks) {
       final route = calculateTopologicalRoute(originId, landmark.id);
-      if (waveNumber == 1 && route.waveTier == DispatchWaveTier.wave1Immediate) {
+      if (waveNumber == 1 &&
+          route.waveTier == DispatchWaveTier.wave1Immediate) {
         eligible.add(landmark.id);
       } else if (waveNumber == 2 &&
           (route.waveTier == DispatchWaveTier.wave1Immediate ||
@@ -341,6 +345,34 @@ class YaoundeTopologicalRouter {
       }
     }
     return eligible;
+  }
+
+  /// Construit la liste des pharmacies ciblées pour une vague à partir des repères éligibles
+  List<DispatchedPharmacy> buildTargetsForWave(
+    List<String> landmarkIds,
+    YaoundeLandmark origin,
+    int waveIndex, {
+    List<DispatchedPharmacy> existing = const [],
+  }) {
+    final targets = List<DispatchedPharmacy>.from(existing);
+    for (final id in landmarkIds) {
+      final lm = findLandmarkById(id);
+      if (lm != null &&
+          (existing.isEmpty || !targets.any((t) => t.quarter == lm.quartier))) {
+        final route = calculateTopologicalRoute(origin.id, lm.id);
+        targets.add(
+          DispatchedPharmacy(
+            id: 'pharmacy-$id',
+            name: 'Pharmacie ${lm.nom}',
+            quarter: lm.quartier,
+            distanceKm: route.distanceKm,
+            phone: '+237 600000000',
+            waveIndex: waveIndex,
+          ),
+        );
+      }
+    }
+    return targets;
   }
 
   static double _degreesToRadians(double degrees) => degrees * math.pi / 180.0;

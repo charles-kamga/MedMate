@@ -65,8 +65,9 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
       final expiresAt = now.add(const Duration(hours: 2));
 
       // Calcul des cibles de la Vague 1 (< 5 min) via le routeur topologique
-      final wave1LandmarkIds = router.getEligibleLandmarksForWave(landmark.id, 1);
-      final targets = _buildInitialTargets(wave1LandmarkIds, landmark);
+      final wave1LandmarkIds =
+          router.getEligibleLandmarksForWave(landmark.id, 1);
+      final targets = router.buildTargetsForWave(wave1LandmarkIds, landmark, 1);
 
       final order = FlashOrder(
         id: orderId,
@@ -83,12 +84,16 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
       _ordersCache[orderId] = order;
       return Right(order);
     } catch (e) {
-      return Left(ServerFailure('Erreur lors de la création de la commande: $e'));
+      return Left(
+        ServerFailure('Erreur lors de la création de la commande: $e'),
+      );
     }
   }
 
   @override
-  Future<Either<Failure, FlashOrder>> escalateDispatchWave(String orderId) async {
+  Future<Either<Failure, FlashOrder>> escalateDispatchWave(
+    String orderId,
+  ) async {
     try {
       final existing = _ordersCache[orderId];
       if (existing == null) {
@@ -96,31 +101,21 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
       }
 
       final nextWave = existing.currentWave + 1;
-      final originLandmark = YaoundeTopologicalRouter.yaoundeLandmarks.firstWhere(
+      final originLandmark =
+          YaoundeTopologicalRouter.yaoundeLandmarks.firstWhere(
         (l) => l.quartier.toLowerCase() == existing.quarter.toLowerCase(),
         orElse: () => YaoundeTopologicalRouter.yaoundeLandmarks.first,
       );
 
       // Expansion vers les corridors artériels de Vague 2 (5-15 min)
-      final waveLandmarkIds = router.getEligibleLandmarksForWave(originLandmark.id, nextWave);
-      final updatedTargets = List<DispatchedPharmacy>.from(existing.targets);
-
-      for (final id in waveLandmarkIds) {
-        final lm = router.findLandmarkById(id);
-        if (lm != null && !updatedTargets.any((t) => t.quarter == lm.quartier)) {
-          final route = router.calculateTopologicalRoute(originLandmark.id, lm.id);
-          updatedTargets.add(
-            DispatchedPharmacy(
-              id: 'pharmacy-$id',
-              name: 'Pharmacie ${lm.nom}',
-              quarter: lm.quartier,
-              distanceKm: route.distanceKm,
-              phone: '+237 600000000',
-              waveIndex: nextWave,
-            ),
-          );
-        }
-      }
+      final waveLandmarkIds =
+          router.getEligibleLandmarksForWave(originLandmark.id, nextWave);
+      final updatedTargets = router.buildTargetsForWave(
+        waveLandmarkIds,
+        originLandmark,
+        nextWave,
+        existing: existing.targets,
+      );
 
       final updatedOrder = existing.copyWith(
         currentWave: nextWave,
@@ -138,7 +133,9 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
   }
 
   @override
-  Future<Either<Failure, FlashOrder>> getFlashRequestById(String orderId) async {
+  Future<Either<Failure, FlashOrder>> getFlashRequestById(
+    String orderId,
+  ) async {
     final cached = _ordersCache[orderId];
     if (cached != null) return Right(cached);
     return const Left(ServerFailure('Commande flash introuvable'));
@@ -207,7 +204,9 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
       }).toList();
       return Right(pending);
     } catch (e) {
-      return Left(ServerFailure('Erreur de récupération des commandes en attente: $e'));
+      return Left(
+        ServerFailure('Erreur de récupération des commandes en attente: $e'),
+      );
     }
   }
 
@@ -226,7 +225,11 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
     try {
       final order = _ordersCache[orderId];
       if (order != null && order.status == FlashOrderStatus.accepted) {
-        return const Left(ServerFailure('Cette commande a déjà été acceptée par un confrère'));
+        return const Left(
+          ServerFailure(
+            'Cette commande a déjà été acceptée par un confrère',
+          ),
+        );
       }
       if (order != null && order.status == FlashOrderStatus.cancelled) {
         return const Left(ServerFailure('Cette commande a été annulée'));
@@ -252,7 +255,8 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
       _offersCache.putIfAbsent(orderId, () => []).add(offer);
 
       if (order != null) {
-        final updatedOffers = List<PharmacyOffer>.from(order.offers)..add(offer);
+        final updatedOffers = List<PharmacyOffer>.from(order.offers)
+          ..add(offer);
         _ordersCache[orderId] = order.copyWith(
           offers: updatedOffers,
           status: FlashOrderStatus.offersReceived,
@@ -279,15 +283,21 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
       }
 
       if (order.status == FlashOrderStatus.cancelled) {
-        return const Left(ServerFailure('Cette commande a été annulée par le patient'));
+        return const Left(
+          ServerFailure('Cette commande a été annulée par le patient'),
+        );
       }
 
       if (order.isPickedUp || order.status == FlashOrderStatus.delivered) {
-        return const Left(ServerFailure('Cette commande a déjà été retirée au comptoir'));
+        return const Left(
+          ServerFailure('Cette commande a déjà été retirée au comptoir'),
+        );
       }
 
       if (order.isExpired) {
-        return const Left(ServerFailure('Ce code de retrait OTP a expiré (> 2 heures)'));
+        return const Left(
+          ServerFailure('Ce code de retrait OTP a expiré (> 2 heures)'),
+        );
       }
 
       if (order.reservationOtpCode != otpCode) {
@@ -300,11 +310,16 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
       );
 
       _ordersCache[orderId] = deliveredOrder;
-      await realtimeDataSource.updateOrderStatus(orderId, FlashOrderStatus.delivered);
+      await realtimeDataSource.updateOrderStatus(
+        orderId,
+        FlashOrderStatus.delivered,
+      );
 
       // Archivage sécurisé du ticket de délivrance (Loi n° 2024/017 & ONPC)
       final itemsSummary = order.items.isNotEmpty
-          ? order.items.map((i) => '${i.medication.nomCommercial} x${i.quantity}').join(', ')
+          ? order.items
+              .map((i) => '${i.medication.nomCommercial} x${i.quantity}')
+              .join(', ')
           : '${order.medication.nomCommercial} x${order.quantity}';
 
       final ticketId = _uuid.v4();
@@ -328,52 +343,36 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
 
   @override
   Future<Either<Failure, FlashOrder>> cancelFlashRequest(String orderId) async {
+    final existing = _ordersCache[orderId];
+    if (existing == null) {
+      return const Left(ServerFailure('Commande introuvable pour annulation'));
+    }
+    if (existing.status == FlashOrderStatus.delivered || existing.isPickedUp) {
+      return const Left(
+        ServerFailure("Impossible d'annuler une commande déjà délivrée."),
+      );
+    }
+    final cancelled = existing.copyWith(
+      status: FlashOrderStatus.cancelled,
+    );
     try {
-      final existing = _ordersCache[orderId];
-      if (existing == null) {
-        return const Left(ServerFailure('Commande introuvable pour annulation'));
-      }
-      if (existing.status == FlashOrderStatus.delivered || existing.isPickedUp) {
-        return const Left(ServerFailure("Impossible d'annuler une commande déjà délivrée."));
-      }
-      final cancelled = existing.copyWith(
-        status: FlashOrderStatus.cancelled,
+      await realtimeDataSource.updateOrderStatus(
+        orderId,
+        FlashOrderStatus.cancelled,
       );
       _ordersCache[orderId] = cancelled;
-      await realtimeDataSource.updateOrderStatus(orderId, FlashOrderStatus.cancelled);
       return Right(cancelled);
     } catch (e) {
-      return Left(ServerFailure("Erreur lors de l'annulation de la commande: $e"));
+      _ordersCache[orderId] = existing;
+      return Left(
+        ServerFailure("Erreur lors de l'annulation de la commande: $e"),
+      );
     }
   }
 
   @override
   void dispose() {
     realtimeDataSource.dispose();
-  }
-
-  List<DispatchedPharmacy> _buildInitialTargets(
-    List<String> landmarkIds,
-    YaoundeLandmark origin,
-  ) {
-    final targets = <DispatchedPharmacy>[];
-    for (final id in landmarkIds) {
-      final lm = router.findLandmarkById(id);
-      if (lm != null) {
-        final route = router.calculateTopologicalRoute(origin.id, lm.id);
-        targets.add(
-          DispatchedPharmacy(
-            id: 'pharmacy-$id',
-            name: 'Pharmacie ${lm.nom}',
-            quarter: lm.quartier,
-            distanceKm: route.distanceKm,
-            phone: '+237 600000000',
-            waveIndex: 1,
-          ),
-        );
-      }
-    }
-    return targets;
   }
 
   String _generateOtpCode() {

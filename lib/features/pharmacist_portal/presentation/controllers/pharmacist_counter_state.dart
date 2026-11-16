@@ -49,7 +49,8 @@ class PharmacistCounterState extends Equatable {
   bool get isInitial => status == PharmacistCounterStatus.initial;
   bool get isLoading => status == PharmacistCounterStatus.loading;
   bool get isLoaded => status == PharmacistCounterStatus.loaded;
-  bool get isSubmittingQuote => status == PharmacistCounterStatus.submittingQuote;
+  bool get isSubmittingQuote =>
+      status == PharmacistCounterStatus.submittingQuote;
   bool get isQuoteSubmitted => status == PharmacistCounterStatus.quoteSubmitted;
   bool get isValidatingOtp => status == PharmacistCounterStatus.validatingOtp;
   bool get isOtpSuccess => status == PharmacistCounterStatus.otpSuccess;
@@ -61,6 +62,57 @@ class PharmacistCounterState extends Equatable {
       return orders;
     }
     return orders.where((order) => order.status.name == filterStatus).toList();
+  }
+
+  /// Calcule le nouvel état après réception d'une liste de commandes temps réel
+  ({PharmacistCounterState nextState, bool selectionCleared})
+      withRealtimeOrdersUpdate(
+    String pharmacyId,
+    List<FlashOrder> incomingOrders,
+  ) {
+    final validOrders = incomingOrders.where((order) {
+      if (order.selectedOffer != null &&
+          order.selectedOffer!.pharmacyId != pharmacyId) {
+        return false;
+      }
+      if (order.status != FlashOrderStatus.dispatchingWave &&
+          order.selectedOffer?.pharmacyId != pharmacyId) {
+        return false;
+      }
+      return true;
+    }).toList();
+
+    final existingIds = orders.map((o) => o.id).toSet();
+    final newCount =
+        validOrders.where((o) => !existingIds.contains(o.id)).length;
+    final hasNew = newCount > 0;
+
+    FlashOrder? updatedSelected;
+    int? remainingSeconds;
+    var clearSelected = false;
+
+    if (selectedOrder != null) {
+      final selectedId = selectedOrder!.id;
+      final found = validOrders.where((o) => o.id == selectedId).firstOrNull;
+      if (found == null) {
+        clearSelected = true;
+      } else {
+        updatedSelected = found;
+        remainingSeconds = found.waveTimeRemainingSeconds;
+      }
+    }
+
+    final nextState = copyWith(
+      status: PharmacistCounterStatus.loaded,
+      orders: validOrders,
+      selectedOrder: updatedSelected,
+      clearSelectedOrder: clearSelected,
+      selectedOrderWaveRemainingSeconds: remainingSeconds,
+      clearWaveRemaining: clearSelected,
+      hasNewOrderAlert: hasNew || hasNewOrderAlert,
+      newOrdersCount: newOrdersCount + newCount,
+    );
+    return (nextState: nextState, selectionCleared: clearSelected);
   }
 
   PharmacistCounterState copyWith({

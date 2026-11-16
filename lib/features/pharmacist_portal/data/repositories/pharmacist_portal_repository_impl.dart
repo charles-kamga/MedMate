@@ -38,7 +38,9 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
 
       return Right(List.unmodifiable(list));
     } catch (e) {
-      return Left(ServerFailure('Erreur lors du chargement des commandes : $e'));
+      return Left(
+        ServerFailure('Erreur lors du chargement des commandes : $e'),
+      );
     }
   }
 
@@ -60,13 +62,21 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
         return const Left(NotFoundFailure('Demande flash introuvable.'));
       }
       if (order.status == FlashOrderStatus.cancelled) {
-        return const Left(ValidationFailure('Cette demande flash a été annulée par le patient.'));
+        return const Left(
+          ValidationFailure(
+            'Cette demande flash a été annulée par le patient.',
+          ),
+        );
       }
 
       // Vérification du ciblage de l'officine
       final targetIndex = order.targets.indexWhere((t) => t.id == pharmacyId);
       if (targetIndex == -1) {
-        return const Left(NotFoundFailure("Cette officine n'est pas ciblée par cette demande."));
+        return const Left(
+          NotFoundFailure(
+            "Cette officine n'est pas ciblée par cette demande.",
+          ),
+        );
       }
 
       // Vérification de l'expiration de la vague (2 minutes max)
@@ -75,11 +85,12 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
       }
 
       // Détection de conflit de concurrence : déjà attribuée à un confrère
-      final isAlreadyClaimedByOther = (order.status == FlashOrderStatus.accepted ||
-              order.status == FlashOrderStatus.readyForPickup ||
-              order.status == FlashOrderStatus.delivered) &&
-          order.selectedOffer != null &&
-          order.selectedOffer!.pharmacyId != pharmacyId;
+      final isAlreadyClaimedByOther =
+          (order.status == FlashOrderStatus.accepted ||
+                  order.status == FlashOrderStatus.readyForPickup ||
+                  order.status == FlashOrderStatus.delivered) &&
+              order.selectedOffer != null &&
+              order.selectedOffer!.pharmacyId != pharmacyId;
 
       if (isAlreadyClaimedByOther) {
         return const Left(OrderAlreadyClaimedFailure());
@@ -87,7 +98,8 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
 
       // Conversion du statut de réponse pour l'officine ciblée
       final replyType = switch (availability) {
-        PharmacyAvailabilityType.fullyAvailable => PharmacistReplyType.available,
+        PharmacyAvailabilityType.fullyAvailable =>
+          PharmacistReplyType.available,
         PharmacyAvailabilityType.partiallyAvailable ||
         PharmacyAvailabilityType.conditional =>
           PharmacistReplyType.conditional,
@@ -137,7 +149,9 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
       _orders[orderId] = updatedOrder;
       return Right(offer);
     } catch (e) {
-      return Left(ServerFailure("Erreur lors de l'enregistrement du devis : $e"));
+      return Left(
+        ServerFailure("Erreur lors de l'enregistrement du devis : $e"),
+      );
     }
   }
 
@@ -153,7 +167,9 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
         return const Left(NotFoundFailure('Demande de retrait introuvable.'));
       }
       if (order.status == FlashOrderStatus.cancelled) {
-        return const Left(ValidationFailure('Cette commande a été annulée par le patient.'));
+        return const Left(
+          ValidationFailure('Cette commande a été annulée par le patient.'),
+        );
       }
 
       // Vérification du format à 6 chiffres

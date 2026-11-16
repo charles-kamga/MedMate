@@ -28,10 +28,17 @@ import 'package:medmate/features/reservation/presentation/widgets/wave_dispatch_
 import 'package:mocktail/mocktail.dart';
 
 class MockPharmacyRepository extends Mock implements PharmacyRepository {}
+
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
-class MockFlashOrderCubit extends MockCubit<FlashOrderState> implements FlashOrderCubit {}
-class MockFlashReservationCubit extends MockCubit<FlashReservationState> implements FlashReservationCubit {}
-class MockMedicationCatalogCubit extends MockCubit<MedicationCatalogState> implements MedicationCatalogCubit {}
+
+class MockFlashOrderCubit extends MockCubit<FlashOrderState>
+    implements FlashOrderCubit {}
+
+class MockFlashReservationCubit extends MockCubit<FlashReservationState>
+    implements FlashReservationCubit {}
+
+class MockMedicationCatalogCubit extends MockCubit<MedicationCatalogState>
+    implements MedicationCatalogCubit {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -71,8 +78,11 @@ void main() {
     expiresAt: DateTime.now().add(const Duration(hours: 2)),
   );
 
-  group('Afya-Health V1 — ReservationOtpTicketCard & WaveDispatchProgressCard', () {
-    testWidgets('ReservationOtpTicketCard mentionne le règlement sur place au comptoir', (tester) async {
+  group('Afya-Health V1 — ReservationOtpTicketCard & WaveDispatchProgressCard',
+      () {
+    testWidgets(
+        'ReservationOtpTicketCard mentionne le règlement sur place au comptoir',
+        (tester) async {
       final now = DateTime.now();
       final reservation = Reservation(
         id: 'RES-001',
@@ -107,7 +117,9 @@ void main() {
       );
     });
 
-    testWidgets('ReservationOtpTicketCard affiche le QR code et déclenche le bouton annuler ma demande', (tester) async {
+    testWidgets(
+        'ReservationOtpTicketCard affiche le QR code et déclenche le bouton annuler ma demande',
+        (tester) async {
       final now = DateTime.now();
       final reservation = Reservation(
         id: 'RES-002',
@@ -150,7 +162,9 @@ void main() {
       expect(cancelTriggered, isTrue);
     });
 
-    testWidgets('WaveDispatchProgressCard affiche et actionne bouton de recours pharmacies de garde', (tester) async {
+    testWidgets(
+        'WaveDispatchProgressCard affiche et actionne bouton de recours pharmacies de garde',
+        (tester) async {
       var dutyOpened = false;
 
       await tester.pumpWidget(
@@ -190,12 +204,14 @@ void main() {
 
       when(() => mockAuthBloc.state).thenReturn(const AuthInitial());
       when(() => mockFlashOrderCubit.state).thenReturn(const FlashOrderState());
-      when(() => mockFlashCubit.state).thenReturn(const FlashReservationState());
+      when(() => mockFlashCubit.state)
+          .thenReturn(const FlashReservationState());
       when(() => mockCatalogCubit.state)
           .thenReturn(const MedicationCatalogInitial());
     });
 
-    testWidgets('onglet 2 bascule entre DutyPharmacyScreen et PharmacyMapView', (tester) async {
+    testWidgets('onglet 2 bascule entre DutyPharmacyScreen et PharmacyMapView',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -229,7 +245,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Vérification état initial de l'onglet : Liste de gardes active
-      expect(find.byKey(const ValueKey('btn_switch_duty_list')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('btn_switch_duty_list')),
+        findsOneWidget,
+      );
       expect(find.byKey(const ValueKey('btn_switch_map_view')), findsOneWidget);
       expect(find.byType(DutyPharmacyScreen), findsOneWidget);
       expect(find.byType(PharmacyMapView), findsNothing);

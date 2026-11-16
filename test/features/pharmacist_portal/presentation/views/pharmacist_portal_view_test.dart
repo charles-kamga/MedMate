@@ -79,7 +79,8 @@ void main() {
   }
 
   group('PharmacistPortalView Responsive Multi-Viewport', () {
-    testWidgets('rendu desktop split view 1280x800 sans aucun overflow', (tester) async {
+    testWidgets('rendu desktop split view 1280x800 sans aucun overflow',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -93,10 +94,14 @@ void main() {
       expect(find.text('#ORD-102'), findsOneWidget);
 
       // Panneau de droite vide au départ
-      expect(find.text('Sélectionnez une commande dans la file'), findsOneWidget);
+      expect(
+        find.text('Sélectionnez une commande dans la file'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets("desktop : sélection d'une commande affiche le panneau de devis à droite",
+    testWidgets(
+        "desktop : sélection d'une commande affiche le panneau de devis à droite",
         (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -116,7 +121,8 @@ void main() {
       expect(find.byType(PharmacistQuoteReplySheet), findsOneWidget);
     });
 
-    testWidgets("desktop : sélection d'une commande prête affiche le clavier OTP",
+    testWidgets(
+        "desktop : sélection d'une commande prête affiche le clavier OTP",
         (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -136,7 +142,8 @@ void main() {
       expect(find.byType(CounterOtpValidationKeypad), findsOneWidget);
     });
 
-    testWidgets('rendu mobile 390x844 avec onglets fluides sans overflow', (tester) async {
+    testWidgets('rendu mobile 390x844 avec onglets fluides sans overflow',
+        (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -149,7 +156,8 @@ void main() {
       expect(find.byType(PharmacistRequestInboxCard), findsNWidgets(2));
     });
 
-    testWidgets('instanciation autonome par défaut sans injection préalable', (tester) async {
+    testWidgets('instanciation autonome par défaut sans injection préalable',
+        (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
@@ -161,7 +169,8 @@ void main() {
       expect(find.byType(PharmacistPortalView), findsOneWidget);
     });
 
-    testWidgets('déclenche le son et affiche le badge alerte urgente qui se dissipe lors de l’acquittement',
+    testWidgets(
+        'déclenche le son et affiche le badge alerte urgente qui se dissipe lors de l’acquittement',
         (tester) async {
       tester.view.physicalSize = const Size(900, 700);
       tester.view.devicePixelRatio = 1.0;
@@ -223,7 +232,8 @@ void main() {
       expect(find.textContaining('Pharmacie Melen 8'), findsWidgets);
     });
 
-    testWidgets('cycle complet 30s/2min : 4 sonneries puis arrêt audio et bandeau maintenu jusqu’à acquittement',
+    testWidgets(
+        'cycle complet 30s/2min : 4 sonneries puis arrêt audio et bandeau maintenu jusqu’à acquittement',
         (tester) async {
       tester.view.physicalSize = const Size(900, 700);
       tester.view.devicePixelRatio = 1.0;
@@ -276,7 +286,8 @@ void main() {
       expect(find.text('Nouvelle demande urgente'), findsNothing);
     });
 
-    testWidgets('acquittement précoce à 45s stoppe immédiatement les rappels sonores et le timer',
+    testWidgets(
+        'acquittement précoce à 45s stoppe immédiatement les rappels sonores et le timer',
         (tester) async {
       tester.view.physicalSize = const Size(900, 700);
       tester.view.devicePixelRatio = 1.0;

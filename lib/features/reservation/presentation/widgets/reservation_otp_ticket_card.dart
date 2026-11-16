@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../pharmacy_search/domain/entities/reservation.dart';
 import '../../domain/entities/flash_order.dart';
 import '../controllers/flash_reservation_cubit.dart';
+import 'reservation_qr_code_box.dart';
 
 /// Ticket récapitulatif de réservation avec Code OTP à 6 chiffres et QR Code.
 class ReservationOtpTicketCard extends StatelessWidget {
@@ -38,17 +38,20 @@ class ReservationOtpTicketCard extends StatelessWidget {
     }
   }
 
-  String _formatTime(DateTime dt) =>
-      '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-
   void _handleOsm(BuildContext context, Reservation res) {
     final url = AppConfig.buildOsmSearchUrl(
-        latitude: 3.8667, longitude: 11.5200, label: res.pharmacyName,);
+      latitude: 3.8667,
+      longitude: 11.5200,
+      label: res.pharmacyName,
+    );
     onOpenOsmRoute != null
         ? onOpenOsmRoute!(url)
-        : ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Itinéraire OSM : $url'),
-            backgroundColor: AppColors.primary,),);
+        : ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Itinéraire OSM : $url'),
+              backgroundColor: AppColors.primary,
+            ),
+          );
   }
 
   void _handleCall(BuildContext context, String phone) {
@@ -56,18 +59,23 @@ class ReservationOtpTicketCard extends StatelessWidget {
     if (sanitized.isEmpty) return;
     onCallPharmacy != null
         ? onCallPharmacy!(sanitized)
-        : ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Appel officine : $sanitized'),
-            backgroundColor: AppColors.secondary,),);
+        : ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Appel officine : $sanitized'),
+              backgroundColor: AppColors.secondary,
+            ),
+          );
   }
 
   void _copyOtp(BuildContext context, String code) {
     Clipboard.setData(ClipboardData(text: code));
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Code OTP copié'),
-      backgroundColor: Color(0xFF10B981),
-      duration: Duration(seconds: 2),
-    ),);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Code OTP copié'),
+        backgroundColor: Color(0xFF10B981),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -80,13 +88,16 @@ class ReservationOtpTicketCard extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.border),),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
         child: const Center(
-            child: Text('Aucune réservation confirmée.',
-                style:
-                    TextStyle(fontSize: 13, color: AppColors.textSecondary),),),
+          child: Text(
+            'Aucune réservation confirmée.',
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          ),
+        ),
       );
     }
 
@@ -102,9 +113,10 @@ class ReservationOtpTicketCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFF10B981), width: 1.5),
         boxShadow: [
           BoxShadow(
-              color: const Color(0xFF10B981).withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 4),),
+            color: const Color(0xFF10B981).withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -115,33 +127,47 @@ class ReservationOtpTicketCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: const BoxDecoration(
-                    color: Color(0xFFEAF7F0), shape: BoxShape.circle,),
-                child: const Icon(Icons.check_circle_rounded,
-                    color: Color(0xFF10B981), size: 28,),
+                  color: Color(0xFFEAF7F0),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle_rounded,
+                  color: Color(0xFF10B981),
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Réservation confirmée !',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                            color: AppColors.textPrimary,),),
+                    const Text(
+                      'Réservation confirmée !',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(res.pharmacyName,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            color: AppColors.primary,),),
+                    Text(
+                      res.pharmacyName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: AppColors.primary,
+                      ),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       phone.isEmpty ? 'Numéro non communiqué' : phone,
                       style: TextStyle(
                         fontSize: 11,
-                        fontStyle: phone.isEmpty ? FontStyle.italic : FontStyle.normal,
-                        color: phone.isEmpty ? AppColors.textTertiary : AppColors.textSecondary,
+                        fontStyle:
+                            phone.isEmpty ? FontStyle.italic : FontStyle.normal,
+                        color: phone.isEmpty
+                            ? AppColors.textTertiary
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -157,132 +183,78 @@ class ReservationOtpTicketCard extends StatelessWidget {
                 child: Text(
                   isExpired ? 'Expiré' : 'TTL 2h actif',
                   style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: isExpired
-                          ? AppColors.alert
-                          : const Color(0xFF10B981),),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color:
+                        isExpired ? AppColors.alert : const Color(0xFF10B981),
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.borderSubtle),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  'CODE DE RETRAIT AU COMPTOIR',
-                  style: TextStyle(
-                    fontSize: 11,
-                    letterSpacing: 1.5,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.borderSubtle),
-                  ),
-                  child: QrImageView(
-                    key: const ValueKey('qr_code_otp_ticket'),
-                    data:
-                        '{"otp":"${res.codeRetraitOtp}","reservationId":"${res.id}","pharmacyId":"${res.pharmacyId}"}',
-                    size: 100,
-                    eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: AppColors.primaryDark),
-                    dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: AppColors.primaryDark),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        res.codeRetraitOtp,
-                        style: const TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 6,
-                          color: AppColors.primaryDark,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.copy_rounded,
-                        size: 20,
-                        color: AppColors.primary,
-                      ),
-                      tooltip: 'Copier le code OTP',
-                      onPressed: () => _copyOtp(context, res.codeRetraitOtp),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Valable jusqu'à ${_formatTime(res.expiresAt)} (2 heures)",
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
+          ReservationQrCodeBox(
+            reservation: res,
+            onCopyOtp: () => _copyOtp(context, res.codeRetraitOtp),
           ),
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.borderSubtle),),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.borderSubtle),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Médicaments : ${res.medicationName}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        color: AppColors.textPrimary,),),
+                Text(
+                  'Médicaments : ${res.medicationName}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Wrap(
                   alignment: WrapAlignment.spaceBetween,
                   spacing: 8,
                   runSpacing: 4,
                   children: [
-                    Text('Quantité totale : ${res.quantite}',
-                        style: const TextStyle(
-                            fontSize: 12, color: AppColors.textSecondary,),),
+                    Text(
+                      'Quantité totale : ${res.quantite}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                     if (totalAmount != null)
-                      Text('Total à régler : $totalAmount FCFA',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              color: AppColors.primary,),),
+                      Text(
+                        'Total à régler : $totalAmount FCFA',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: AppColors.primary,
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppColors.primarySoft,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.point_of_sale_rounded, size: 16, color: AppColors.primary),
+                      Icon(
+                        Icons.point_of_sale_rounded,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
                       SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -311,7 +283,9 @@ class ReservationOtpTicketCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
@@ -320,13 +294,16 @@ class ReservationOtpTicketCard extends StatelessWidget {
               Expanded(
                 child: ElevatedButton.icon(
                   key: const ValueKey('btn_call_pharmacy'),
-                  onPressed: phone.isEmpty ? null : () => _handleCall(context, phone),
+                  onPressed:
+                      phone.isEmpty ? null : () => _handleCall(context, phone),
                   icon: const Icon(Icons.phone_rounded, size: 18),
                   label: const Text('Appeler'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     elevation: 0,
                   ),
@@ -336,20 +313,32 @@ class ReservationOtpTicketCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           TextButton.icon(
-            onPressed: () => onNewSearch != null ? onNewSearch!() : _getCubit(context)?.reset(),
+            onPressed: () => onNewSearch != null
+                ? onNewSearch!()
+                : _getCubit(context)?.reset(),
             icon: const Icon(Icons.refresh_rounded, size: 18),
             label: const Text('Effectuer une nouvelle recherche'),
-            style: TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
+            style:
+                TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
           ),
           if (resolvedOrder == null ||
-              (resolvedOrder.status != FlashOrderStatus.delivered && !resolvedOrder.isPickedUp)) ...[
+              (resolvedOrder.status != FlashOrderStatus.delivered &&
+                  !resolvedOrder.isPickedUp)) ...[
             TextButton.icon(
               key: const ValueKey('btn_cancel_reservation'),
               onPressed: () => _handleCancel(context),
-              icon: const Icon(Icons.cancel_outlined, size: 16, color: AppColors.alert),
+              icon: const Icon(
+                Icons.cancel_outlined,
+                size: 16,
+                color: AppColors.alert,
+              ),
               label: const Text(
                 'Annuler ma demande',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.alert),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.alert,
+                ),
               ),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.alert,
@@ -370,12 +359,23 @@ class ReservationOtpTicketCard extends StatelessWidget {
     showDialog<bool>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('Annuler la demande ?', style: TextStyle(fontWeight: FontWeight.w700)),
-        content: const Text('Êtes-vous sûr de vouloir annuler votre demande ? Les pharmacies ciblées seront prévenues.'),
+        title: const Text(
+          'Annuler la demande ?',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        content: const Text(
+          'Êtes-vous sûr de vouloir annuler votre demande ? Les pharmacies ciblées seront prévenues.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(dialogCtx).pop(false), child: const Text('Non, conserver')),
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: const Text('Non, conserver'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.alert, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.alert,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.of(dialogCtx).pop(true),
             child: const Text('Oui, annuler'),
           ),

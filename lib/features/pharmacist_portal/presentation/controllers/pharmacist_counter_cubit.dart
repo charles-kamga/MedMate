@@ -15,6 +15,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
     required SubmitCounterQuoteUseCase submitQuoteUseCase,
     required ValidateCounterOtpUseCase validateOtpUseCase,
     RealtimeDispatchRepository? realtimeRepository,
+    Stream<void>? localOrdersStream,
     bool enableAutoRefresh = false,
     Duration autoRefreshInterval = const Duration(seconds: 30),
   })  : _getPendingOrders = getPendingOrders,
@@ -23,7 +24,15 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
         _realtimeRepository = realtimeRepository,
         _enableAutoRefresh = enableAutoRefresh,
         _autoRefreshInterval = autoRefreshInterval,
-        super(const PharmacistCounterState());
+        super(const PharmacistCounterState()) {
+    if (localOrdersStream != null) {
+      _localOrdersSubscription = localOrdersStream.listen((_) {
+        if (!isClosed && _activePharmacyId != null) {
+          _silentRefresh(_activePharmacyId!);
+        }
+      });
+    }
+  }
 
   final GetPendingCounterOrdersUseCase _getPendingOrders;
   final SubmitCounterQuoteUseCase _submitQuoteUseCase;
@@ -32,47 +41,56 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
   final bool _enableAutoRefresh;
   final Duration _autoRefreshInterval;
 
+  /// Accès au repository temps réel injecté
+  RealtimeDispatchRepository? get realtimeRepository => _realtimeRepository;
+
   Timer? _refreshTimer;
   Timer? _countdownTimer;
   StreamSubscription<List<FlashOrder>>? _ordersSubscription;
+  StreamSubscription<void>? _localOrdersSubscription;
   String? _activePharmacyId;
 
   /// Charge la liste des demandes de réservation pour l'officine
   Future<void> loadPendingOrders(String pharmacyId) async {
     _activePharmacyId = pharmacyId;
-    emit(state.copyWith(
-      status: PharmacistCounterStatus.loading,
-      clearError: true,
-      clearSuccess: true,
-    ),);
+    emit(
+      state.copyWith(
+        status: PharmacistCounterStatus.loading,
+        clearError: true,
+        clearSuccess: true,
+      ),
+    );
 
     final result = await _getPendingOrders(pharmacyId);
     result.fold(
       (failure) {
-        emit(state.copyWith(
-          status: PharmacistCounterStatus.failure,
-          errorMessage: failure.message,
-          failure: failure,
-        ),);
+        emit(
+          state.copyWith(
+            status: PharmacistCounterStatus.failure,
+            errorMessage: failure.message,
+            failure: failure,
+          ),
+        );
       },
       (orders) {
         FlashOrder? updatedSelected;
         int? remainingSeconds;
 
         if (state.selectedOrder != null) {
-          final found = orders
-              .where((o) => o.id == state.selectedOrder!.id)
-              .firstOrNull;
+          final found =
+              orders.where((o) => o.id == state.selectedOrder!.id).firstOrNull;
           updatedSelected = found ?? state.selectedOrder;
           remainingSeconds = updatedSelected?.waveTimeRemainingSeconds;
         }
 
-        emit(state.copyWith(
-          status: PharmacistCounterStatus.loaded,
-          orders: orders,
-          selectedOrder: updatedSelected,
-          selectedOrderWaveRemainingSeconds: remainingSeconds,
-        ),);
+        emit(
+          state.copyWith(
+            status: PharmacistCounterStatus.loaded,
+            orders: orders,
+            selectedOrder: updatedSelected,
+            selectedOrderWaveRemainingSeconds: remainingSeconds,
+          ),
+        );
 
         _setupAutoRefreshIfNeeded();
         _subscribeToRealtimeOrders(pharmacyId);
@@ -84,18 +102,22 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
   void selectOrder(FlashOrder? order) {
     _countdownTimer?.cancel();
     if (order == null) {
-      emit(state.copyWith(
-        clearSelectedOrder: true,
-        clearWaveRemaining: true,
-      ),);
+      emit(
+        state.copyWith(
+          clearSelectedOrder: true,
+          clearWaveRemaining: true,
+        ),
+      );
       return;
     }
 
     final remaining = order.waveTimeRemainingSeconds;
-    emit(state.copyWith(
-      selectedOrder: order,
-      selectedOrderWaveRemainingSeconds: remaining,
-    ),);
+    emit(
+      state.copyWith(
+        selectedOrder: order,
+        selectedOrderWaveRemainingSeconds: remaining,
+      ),
+    );
 
     if (_enableAutoRefresh && remaining > 0) {
       _startCountdownTimer();
@@ -122,11 +144,13 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
     int deliveryFeeCfa = 0,
     int? estimatedDeliveryMinutes,
   }) async {
-    emit(state.copyWith(
-      status: PharmacistCounterStatus.submittingQuote,
-      clearError: true,
-      clearSuccess: true,
-    ),);
+    emit(
+      state.copyWith(
+        status: PharmacistCounterStatus.submittingQuote,
+        clearError: true,
+        clearSuccess: true,
+      ),
+    );
 
     final result = await _submitQuoteUseCase(
       orderId: orderId,
@@ -142,11 +166,13 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
 
     result.fold(
       (failure) {
-        emit(state.copyWith(
-          status: PharmacistCounterStatus.failure,
-          errorMessage: failure.message,
-          failure: failure,
-        ),);
+        emit(
+          state.copyWith(
+            status: PharmacistCounterStatus.failure,
+            errorMessage: failure.message,
+            failure: failure,
+          ),
+        );
       },
       (offer) {
         final updatedOrders = state.orders.map((order) {
@@ -163,13 +189,15 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
             ? updatedOrders.firstWhere((o) => o.id == orderId)
             : state.selectedOrder;
 
-        emit(state.copyWith(
-          status: PharmacistCounterStatus.quoteSubmitted,
-          orders: updatedOrders,
-          selectedOrder: updatedSelected,
-          lastSubmittedQuote: offer,
-          successMessage: 'Devis soumis au patient avec succès.',
-        ),);
+        emit(
+          state.copyWith(
+            status: PharmacistCounterStatus.quoteSubmitted,
+            orders: updatedOrders,
+            selectedOrder: updatedSelected,
+            lastSubmittedQuote: offer,
+            successMessage: 'Devis soumis au patient avec succès.',
+          ),
+        );
       },
     );
   }
@@ -180,11 +208,13 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
     required String pharmacyId,
     required String otpCode,
   }) async {
-    emit(state.copyWith(
-      status: PharmacistCounterStatus.validatingOtp,
-      clearError: true,
-      clearSuccess: true,
-    ),);
+    emit(
+      state.copyWith(
+        status: PharmacistCounterStatus.validatingOtp,
+        clearError: true,
+        clearSuccess: true,
+      ),
+    );
 
     final result = await _validateOtpUseCase(
       orderId: orderId,
@@ -194,34 +224,40 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
 
     result.fold(
       (failure) {
-        emit(state.copyWith(
-          status: PharmacistCounterStatus.failure,
-          errorMessage: failure.message,
-          failure: failure,
-        ),);
+        emit(
+          state.copyWith(
+            status: PharmacistCounterStatus.failure,
+            errorMessage: failure.message,
+            failure: failure,
+          ),
+        );
       },
       (deliveredOrder) {
         final updatedOrders = state.orders.map((order) {
           return order.id == orderId ? deliveredOrder : order;
         }).toList();
 
-        emit(state.copyWith(
-          status: PharmacistCounterStatus.otpSuccess,
-          orders: updatedOrders,
-          selectedOrder: deliveredOrder,
-          lastValidatedOrder: deliveredOrder,
-          successMessage: 'Code OTP validé. Médicaments remis au patient.',
-        ),);
+        emit(
+          state.copyWith(
+            status: PharmacistCounterStatus.otpSuccess,
+            orders: updatedOrders,
+            selectedOrder: deliveredOrder,
+            lastValidatedOrder: deliveredOrder,
+            successMessage: 'Code OTP validé. Médicaments remis au patient.',
+          ),
+        );
       },
     );
   }
 
   /// Filtre les commandes par statut
   void setFilterStatus(String? filter) {
-    emit(state.copyWith(
-      filterStatus: filter,
-      clearFilter: filter == null || filter.isEmpty,
-    ),);
+    emit(
+      state.copyWith(
+        filterStatus: filter,
+        clearFilter: filter == null || filter.isEmpty,
+      ),
+    );
   }
 
   /// Réinitialise les messages de retour utilisateur et repasse en mode chargé
@@ -232,19 +268,23 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
         ? PharmacistCounterStatus.loaded
         : state.status;
 
-    emit(state.copyWith(
-      status: nextStatus,
-      clearError: true,
-      clearSuccess: true,
-    ),);
+    emit(
+      state.copyWith(
+        status: nextStatus,
+        clearError: true,
+        clearSuccess: true,
+      ),
+    );
   }
 
   /// Efface le signalement discret de nouvelle commande reçue
   void clearNewOrderAlert() {
-    emit(state.copyWith(
-      hasNewOrderAlert: false,
-      newOrdersCount: 0,
-    ),);
+    emit(
+      state.copyWith(
+        hasNewOrderAlert: false,
+        newOrdersCount: 0,
+      ),
+    );
   }
 
   void _subscribeToRealtimeOrders(String pharmacyId) {
@@ -263,49 +303,12 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
     String pharmacyId,
     List<FlashOrder> incomingOrders,
   ) {
-    final validOrders = incomingOrders.where((order) {
-      if (order.selectedOffer != null &&
-          order.selectedOffer!.pharmacyId != pharmacyId) {
-        return false;
-      }
-      if (order.status != FlashOrderStatus.dispatchingWave &&
-          order.selectedOffer?.pharmacyId != pharmacyId) {
-        return false;
-      }
-      return true;
-    }).toList();
-
-    final existingIds = state.orders.map((o) => o.id).toSet();
-    final newCount =
-        validOrders.where((o) => !existingIds.contains(o.id)).length;
-    final hasNew = newCount > 0;
-
-    FlashOrder? updatedSelected;
-    int? remainingSeconds;
-    var clearSelected = false;
-
-    if (state.selectedOrder != null) {
-      final selectedId = state.selectedOrder!.id;
-      final found = validOrders.where((o) => o.id == selectedId).firstOrNull;
-      if (found == null) {
-        _countdownTimer?.cancel();
-        clearSelected = true;
-      } else {
-        updatedSelected = found;
-        remainingSeconds = found.waveTimeRemainingSeconds;
-      }
+    final (:nextState, :selectionCleared) =
+        state.withRealtimeOrdersUpdate(pharmacyId, incomingOrders);
+    if (selectionCleared) {
+      _countdownTimer?.cancel();
     }
-
-    emit(state.copyWith(
-      status: PharmacistCounterStatus.loaded,
-      orders: validOrders,
-      selectedOrder: updatedSelected,
-      clearSelectedOrder: clearSelected,
-      selectedOrderWaveRemainingSeconds: remainingSeconds,
-      clearWaveRemaining: clearSelected,
-      hasNewOrderAlert: hasNew || state.hasNewOrderAlert,
-      newOrdersCount: state.newOrdersCount + newCount,
-    ),);
+    emit(nextState);
   }
 
   void _setupAutoRefreshIfNeeded() {
@@ -323,7 +326,16 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
       (_) => null,
       (orders) {
         if (!isClosed) {
-          emit(state.copyWith(orders: orders));
+          final currentSel = state.selectedOrder;
+          final clearSel =
+              currentSel != null && !orders.any((o) => o.id == currentSel.id);
+          emit(
+            state.copyWith(
+              orders: orders,
+              clearSelectedOrder: clearSel,
+              clearWaveRemaining: clearSel,
+            ),
+          );
         }
       },
     );
@@ -345,6 +357,7 @@ class PharmacistCounterCubit extends Cubit<PharmacistCounterState> {
   @override
   Future<void> close() {
     _ordersSubscription?.cancel();
+    _localOrdersSubscription?.cancel();
     _refreshTimer?.cancel();
     _countdownTimer?.cancel();
     return super.close();

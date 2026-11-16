@@ -124,11 +124,17 @@ void main() {
         expect(order.targets.any((t) => t.waveIndex == 2), isTrue);
       });
 
-      verify(() => mockDataSource.updateOrderStatus(orderId, FlashOrderStatus.dispatchingWave))
-          .called(1);
+      verify(
+        () => mockDataSource.updateOrderStatus(
+          orderId,
+          FlashOrderStatus.dispatchingWave,
+        ),
+      ).called(1);
     });
 
-    test('selectPharmacyOffer validates choice and generates 6-digit OTP ticket (TTL 2h)', () async {
+    test(
+        'selectPharmacyOffer validates choice and generates 6-digit OTP ticket (TTL 2h)',
+        () async {
       final createRes = await repository.submitFlashRequest(
         items: const [sampleBasketItem],
         landmark: sampleLandmark,
@@ -172,7 +178,9 @@ void main() {
       });
     });
 
-    test('submitQuote rejects if order was already accepted by another pharmacist (Race condition)', () async {
+    test(
+        'submitQuote rejects if order was already accepted by another pharmacist (Race condition)',
+        () async {
       final createRes = await repository.submitFlashRequest(
         items: const [sampleBasketItem],
         landmark: sampleLandmark,
@@ -210,13 +218,18 @@ void main() {
       expect(lateQuoteRes.isLeft(), isTrue);
       lateQuoteRes.fold(
         (failure) {
-          expect(failure.message, contains('déjà été acceptée par un confrère'));
+          expect(
+            failure.message,
+            contains('déjà été acceptée par un confrère'),
+          );
         },
         (r) => fail('Should have failed'),
       );
     });
 
-    test('validateOtpAtCounter marks order delivered on valid OTP, rejects on invalid', () async {
+    test(
+        'validateOtpAtCounter marks order delivered on valid OTP, rejects on invalid',
+        () async {
       final createRes = await repository.submitFlashRequest(
         items: const [sampleBasketItem],
         landmark: sampleLandmark,
@@ -244,7 +257,10 @@ void main() {
       );
 
       late String generatedOtp;
-      selectRes.fold((l) => fail('Failed to select'), (r) => generatedOtp = r.codeRetraitOtp);
+      selectRes.fold(
+        (l) => fail('Failed to select'),
+        (r) => generatedOtp = r.codeRetraitOtp,
+      );
 
       // Test 1: OTP invalide
       final invalidRes = await repository.validateOtpAtCounter(
@@ -273,6 +289,69 @@ void main() {
         otpCode: generatedOtp,
       );
       expect(alreadyPickedUpRes.isLeft(), isTrue);
+    });
+
+    test(
+        'cancelFlashRequest updates status to cancelled on Supabase and excludes from pending',
+        () async {
+      final createRes = await repository.submitFlashRequest(
+        items: const [sampleBasketItem],
+        landmark: sampleLandmark,
+      );
+
+      late String orderId;
+      createRes.fold((l) => fail('Failed to create'), (o) => orderId = o.id);
+
+      final cancelRes = await repository.cancelFlashRequest(orderId);
+      expect(cancelRes.isRight(), isTrue);
+      cancelRes.fold(
+        (l) => fail('Should succeed'),
+        (cancelled) => expect(cancelled.status, FlashOrderStatus.cancelled),
+      );
+
+      verify(
+        () => mockDataSource.updateOrderStatus(
+          orderId,
+          FlashOrderStatus.cancelled,
+        ),
+      ).called(1);
+
+      final pendingRes =
+          await repository.getPendingOrdersForPharmacy('pharma-soleil');
+      pendingRes.fold(
+        (l) => fail('Should load pending'),
+        (orders) => expect(orders.any((o) => o.id == orderId), isFalse),
+      );
+    });
+
+    test(
+        'cancelFlashRequest preserves previous status in local cache when Supabase fails',
+        () async {
+      final createRes = await repository.submitFlashRequest(
+        items: const [sampleBasketItem],
+        landmark: sampleLandmark,
+      );
+
+      late String orderId;
+      createRes.fold((l) => fail('Failed to create'), (o) => orderId = o.id);
+
+      when(
+        () => mockDataSource.updateOrderStatus(
+          orderId,
+          FlashOrderStatus.cancelled,
+        ),
+      ).thenThrow(Exception('Supabase network failure'));
+
+      final cancelRes = await repository.cancelFlashRequest(orderId);
+      expect(cancelRes.isLeft(), isTrue);
+
+      // Vérifie que le cache local n'a pas été corrompu en 'cancelled'
+      final fetchRes = await repository.getFlashRequestById(orderId);
+      expect(fetchRes.isRight(), isTrue);
+      fetchRes.fold(
+        (l) => fail('Should find order in cache'),
+        (order) => expect(order.status, FlashOrderStatus.dispatchingWave),
+      );
     });
   });
 }

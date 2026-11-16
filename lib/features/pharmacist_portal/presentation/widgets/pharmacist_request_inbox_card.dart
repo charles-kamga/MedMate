@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../flash_order/domain/entities/flash_order.dart';
+import 'pharmacist_inbox_card_footer.dart';
 
 /// Carte de commande Flash pour la boîte de réception comptoir du pharmacien (< 400 lignes).
 /// Affiche la liste des médicaments, quantités, mentions d'ordonnance, repère Yaoundé,
@@ -29,7 +30,8 @@ class PharmacistRequestInboxCard extends StatelessWidget {
   static const Color _amber = Color(0xFFF59E0B);
   static const Color _amberSoft = Color(0xFFFEF3C7);
 
-  int get _effectiveSeconds => remainingSeconds ?? order.waveTimeRemainingSeconds;
+  int get _effectiveSeconds =>
+      remainingSeconds ?? order.waveTimeRemainingSeconds;
 
   bool get _hasSubmittedQuote {
     if (currentPharmacyId == null) return false;
@@ -46,7 +48,8 @@ class PharmacistRequestInboxCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tickerEnabled = TickerMode.valuesOf(context).enabled;
-    final displaySeconds = tickerEnabled ? _effectiveSeconds : order.waveTimeRemainingSeconds;
+    final displaySeconds =
+        tickerEnabled ? _effectiveSeconds : order.waveTimeRemainingSeconds;
 
     return Semantics(
       label: 'Demande flash #${order.id}',
@@ -63,10 +66,14 @@ class PharmacistRequestInboxCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: isSelected ? 2 : 1),
+              border: Border.all(
+                color: isSelected ? AppColors.primary : AppColors.border,
+                width: isSelected ? 2 : 1,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isSelected ? 0.06 : 0.02),
+                  color:
+                      Colors.black.withValues(alpha: isSelected ? 0.06 : 0.02),
                   blurRadius: isSelected ? 8 : 4,
                   offset: const Offset(0, 2),
                 ),
@@ -81,9 +88,18 @@ class PharmacistRequestInboxCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 _buildItemsList(),
                 const SizedBox(height: 12),
-                const Divider(height: 1, thickness: 1, color: AppColors.divider),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: AppColors.divider,
+                ),
                 const SizedBox(height: 10),
-                _buildFooterRow(context),
+                PharmacistInboxCardFooter(
+                  order: order,
+                  hasSubmittedQuote: _hasSubmittedQuote,
+                  onQuotePressed: onQuotePressed,
+                  onValidateOtpPressed: onValidateOtpPressed,
+                ),
               ],
             ),
           ),
@@ -129,7 +145,9 @@ class PharmacistRequestInboxCard extends StatelessWidget {
             color: isExpired ? AppColors.alertSoft : const Color(0xFFEAF7F0),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isExpired ? AppColors.alert.withValues(alpha: 0.3) : _emerald.withValues(alpha: 0.4),
+              color: isExpired
+                  ? AppColors.alert.withValues(alpha: 0.3)
+                  : _emerald.withValues(alpha: 0.4),
             ),
           ),
           child: Row(
@@ -158,14 +176,46 @@ class PharmacistRequestInboxCard extends StatelessWidget {
 
   Widget _buildStatusBadge() {
     final (bg, fg, label) = switch (order.status) {
-      FlashOrderStatus.dispatchingWave => (const Color(0xFFEFF6FF), AppColors.secondary, 'Vague ${order.currentWave} active'),
-      FlashOrderStatus.offersReceived => (const Color(0xFFEFF6FF), AppColors.secondary, 'Offres reçues'),
-      FlashOrderStatus.accepted => (_amberSoft, const Color(0xFFB45309), 'Offre retenue'),
-      FlashOrderStatus.readyForPickup => (const Color(0xFFEAF7F0), _emerald, 'Prêt pour retrait'),
-      FlashOrderStatus.delivered => (const Color(0xFFEAF7F0), AppColors.primary, 'Délivré au comptoir'),
-      FlashOrderStatus.expired => (AppColors.alertSoft, AppColors.alert, 'Expiré'),
-      FlashOrderStatus.cancelled => (AppColors.alertSoft, AppColors.alert, 'Annulée'),
-      FlashOrderStatus.idle => (AppColors.surfaceVariant, AppColors.textSecondary, 'En attente'),
+      FlashOrderStatus.dispatchingWave => (
+          const Color(0xFFEFF6FF),
+          AppColors.secondary,
+          'Vague ${order.currentWave} active'
+        ),
+      FlashOrderStatus.offersReceived => (
+          const Color(0xFFEFF6FF),
+          AppColors.secondary,
+          'Offres reçues'
+        ),
+      FlashOrderStatus.accepted => (
+          _amberSoft,
+          const Color(0xFFB45309),
+          'Offre retenue'
+        ),
+      FlashOrderStatus.readyForPickup => (
+          const Color(0xFFEAF7F0),
+          _emerald,
+          'Prêt pour retrait'
+        ),
+      FlashOrderStatus.delivered => (
+          const Color(0xFFEAF7F0),
+          AppColors.primary,
+          'Délivré au comptoir'
+        ),
+      FlashOrderStatus.expired => (
+          AppColors.alertSoft,
+          AppColors.alert,
+          'Expiré'
+        ),
+      FlashOrderStatus.cancelled => (
+          AppColors.alertSoft,
+          AppColors.alert,
+          'Annulée'
+        ),
+      FlashOrderStatus.idle => (
+          AppColors.surfaceVariant,
+          AppColors.textSecondary,
+          'En attente'
+        ),
     };
 
     return Container(
@@ -194,7 +244,11 @@ class PharmacistRequestInboxCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.location_on_rounded, size: 15, color: AppColors.secondary),
+            const Icon(
+              Icons.location_on_rounded,
+              size: 15,
+              color: AppColors.secondary,
+            ),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
@@ -222,14 +276,24 @@ class PharmacistRequestInboxCard extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(Icons.phone_outlined, size: 13, color: AppColors.textSecondary),
+              const Icon(
+                Icons.phone_outlined,
+                size: 13,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: 4),
               Text(
-                phone == null || phone.isEmpty ? 'Numéro non communiqué' : phone,
+                phone == null || phone.isEmpty
+                    ? 'Numéro non communiqué'
+                    : phone,
                 style: TextStyle(
                   fontSize: 11,
-                  fontStyle: phone == null || phone.isEmpty ? FontStyle.italic : FontStyle.normal,
-                  color: phone == null || phone.isEmpty ? AppColors.textTertiary : AppColors.textSecondary,
+                  fontStyle: phone == null || phone.isEmpty
+                      ? FontStyle.italic
+                      : FontStyle.normal,
+                  color: phone == null || phone.isEmpty
+                      ? AppColors.textTertiary
+                      : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -269,7 +333,8 @@ class PharmacistRequestInboxCard extends StatelessWidget {
               ),
               if (item.hasPrescription)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                   decoration: BoxDecoration(
                     color: _amberSoft,
                     borderRadius: BorderRadius.circular(4),
@@ -288,79 +353,6 @@ class PharmacistRequestInboxCard extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-
-  Widget _buildFooterRow(BuildContext context) {
-    final canValidateOtp = order.status == FlashOrderStatus.readyForPickup ||
-        order.status == FlashOrderStatus.accepted;
-    final isDelivered = order.status == FlashOrderStatus.delivered;
-
-    return Wrap(
-      alignment: WrapAlignment.spaceBetween,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        if (_hasSubmittedQuote)
-          const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.check_circle_rounded, size: 14, color: _emerald),
-              SizedBox(width: 4),
-              Text(
-                'Devis transmis',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _emerald),
-              ),
-            ],
-          )
-        else
-          Text(
-            isDelivered ? 'Retrait effectué' : 'Action requise',
-            style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
-          ),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            if (!isDelivered && onQuotePressed != null)
-              TextButton.icon(
-                key: ValueKey('btn_quote_${order.id}'),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  backgroundColor: AppColors.primarySoft,
-                  foregroundColor: AppColors.primary,
-                  visualDensity: VisualDensity.compact,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                onPressed: onQuotePressed,
-                icon: const Icon(Icons.request_quote_outlined, size: 15),
-                label: Text(
-                  _hasSubmittedQuote ? 'Modifier devis' : 'Émettre un devis',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-                ),
-              ),
-            if (canValidateOtp && onValidateOtpPressed != null)
-              ElevatedButton.icon(
-                key: ValueKey('btn_otp_${order.id}'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  backgroundColor: _emerald,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  visualDensity: VisualDensity.compact,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                onPressed: onValidateOtpPressed,
-                icon: const Icon(Icons.dialpad_rounded, size: 15),
-                label: const Text(
-                  'Valider retrait OTP',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-                ),
-              ),
-          ],
-        ),
-      ],
     );
   }
 }

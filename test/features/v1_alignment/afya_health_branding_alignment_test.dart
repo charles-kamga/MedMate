@@ -71,7 +71,8 @@ void main() {
       expect(AppConfig.officialEmail, 'deanstephan06.tf@gmail.com');
     });
 
-    test('Repères géographiques de la zone pilote Yaoundé Melen / Ngoa-Ekellé', () {
+    test('Repères géographiques de la zone pilote Yaoundé Melen / Ngoa-Ekellé',
+        () {
       final melen = YaoundeLandmarks.list
           .firstWhere((l) => l.id == 'carrefour-melen-chu');
       expect(melen.nom, 'Carrefour Melen / CHU');
@@ -85,7 +86,9 @@ void main() {
       expect(polytech.longitude, closeTo(11.5003, 0.001));
     });
 
-    test('Référentiel des pharmacies de garde inclut les officines MboaPHARMA pilotes', () async {
+    test(
+        'Référentiel des pharmacies de garde inclut les officines MboaPHARMA pilotes',
+        () async {
       const repo = DutyPharmacyRepositoryImpl();
       final result = await repo.getDutyPharmacies(city: 'Yaoundé');
       expect(result.isRight(), isTrue);
@@ -108,7 +111,9 @@ void main() {
           .thenReturn(const PharmacistCounterState());
     });
 
-    testWidgets('affiche bandeau V1 retrait comptoir quand enableDeliveryOption = false', (tester) async {
+    testWidgets(
+        'affiche bandeau V1 retrait comptoir quand enableDeliveryOption = false',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -134,7 +139,8 @@ void main() {
       expect(find.byKey(const ValueKey('switch_mototaxi')), findsNothing);
     });
 
-    testWidgets('affiche switch mototaxi quand enableDeliveryOption = true', (tester) async {
+    testWidgets('affiche switch mototaxi quand enableDeliveryOption = true',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -154,7 +160,8 @@ void main() {
       expect(find.byKey(const ValueKey('switch_mototaxi')), findsOneWidget);
     });
 
-    testWidgets('case majorité requise sous conditions transmise au devis', (tester) async {
+    testWidgets('case majorité requise sous conditions transmise au devis',
+        (tester) async {
       when(
         () => mockCounterCubit.submitQuote(
           orderId: any(named: 'orderId'),
