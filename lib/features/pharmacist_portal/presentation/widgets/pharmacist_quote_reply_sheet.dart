@@ -5,6 +5,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../flash_order/domain/entities/flash_order.dart';
 import '../../../flash_order/domain/entities/pharmacy_offer.dart';
 import '../controllers/pharmacist_counter_cubit.dart';
+import 'pharmacist_quote_delivery_box.dart';
+import 'pharmacist_quote_header_and_tabs.dart';
 
 /// Formulaire ergonomique de devis officine (< 400 lignes).
 class PharmacistQuoteReplySheet extends StatefulWidget {
@@ -26,7 +28,8 @@ class PharmacistQuoteReplySheet extends StatefulWidget {
   static const Color amber = Color(0xFFF59E0B);
 
   @override
-  State<PharmacistQuoteReplySheet> createState() => _PharmacistQuoteReplySheetState();
+  State<PharmacistQuoteReplySheet> createState() =>
+      _PharmacistQuoteReplySheetState();
 }
 
 class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
@@ -49,12 +52,16 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
           (o) => o?.pharmacyId == widget.pharmacyId,
           orElse: () => null,
         );
-    _availability = ex?.availabilityType ?? PharmacyAvailabilityType.fullyAvailable;
-    _priceCtrl = TextEditingController(text: ex != null && ex.quotedPriceCfa > 0 ? '${ex.quotedPriceCfa}' : '');
+    _availability =
+        ex?.availabilityType ?? PharmacyAvailabilityType.fullyAvailable;
+    _priceCtrl = TextEditingController(
+      text: ex != null && ex.quotedPriceCfa > 0 ? '${ex.quotedPriceCfa}' : '',
+    );
     _noteCtrl = TextEditingController(text: ex?.conditionNote ?? '');
     _delivery = ex?.proposesDelivery ?? false;
     _feeCtrl = TextEditingController(text: '${ex?.deliveryFeeCfa ?? 1000}');
-    _minsCtrl = TextEditingController(text: '${ex?.estimatedDeliveryMinutes ?? 30}');
+    _minsCtrl =
+        TextEditingController(text: '${ex?.estimatedDeliveryMinutes ?? 30}');
   }
 
   @override
@@ -67,12 +74,21 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
   }
 
   void _submit() {
-    if (_availability != PharmacyAvailabilityType.unavailable && !_formKey.currentState!.validate()) return;
-    final price = _availability == PharmacyAvailabilityType.unavailable ? 0 : (int.tryParse(_priceCtrl.text.trim()) ?? 0);
+    if (_availability != PharmacyAvailabilityType.unavailable &&
+        !_formKey.currentState!.validate()) {
+      return;
+    }
+    final price = _availability == PharmacyAvailabilityType.unavailable
+        ? 0
+        : (int.tryParse(_priceCtrl.text.trim()) ?? 0);
     final conditions = <String>[];
-    if (_availability == PharmacyAvailabilityType.conditional || _availability == PharmacyAvailabilityType.partiallyAvailable) {
+    if (_availability == PharmacyAvailabilityType.conditional ||
+        _availability == PharmacyAvailabilityType.partiallyAvailable) {
       if (_reqPrescription) conditions.add('Ordonnance originale requise');
-      if (_dciSub) conditions.add('Substitution équivalente DCI homologuée / dosage alternatif');
+      if (_dciSub) {
+        conditions
+            .add('Substitution équivalente DCI homologuée / dosage alternatif');
+      }
       if (_reqMajority) conditions.add("Pièce d'identité / Majorité requise");
     }
     final note = _availability == PharmacyAvailabilityType.unavailable
@@ -89,8 +105,10 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
           conditionRequirements: conditions,
           conditionNote: note,
           proposesDelivery: deliveryActive,
-          deliveryFeeCfa: deliveryActive ? (int.tryParse(_feeCtrl.text) ?? 1000) : 0,
-          estimatedDeliveryMinutes: deliveryActive ? (int.tryParse(_minsCtrl.text) ?? 30) : null,
+          deliveryFeeCfa:
+              deliveryActive ? (int.tryParse(_feeCtrl.text) ?? 1000) : 0,
+          estimatedDeliveryMinutes:
+              deliveryActive ? (int.tryParse(_minsCtrl.text) ?? 30) : null,
         );
     widget.onQuoteSubmitted?.call();
   }
@@ -103,17 +121,28 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildHeader(),
+          PharmacistQuoteHeaderAndTabs(
+            order: widget.order,
+            selectedAvailability: _availability,
+            onAvailabilityChanged: (type) =>
+                setState(() => _availability = type),
+          ),
           const SizedBox(height: 12),
-          _buildAvailabilityTabs(),
-          const SizedBox(height: 12),
-          if (_availability == PharmacyAvailabilityType.conditional || _availability == PharmacyAvailabilityType.partiallyAvailable)
+          if (_availability == PharmacyAvailabilityType.conditional ||
+              _availability == PharmacyAvailabilityType.partiallyAvailable)
             _buildConditionalBox(),
-          if (_availability == PharmacyAvailabilityType.unavailable) _buildUnavailableBox(),
+          if (_availability == PharmacyAvailabilityType.unavailable)
+            _buildUnavailableBox(),
           if (_availability != PharmacyAvailabilityType.unavailable) ...[
             _buildPriceField(),
             const SizedBox(height: 12),
-            _buildDeliveryBox(),
+            PharmacistQuoteDeliveryBox(
+              enableDeliveryOption: widget.enableDeliveryOption,
+              deliveryEnabled: _delivery,
+              feeController: _feeCtrl,
+              minsController: _minsCtrl,
+              onDeliveryChanged: (v) => setState(() => _delivery = v),
+            ),
           ],
           const SizedBox(height: 16),
           _buildSubmitButton(),
@@ -121,70 +150,24 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
       ),
     );
 
-    if (widget.isEmbedded) return SingleChildScrollView(padding: const EdgeInsets.all(16), child: body);
+    if (widget.isEmbedded) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: body,
+      );
+    }
     return Container(
-      decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(context).viewInsets.bottom + 16),
-      child: SingleChildScrollView(child: body),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(10)),
-          child: const Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 20),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Devis Officine — #${widget.order.id}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-              Text('Secteur : ${widget.order.quarter}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAvailabilityTabs() {
-    return Row(
-      children: [
-        _tabItem(PharmacyAvailabilityType.fullyAvailable, 'Disponible', PharmacistQuoteReplySheet.emerald, Icons.check_circle_outline),
-        const SizedBox(width: 8),
-        _tabItem(PharmacyAvailabilityType.conditional, 'Sous conditions', PharmacistQuoteReplySheet.amber, Icons.info_outline),
-        const SizedBox(width: 8),
-        _tabItem(PharmacyAvailabilityType.unavailable, 'Indisponible', AppColors.textSecondary, Icons.cancel_outlined),
-      ],
-    );
-  }
-
-  Widget _tabItem(PharmacyAvailabilityType type, String label, Color color, IconData icon) {
-    final sel = _availability == type;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _availability = type),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: sel ? color.withValues(alpha: 0.12) : AppColors.surfaceVariant,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: sel ? color : AppColors.border, width: sel ? 2 : 1),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, size: 16, color: sel ? color : AppColors.textSecondary),
-              const SizedBox(height: 2),
-              Text(label, style: TextStyle(fontSize: 10, fontWeight: sel ? FontWeight.w800 : FontWeight.w600, color: sel ? color : AppColors.textPrimary)),
-            ],
-          ),
-        ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: SingleChildScrollView(child: body),
     );
   }
 
@@ -195,71 +178,109 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
         color: const Color(0xFFFFFBEB),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: PharmacistQuoteReplySheet.amber.withValues(alpha: 0.4)),
+          side: BorderSide(
+            color: PharmacistQuoteReplySheet.amber.withValues(alpha: 0.4),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Conditions exigées :', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFFB45309))),
+              const Text(
+                'Conditions exigées :',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFB45309),
+                ),
+              ),
               CheckboxListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            activeColor: PharmacistQuoteReplySheet.amber,
-            title: const Text('Ordonnance originale requise', style: TextStyle(fontSize: 11)),
-            value: _reqPrescription,
-            onChanged: (v) => setState(() => _reqPrescription = v ?? false),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                activeColor: PharmacistQuoteReplySheet.amber,
+                title: const Text(
+                  'Ordonnance originale requise',
+                  style: TextStyle(fontSize: 11),
+                ),
+                value: _reqPrescription,
+                onChanged: (v) => setState(() => _reqPrescription = v ?? false),
+              ),
+              CheckboxListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                activeColor: PharmacistQuoteReplySheet.amber,
+                title: const Text(
+                  'Substitution DCI homologuée / dosage alternatif',
+                  style: TextStyle(fontSize: 11),
+                ),
+                value: _dciSub,
+                onChanged: (v) => setState(() => _dciSub = v ?? false),
+              ),
+              CheckboxListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                activeColor: PharmacistQuoteReplySheet.amber,
+                title: const Text(
+                  "Pièce d'identité / Majorité requise",
+                  style: TextStyle(fontSize: 11),
+                ),
+                value: _reqMajority,
+                onChanged: (v) => setState(() => _reqMajority = v ?? false),
+              ),
+              TextFormField(
+                controller: _noteCtrl,
+                decoration: InputDecoration(
+                  labelText: 'Note explicative pour le patient',
+                  labelStyle: const TextStyle(fontSize: 11),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
           ),
-          CheckboxListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            activeColor: PharmacistQuoteReplySheet.amber,
-            title: const Text('Substitution DCI homologuée / dosage alternatif', style: TextStyle(fontSize: 11)),
-            value: _dciSub,
-            onChanged: (v) => setState(() => _dciSub = v ?? false),
-          ),
-          CheckboxListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            activeColor: PharmacistQuoteReplySheet.amber,
-            title: const Text("Pièce d'identité / Majorité requise", style: TextStyle(fontSize: 11)),
-            value: _reqMajority,
-            onChanged: (v) => setState(() => _reqMajority = v ?? false),
-          ),
-          TextFormField(
-            controller: _noteCtrl,
-            decoration: InputDecoration(
-              labelText: 'Note explicative pour le patient',
-              labelStyle: const TextStyle(fontSize: 11),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-          ),
-        ],
+        ),
       ),
-    ),
-  ),
-);
+    );
   }
 
   Widget _buildUnavailableBox() {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
       child: DropdownButtonFormField<String>(
         initialValue: _unavReason,
         isExpanded: true,
         decoration: InputDecoration(
           labelText: "Motif d'indisponibilité (prix fixé à 0 FCFA)",
           labelStyle: const TextStyle(fontSize: 11),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
         items: const [
-          DropdownMenuItem(value: 'Rupture de stock temporaire', child: Text('Rupture de stock temporaire', style: TextStyle(fontSize: 12))),
-          DropdownMenuItem(value: 'Produit déréférencé / non disponible', child: Text('Produit déréférencé / non disponible', style: TextStyle(fontSize: 12))),
+          DropdownMenuItem(
+            value: 'Rupture de stock temporaire',
+            child: Text(
+              'Rupture de stock temporaire',
+              style: TextStyle(fontSize: 12),
+            ),
+          ),
+          DropdownMenuItem(
+            value: 'Produit déréférencé / non disponible',
+            child: Text(
+              'Produit déréférencé / non disponible',
+              style: TextStyle(fontSize: 12),
+            ),
+          ),
         ],
         onChanged: (v) => setState(() => _unavReason = v ?? _unavReason),
       ),
@@ -270,21 +291,27 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Prix total proposé au comptoir (FCFA)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+        const Text(
+          'Prix total proposé au comptoir (FCFA)',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+        ),
         const SizedBox(height: 4),
         TextFormField(
           key: const ValueKey('input_quoted_price'),
           controller: _priceCtrl,
           keyboardType: TextInputType.number,
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Veuillez saisir un montant';
+            if (v == null || v.trim().isEmpty) {
+              return 'Veuillez saisir un montant';
+            }
             final n = int.tryParse(v.trim());
             return (n == null || n <= 0) ? 'Montant invalide' : null;
           },
           decoration: InputDecoration(
             suffixText: 'FCFA',
             hintText: 'Ex: 3200',
-            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
@@ -292,102 +319,34 @@ class _PharmacistQuoteReplySheetState extends State<PharmacistQuoteReplySheet> {
     );
   }
 
-  Widget _buildDeliveryBox() {
-    if (!widget.enableDeliveryOption) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.primarySoft,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.storefront_rounded, color: AppColors.primary, size: 18),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Retrait au comptoir uniquement (V1) · Paiement sur place',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primaryDark,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Material(
-      color: AppColors.surfaceVariant,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: AppColors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-        children: [
-          SwitchListTile(
-            key: const ValueKey('switch_mototaxi'),
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            activeThumbColor: AppColors.primary,
-            title: const Text('Option mototaxi partenaire', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-            value: _delivery,
-            onChanged: (v) => setState(() => _delivery = v),
-          ),
-          if (_delivery)
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    key: const ValueKey('input_delivery_fee'),
-                    controller: _feeCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Frais (FCFA)',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    key: const ValueKey('input_delivery_minutes'),
-                    controller: _minsCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Délai (min)',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    ),
-  );
-  }
-
   Widget _buildSubmitButton() {
     final isUnav = _availability == PharmacyAvailabilityType.unavailable;
-    final color = isUnav ? AppColors.textSecondary : (_availability == PharmacyAvailabilityType.conditional ? PharmacistQuoteReplySheet.amber : PharmacistQuoteReplySheet.emerald);
+    final color = isUnav
+        ? AppColors.textSecondary
+        : (_availability == PharmacyAvailabilityType.conditional
+            ? PharmacistQuoteReplySheet.amber
+            : PharmacistQuoteReplySheet.emerald);
     return SizedBox(
       width: double.infinity,
       height: 44,
       child: ElevatedButton.icon(
         key: const ValueKey('btn_submit_counter_quote'),
-        style: ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          elevation: 0,
+        ),
         onPressed: _submit,
-        icon: Icon(isUnav ? Icons.cancel_outlined : Icons.send_rounded, size: 16),
-        label: Text(isUnav ? "Notifier l'indisponibilité" : "Transmettre l'offre chiffrée", style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+        icon:
+            Icon(isUnav ? Icons.cancel_outlined : Icons.send_rounded, size: 16),
+        label: Text(
+          isUnav
+              ? "Notifier l'indisponibilité"
+              : "Transmettre l'offre chiffrée",
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+        ),
       ),
     );
   }

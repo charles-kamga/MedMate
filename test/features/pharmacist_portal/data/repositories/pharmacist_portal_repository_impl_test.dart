@@ -67,8 +67,8 @@ void main() {
     status: FlashOrderStatus.readyForPickup,
     reservationOtpCode: '123456',
     phoneNumber: '+237 690 00 11 22',
-    createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
-    expiresAt: DateTime.now().add(const Duration(hours: 1, minutes: 45)),
+    createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
+    expiresAt: DateTime.now().add(const Duration(minutes: 10)),
     selectedOffer: PharmacyOffer(
       id: 'OFFER-OTP-1',
       pharmacyId: pharmaSoleilId,
@@ -94,7 +94,8 @@ void main() {
 
   group('PharmacistPortalRepositoryImpl - getPendingOrdersForPharmacy', () {
     test('retourne les commandes ciblant ou attribuées à l’officine', () async {
-      final result = await repository.getPendingOrdersForPharmacy(pharmaSoleilId);
+      final result =
+          await repository.getPendingOrdersForPharmacy(pharmaSoleilId);
       expect(result.isRight(), isTrue);
       result.fold(
         (_) => fail('Devrait réussir'),
@@ -106,9 +107,11 @@ void main() {
       );
     });
 
-    test('utilise les données de démo par défaut si aucun store initial fourni', () async {
+    test('utilise les données de démo par défaut si aucun store initial fourni',
+        () async {
       final defaultRepo = PharmacistPortalRepositoryImpl();
-      final result = await defaultRepo.getPendingOrdersForPharmacy('pharma-soleil');
+      final result =
+          await defaultRepo.getPendingOrdersForPharmacy('pharma-soleil');
       expect(result.isRight(), isTrue);
       result.fold(
         (_) => fail('Devrait réussir'),
@@ -131,13 +134,17 @@ void main() {
         (_) => fail('Devrait réussir'),
         (offer) {
           expect(offer.quotedPriceCfa, 2000);
-          expect(offer.availabilityType, PharmacyAvailabilityType.fullyAvailable);
+          expect(
+            offer.availabilityType,
+            PharmacyAvailabilityType.fullyAvailable,
+          );
           expect(offer.pharmacyId, pharmaSoleilId);
         },
       );
     });
 
-    test('rejette si le temps de vague restant est <= 0 (WaveExpiredFailure)', () async {
+    test('rejette si le temps de vague restant est <= 0 (WaveExpiredFailure)',
+        () async {
       final expiredWaveOrder = sampleActiveOrder.copyWith(
         id: 'ORD-EXPIRED-WAVE',
         waveTimeRemainingSeconds: 0,
@@ -160,7 +167,9 @@ void main() {
       );
     });
 
-    test('rejette si la commande a déjà été acceptée par une autre officine (OrderAlreadyClaimedFailure)', () async {
+    test(
+        'rejette si la commande a déjà été acceptée par une autre officine (OrderAlreadyClaimedFailure)',
+        () async {
       final claimedByOtherOrder = sampleActiveOrder.copyWith(
         id: 'ORD-CLAIMED',
         status: FlashOrderStatus.readyForPickup,
@@ -196,7 +205,8 @@ void main() {
   });
 
   group('PharmacistPortalRepositoryImpl - validateOtpAtCounter', () {
-    test('valide avec succès le code OTP 6 chiffres et passe à delivered', () async {
+    test('valide avec succès le code OTP 6 chiffres et passe à delivered',
+        () async {
       final result = await repository.validateOtpAtCounter(
         orderId: sampleOtpOrder.id,
         pharmacyId: pharmaSoleilId,
@@ -241,7 +251,8 @@ void main() {
       );
     });
 
-    test('rejette un code déjà consommé / commande livrée (ConsumedOtpFailure)', () async {
+    test('rejette un code déjà consommé / commande livrée (ConsumedOtpFailure)',
+        () async {
       // D'abord on valide
       await repository.validateOtpAtCounter(
         orderId: sampleOtpOrder.id,
@@ -263,7 +274,7 @@ void main() {
       );
     });
 
-    test('rejette un code expiré > 2h (ExpiredOtpFailure)', () async {
+    test('rejette un code expiré > 15 min (ExpiredOtpFailure)', () async {
       final expiredOrder = sampleOtpOrder.copyWith(
         id: 'ORD-EXPIRED-OTP',
         expiresAt: DateTime.now().subtract(const Duration(minutes: 5)),

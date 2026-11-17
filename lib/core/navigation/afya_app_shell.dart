@@ -7,6 +7,7 @@ import '../../features/patient_flow/presentation/views/patient_home_flow_view.da
 import '../../features/pharmacist_portal/presentation/views/pharmacist_portal_view.dart';
 import '../../features/pharmacy_search/presentation/views/pharmacy_map_view.dart';
 import '../../features/reservation/presentation/views/patient_flash_flow_view.dart';
+import 'widgets/afya_app_bar.dart';
 
 /// Navigation Shell souverain d'Afya-Health (< 400 lignes).
 /// Intègre harmonieusement le parcours Flash inversé « Style Yango ».
@@ -161,30 +162,41 @@ class _AfyaAppShellState extends State<AfyaAppShell> {
               color: Colors.transparent,
               child: ListTile(
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: const BorderSide(color: AppColors.borderSubtle),),
+                  borderRadius: BorderRadius.circular(14),
+                  side: const BorderSide(color: AppColors.borderSubtle),
+                ),
                 tileColor: AppColors.surface,
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: const BoxDecoration(
-                      color: AppColors.primarySoft, shape: BoxShape.circle,),
-                  child: const Icon(Icons.storefront_rounded,
-                      color: AppColors.primary,),
+                    color: AppColors.primarySoft,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.storefront_rounded,
+                    color: AppColors.primary,
+                  ),
                 ),
-                title: const Text('Portail Officine Partenaire',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w700, fontSize: 14),),
+                title: const Text(
+                  'Portail Officine Partenaire',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                ),
                 subtitle: const Text(
-                    'Gérer les demandes de garde et valider les retraits OTP',
-                    style: TextStyle(fontSize: 12),),
-                trailing: const Icon(Icons.arrow_forward_ios_rounded,
-                    size: 16, color: AppColors.textTertiary,),
+                  'Gérer les demandes de garde et valider les retraits OTP',
+                  style: TextStyle(fontSize: 12),
+                ),
+                trailing: const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: AppColors.textTertiary,
+                ),
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => Scaffold(
                         appBar: AppBar(
-                            title: const Text('Portail Officine Partenaire'),),
+                          title: const Text('Portail Officine Partenaire'),
+                        ),
                         body: const PharmacistPortalView(),
                       ),
                     ),
@@ -198,66 +210,6 @@ class _AfyaAppShellState extends State<AfyaAppShell> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      titleSpacing: 16,
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(10)),
-            alignment: Alignment.center,
-            child: const Text('✚', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, height: 1.1)),
-          ),
-          const SizedBox(width: 8),
-          const Flexible(
-            child: Text(
-              AppConfig.appName,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(6)),
-            child: const Text('Yaoundé', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.primary)),
-          ),
-        ],
-      ),
-      actions: [
-        Container(
-          margin: const EdgeInsets.only(right: 16),
-          child: Tooltip(
-            message: 'Urgence secours Yaoundé',
-            child: TextButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Numéro d'urgence Yaoundé : ${AppConfig.emergencyPhone}"),
-                    backgroundColor: AppColors.primary,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.emergency_rounded, size: 16, color: AppColors.primary),
-              label: const Text(AppConfig.emergencyPhone, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: AppColors.primary)),
-              style: TextButton.styleFrom(
-                backgroundColor: AppColors.primarySoft,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -266,7 +218,7 @@ class _AfyaAppShellState extends State<AfyaAppShell> {
 
         if (isDesktop) {
           return Scaffold(
-            appBar: _buildAppBar(),
+            appBar: const AfyaAppBar(),
             body: Row(
               children: [
                 NavigationRail(
@@ -288,27 +240,37 @@ class _AfyaAppShellState extends State<AfyaAppShell> {
                   destinations: const [
                     NavigationRailDestination(
                       icon: Icon(Icons.home_outlined),
-                      selectedIcon: Icon(Icons.home_rounded, color: AppColors.primary),
+                      selectedIcon:
+                          Icon(Icons.home_rounded, color: AppColors.primary),
                       label: Text('Accueil'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.bolt_outlined),
-                      selectedIcon: Icon(Icons.bolt_rounded, color: AppColors.primary),
+                      selectedIcon:
+                          Icon(Icons.bolt_rounded, color: AppColors.primary),
                       label: Text('Flash Yango'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.local_pharmacy_outlined),
-                      selectedIcon: Icon(Icons.local_pharmacy_rounded, color: AppColors.primary),
+                      selectedIcon: Icon(
+                        Icons.local_pharmacy_rounded,
+                        color: AppColors.primary,
+                      ),
                       label: Text('Gardes & Carte'),
                     ),
                     NavigationRailDestination(
                       icon: Icon(Icons.person_outline_rounded),
-                      selectedIcon: Icon(Icons.person_rounded, color: AppColors.primary),
+                      selectedIcon:
+                          Icon(Icons.person_rounded, color: AppColors.primary),
                       label: Text('Profil'),
                     ),
                   ],
                 ),
-                const VerticalDivider(width: 1, thickness: 1, color: AppColors.borderSubtle),
+                const VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: AppColors.borderSubtle,
+                ),
                 Expanded(child: _buildBody()),
               ],
             ),
@@ -316,7 +278,7 @@ class _AfyaAppShellState extends State<AfyaAppShell> {
         }
 
         return Scaffold(
-          appBar: _buildAppBar(),
+          appBar: const AfyaAppBar(),
           body: _buildBody(),
           bottomNavigationBar: Container(
             decoration: const BoxDecoration(
@@ -332,22 +294,28 @@ class _AfyaAppShellState extends State<AfyaAppShell> {
               destinations: const [
                 NavigationDestination(
                   icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home_rounded, color: AppColors.primary),
+                  selectedIcon:
+                      Icon(Icons.home_rounded, color: AppColors.primary),
                   label: 'Accueil',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.bolt_outlined),
-                  selectedIcon: Icon(Icons.bolt_rounded, color: AppColors.primary),
+                  selectedIcon:
+                      Icon(Icons.bolt_rounded, color: AppColors.primary),
                   label: 'Flash Yango',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.local_pharmacy_outlined),
-                  selectedIcon: Icon(Icons.local_pharmacy_rounded, color: AppColors.primary),
+                  selectedIcon: Icon(
+                    Icons.local_pharmacy_rounded,
+                    color: AppColors.primary,
+                  ),
                   label: 'Gardes',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.person_outline_rounded),
-                  selectedIcon: Icon(Icons.person_rounded, color: AppColors.primary),
+                  selectedIcon:
+                      Icon(Icons.person_rounded, color: AppColors.primary),
                   label: 'Profil',
                 ),
               ],

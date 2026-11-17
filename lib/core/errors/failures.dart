@@ -94,11 +94,11 @@ final class InvalidOtpFailure extends Failure {
   ]);
 }
 
-/// Échec lorsque le code OTP a dépassé son TTL de 2 heures
+/// Échec lorsque le code OTP a dépassé son TTL de 15 minutes
 final class ExpiredOtpFailure extends Failure {
   const ExpiredOtpFailure([
     super.message =
-        'Ce code de retrait a expiré (validité de 2 heures dépassée).',
+        'Ce code de retrait a expiré (validité de 15 minutes dépassée).',
     super.code = 'EXPIRED_OTP',
   ]);
 }

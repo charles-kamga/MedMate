@@ -2,7 +2,10 @@
 library;
 
 class ServerException implements Exception {
-  const ServerException([this.message = 'Erreur serveur Supabase', this.statusCode]);
+  const ServerException([
+    this.message = 'Erreur serveur Supabase',
+    this.statusCode,
+  ]);
   final String message;
   final int? statusCode;
 
@@ -35,7 +38,9 @@ class LocationException implements Exception {
 }
 
 class OrderAlreadyClaimedException implements Exception {
-  const OrderAlreadyClaimedException([this.message = 'Cette commande a déjà été attribuée à une autre officine.']);
+  const OrderAlreadyClaimedException([
+    this.message = 'Cette commande a déjà été attribuée à une autre officine.',
+  ]);
   final String message;
 
   @override
@@ -43,7 +48,10 @@ class OrderAlreadyClaimedException implements Exception {
 }
 
 class WaveExpiredException implements Exception {
-  const WaveExpiredException([this.message = 'La fenêtre de réponse pour cette vague est expirée (2 min).']);
+  const WaveExpiredException([
+    this.message =
+        'La fenêtre de réponse pour cette vague est expirée (2 min).',
+  ]);
   final String message;
 
   @override
@@ -59,7 +67,9 @@ class InvalidOtpException implements Exception {
 }
 
 class ExpiredOtpException implements Exception {
-  const ExpiredOtpException([this.message = 'Code OTP expiré (délai de validité de 2 heures dépassé).']);
+  const ExpiredOtpException([
+    this.message = 'Code OTP expiré (délai de validité de 15 minutes dépassé).',
+  ]);
   final String message;
 
   @override
@@ -67,7 +77,9 @@ class ExpiredOtpException implements Exception {
 }
 
 class ConsumedOtpException implements Exception {
-  const ConsumedOtpException([this.message = 'Ce code OTP a déjà été consommé.']);
+  const ConsumedOtpException([
+    this.message = 'Ce code OTP a déjà été consommé.',
+  ]);
   final String message;
 
   @override

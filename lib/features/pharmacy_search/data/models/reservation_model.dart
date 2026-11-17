@@ -1,3 +1,4 @@
+import '../../../../core/config/app_config.dart';
 import '../../domain/entities/reservation.dart';
 
 /// DTO pour la désérialisation typée des réservations
@@ -27,9 +28,10 @@ class ReservationModel extends Reservation {
       quantite: json['quantite'] as int? ?? 1,
       codeRetraitOtp: json['code_retrait_otp'] as String? ?? '',
       statut: _parseStatus(json['statut'] as String?),
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
       expiresAt: DateTime.tryParse(json['expires_at'] as String? ?? '') ??
-          DateTime.now().add(const Duration(hours: 2)),
+          DateTime.now().add(AppConfig.otpValidityDuration),
     );
   }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:fpdart/fpdart.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/yaounde_landmarks.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../features/flash_order/domain/entities/basket_item.dart';
@@ -62,7 +63,7 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
     try {
       final orderId = _uuid.v4();
       final now = DateTime.now();
-      final expiresAt = now.add(const Duration(hours: 2));
+      final expiresAt = now.add(AppConfig.otpValidityDuration);
 
       // Calcul des cibles de la Vague 1 (< 5 min) via le routeur topologique
       final wave1LandmarkIds =
@@ -156,7 +157,7 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
       // Génération code OTP à 6 chiffres pour retrait comptoir
       final otpCode = _generateOtpCode();
       final now = DateTime.now();
-      final expiresAt = now.add(const Duration(hours: 2));
+      final expiresAt = now.add(AppConfig.otpValidityDuration);
 
       final reservation = Reservation(
         id: _uuid.v4(),
@@ -296,7 +297,9 @@ class RealtimeDispatchRepositoryImpl implements RealtimeDispatchRepository {
 
       if (order.isExpired) {
         return const Left(
-          ServerFailure('Ce code de retrait OTP a expiré (> 2 heures)'),
+          ServerFailure(
+            'Ce code de retrait OTP a expiré (> ${AppConfig.otpValidityLabel})',
+          ),
         );
       }
 

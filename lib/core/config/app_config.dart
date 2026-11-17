@@ -18,12 +18,18 @@ class AppConfig {
 
   /// Contacts officiels Afya-Health
   static const String clientSupportPhone = '+237 656 63 25 01';
-  static const String pharmacySupportPhone = '+237 656 63 25 01 / +237 659 80 58 04';
+  static const String pharmacySupportPhone =
+      '+237 656 63 25 01 / +237 659 80 58 04';
   static const String officialEmail = 'deanstephan06.tf@gmail.com';
 
   /// Arbitrages V1 validés
   static const bool enableDeliveryInV1 = false;
   static const bool enableInAppPaymentInV1 = false;
+
+  /// Durée de validité du ticket OTP au comptoir (15 minutes)
+  static const Duration otpValidityDuration = Duration(minutes: 15);
+  static const String otpValidityLabel = '15 minutes';
+  static const String otpValidityShortLabel = '15 min';
 
   /// Paramètres d'environnement Supabase configurables par --dart-define
   static const String supabaseUrl = String.fromEnvironment(

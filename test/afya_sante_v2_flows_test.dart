@@ -10,7 +10,8 @@ import 'package:medmate/features/flash_order/presentation/views/pharmacist_porta
 import 'package:medmate/features/pharmacy_search/presentation/views/pharmacy_map_view.dart';
 
 void main() {
-  group('Afya Santé V2 - Démonstration & Critères de Validation (Section 12)', () {
+  group('Afya Santé V2 - Démonstration & Critères de Validation (Section 12)',
+      () {
     late FlashOrderCubit flashOrderCubit;
     late AuthBloc authBloc;
 
@@ -37,7 +38,9 @@ void main() {
       );
     }
 
-    testWidgets('Critère 1 & 2 : Recherche sans pharmacie et vague 1 vers 2 pharmacies avec timer 2 min', (tester) async {
+    testWidgets(
+        'Critère 1 & 2 : Recherche sans pharmacie et vague 1 vers 2 pharmacies avec timer 2 min',
+        (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -50,10 +53,14 @@ void main() {
       expect(find.text('Recherche sans pharmacie imposée'), findsOneWidget);
       expect(find.text('Paracétamol 500 mg'), findsOneWidget);
       expect(find.text('Vitamine C 1000 mg'), findsOneWidget);
-      expect(find.textContaining('Afya Santé ne fixe aucun tarif à l’avance'), findsOneWidget);
+      expect(
+        find.textContaining('Afya Santé ne fixe aucun tarif à l’avance'),
+        findsOneWidget,
+      );
 
       // 2. Lancement de la recherche
-      final launchButton = find.text('Lancer la recherche auprès des partenaires →');
+      final launchButton =
+          find.text('Lancer la recherche auprès des partenaires →');
       expect(launchButton, findsOneWidget);
       await tester.ensureVisible(launchButton);
       await tester.tap(launchButton);
@@ -61,7 +68,10 @@ void main() {
 
       // 3. Étape 2 : Radar de recherche en vagues
       expect(find.text('VAGUE 1 / 2'), findsOneWidget);
-      expect(find.text('Sollicitation des pharmacies partenaires'), findsOneWidget);
+      expect(
+        find.text('Sollicitation des pharmacies partenaires'),
+        findsOneWidget,
+      );
       expect(find.text('Pharmacie du Soleil'), findsOneWidget);
       expect(find.text('Grande Pharmacie du Centre'), findsOneWidget);
       expect(find.text('Accélérer l’escalade (Démo 2 min)'), findsOneWidget);
@@ -76,13 +86,19 @@ void main() {
       flashOrderCubit.stopWaveTimer();
     });
 
-    testWidgets('Critère 3 & 4 : Pharmacien transmet son offre avec son prix officiel et conditions', (tester) async {
+    testWidgets(
+        'Critère 3 & 4 : Pharmacien transmet son offre avec son prix officiel et conditions',
+        (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(createTestApp(const PharmacistPortalView(initialPharmacyId: 'pharma-soleil')));
+      await tester.pumpWidget(
+        createTestApp(
+          const PharmacistPortalView(initialPharmacyId: 'pharma-soleil'),
+        ),
+      );
       await tester.pumpAndSettle();
 
       // 1. Profil de l'officine
@@ -97,12 +113,18 @@ void main() {
       expect(find.text('Disponible'), findsOneWidget);
       expect(find.text('Sous conditions'), findsOneWidget);
       expect(find.text('Indisponible'), findsOneWidget);
-      expect(find.text('Montant total officiel des médicaments (FCFA) :'), findsOneWidget);
+      expect(
+        find.text('Montant total officiel des médicaments (FCFA) :'),
+        findsOneWidget,
+      );
 
       // 4. Sélectionner "Sous conditions"
       await tester.tap(find.text('Sous conditions'));
       await tester.pumpAndSettle();
-      expect(find.text('Présentation de l’ordonnance originale obligatoire'), findsOneWidget);
+      expect(
+        find.text('Présentation de l’ordonnance originale obligatoire'),
+        findsOneWidget,
+      );
 
       // 5. Transmettre l'offre chiffrée
       final submitButton = find.text('Transmettre notre offre chiffrée →');
@@ -115,7 +137,9 @@ void main() {
       flashOrderCubit.stopWaveTimer();
     });
 
-    testWidgets('Critère 5 & 6 : Comparaison, Choix patient, Règlement et Code OTP de retrait', (tester) async {
+    testWidgets(
+        'Critère 5 & 6 : Comparaison, Choix patient, Règlement et Code OTP de retrait',
+        (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -146,10 +170,14 @@ void main() {
       expect(find.text('Offres reçues (2)'), findsOneWidget);
       expect(find.text('3500 FCFA'), findsOneWidget);
       expect(find.text('3400 FCFA'), findsOneWidget); // 2900 + 500 livraison
-      expect(find.textContaining('Ordonnance originale requise'), findsOneWidget);
+      expect(
+        find.textContaining('Ordonnance originale requise'),
+        findsOneWidget,
+      );
 
       // 3. Le patient choisit l'offre de la Grande Pharmacie du Centre
-      final chooseButtons = find.widgetWithText(ElevatedButton, 'Choisir cette pharmacie →');
+      final chooseButtons =
+          find.widgetWithText(ElevatedButton, 'Choisir cette pharmacie →');
       expect(chooseButtons, findsWidgets);
       await tester.tap(chooseButtons.last);
       await tester.pumpAndSettle();
@@ -157,30 +185,38 @@ void main() {
       // 4. Étape 4 : Choix du règlement
       expect(find.text('Validation de votre réservation'), findsOneWidget);
       expect(find.text('3400 FCFA'), findsOneWidget);
-      expect(find.text('Paiement au comptoir (Espèces ou Mobile Money sur place)'), findsOneWidget);
+      expect(
+        find.text('Paiement au comptoir (Espèces ou Mobile Money sur place)'),
+        findsOneWidget,
+      );
 
       // 5. Confirmer et générer le code OTP
-      final confirmButton = find.text('Confirmer la réservation & Obtenir le code OTP →');
+      final confirmButton =
+          find.text('Confirmer la réservation & Obtenir le code OTP →');
       expect(confirmButton, findsOneWidget);
       await tester.ensureVisible(confirmButton);
       await tester.tap(confirmButton);
       await tester.pumpAndSettle();
 
-      // 6. Code OTP grand format et TTL 2h
+      // 6. Code OTP grand format et TTL 15 min
       expect(find.text('Réservation confirmée !'), findsOneWidget);
       expect(find.text('CODE DE RETRAIT UNIQUE (OTP)'), findsOneWidget);
       expect(find.textContaining('RET-'), findsOneWidget);
-      expect(find.text('Validité : 2 heures au comptoir'), findsOneWidget);
+      expect(find.text('Validité : 15 minutes au comptoir'), findsOneWidget);
       flashOrderCubit.stopWaveTimer();
     });
 
-    testWidgets('Critère 7 : Carte interactive avec distinction stricte partenaires vs non-partenaires', (tester) async {
+    testWidgets(
+        'Critère 7 : Carte interactive avec distinction stricte partenaires vs non-partenaires',
+        (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(createTestApp(const PharmacyMapView(enableNetworkTiles: false)));
+      await tester.pumpWidget(
+        createTestApp(const PharmacyMapView(enableNetworkTiles: false)),
+      );
       await tester.pumpAndSettle();
 
       // 1. Légende explicite
@@ -201,7 +237,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('NON PARTENAIRE (RECENSÉE)'), findsOneWidget);
-      expect(find.textContaining('Elle n’est pas partenaire et ne reçoit pas de requêtes directes'), findsOneWidget);
+      expect(
+        find.textContaining(
+          'Elle n’est pas partenaire et ne reçoit pas de requêtes directes',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Appeler l’officine directement'), findsOneWidget);
       // Ne doit PAS afficher de bouton de commande in-app
       expect(find.text('Solliciter'), findsNothing);

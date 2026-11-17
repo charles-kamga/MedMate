@@ -181,17 +181,19 @@ void main() {
         selectedOrder: testOrder1,
       ),
       build: () {
-        when(() => mockSubmitQuoteUseCase(
-              orderId: testOrder1.id,
-              pharmacyId: testPharmacyId,
-              availability: PharmacyAvailabilityType.fullyAvailable,
-              quotedPriceCfa: 2400,
-              conditionRequirements: any(named: 'conditionRequirements'),
-              conditionNote: any(named: 'conditionNote'),
-              proposesDelivery: any(named: 'proposesDelivery'),
-              deliveryFeeCfa: any(named: 'deliveryFeeCfa'),
-              estimatedDeliveryMinutes: any(named: 'estimatedDeliveryMinutes'),
-            ),).thenAnswer((_) async => Right(testOfferAvailable));
+        when(
+          () => mockSubmitQuoteUseCase(
+            orderId: testOrder1.id,
+            pharmacyId: testPharmacyId,
+            availability: PharmacyAvailabilityType.fullyAvailable,
+            quotedPriceCfa: 2400,
+            conditionRequirements: any(named: 'conditionRequirements'),
+            conditionNote: any(named: 'conditionNote'),
+            proposesDelivery: any(named: 'proposesDelivery'),
+            deliveryFeeCfa: any(named: 'deliveryFeeCfa'),
+            estimatedDeliveryMinutes: any(named: 'estimatedDeliveryMinutes'),
+          ),
+        ).thenAnswer((_) async => Right(testOfferAvailable));
         return cubit;
       },
       act: (cubit) => cubit.submitQuote(
@@ -222,17 +224,19 @@ void main() {
         selectedOrder: testOrder1,
       ),
       build: () {
-        when(() => mockSubmitQuoteUseCase(
-              orderId: testOrder1.id,
-              pharmacyId: testPharmacyId,
-              availability: PharmacyAvailabilityType.conditional,
-              quotedPriceCfa: 3000,
-              conditionRequirements: ['Ordonnance originale requise'],
-              conditionNote: 'Vérification obligatoire au comptoir',
-              proposesDelivery: false,
-              deliveryFeeCfa: 0,
-              estimatedDeliveryMinutes: null,
-            ),).thenAnswer((_) async => Right(testOfferConditional));
+        when(
+          () => mockSubmitQuoteUseCase(
+            orderId: testOrder1.id,
+            pharmacyId: testPharmacyId,
+            availability: PharmacyAvailabilityType.conditional,
+            quotedPriceCfa: 3000,
+            conditionRequirements: ['Ordonnance originale requise'],
+            conditionNote: 'Vérification obligatoire au comptoir',
+            proposesDelivery: false,
+            deliveryFeeCfa: 0,
+            estimatedDeliveryMinutes: null,
+          ),
+        ).thenAnswer((_) async => Right(testOfferConditional));
         return cubit;
       },
       act: (cubit) => cubit.submitQuote(
@@ -252,7 +256,8 @@ void main() {
         predicate<PharmacistCounterState>((state) {
           return state.status == PharmacistCounterStatus.quoteSubmitted &&
               state.lastSubmittedQuote == testOfferConditional &&
-              (state.lastSubmittedQuote?.conditionRequirements.isNotEmpty ?? false);
+              (state.lastSubmittedQuote?.conditionRequirements.isNotEmpty ??
+                  false);
         }),
       ],
     );
@@ -265,17 +270,19 @@ void main() {
         selectedOrder: testOrder1,
       ),
       build: () {
-        when(() => mockSubmitQuoteUseCase(
-              orderId: testOrder1.id,
-              pharmacyId: testPharmacyId,
-              availability: PharmacyAvailabilityType.unavailable,
-              quotedPriceCfa: 0,
-              conditionRequirements: any(named: 'conditionRequirements'),
-              conditionNote: 'Rupture nationale',
-              proposesDelivery: any(named: 'proposesDelivery'),
-              deliveryFeeCfa: any(named: 'deliveryFeeCfa'),
-              estimatedDeliveryMinutes: any(named: 'estimatedDeliveryMinutes'),
-            ),).thenAnswer((_) async => Right(testOfferUnavailable));
+        when(
+          () => mockSubmitQuoteUseCase(
+            orderId: testOrder1.id,
+            pharmacyId: testPharmacyId,
+            availability: PharmacyAvailabilityType.unavailable,
+            quotedPriceCfa: 0,
+            conditionRequirements: any(named: 'conditionRequirements'),
+            conditionNote: 'Rupture nationale',
+            proposesDelivery: any(named: 'proposesDelivery'),
+            deliveryFeeCfa: any(named: 'deliveryFeeCfa'),
+            estimatedDeliveryMinutes: any(named: 'estimatedDeliveryMinutes'),
+          ),
+        ).thenAnswer((_) async => Right(testOfferUnavailable));
         return cubit;
       },
       act: (cubit) => cubit.submitQuote(

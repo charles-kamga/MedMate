@@ -130,7 +130,7 @@ CREATE TABLE public.demande_dispatch_log (
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
--- Réservations temporaires (TTL strict de 2 heures)
+-- Réservations temporaires (TTL strict de 15 minutes)
 CREATE TABLE public.reservations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   client_reservation_id UUID NOT NULL UNIQUE, -- Idempotence client
@@ -143,7 +143,7 @@ CREATE TABLE public.reservations (
   code_retrait_otp VARCHAR(6) NOT NULL, -- Code à 6 chiffres pour retrait
   statut public.reservation_status NOT NULL DEFAULT 'pending',
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  expires_at TIMESTAMPTZ NOT NULL DEFAULT (timezone('utc'::text, now()) + interval '2 hours'),
+  expires_at TIMESTAMPTZ NOT NULL DEFAULT (timezone('utc'::text, now()) + interval '15 minutes'),
   completed_at TIMESTAMPTZ
 );
 
@@ -253,9 +253,9 @@ CREATE POLICY "Pharmaciens consultent et traitent les reservations de leur offic
 
 SELECT cron.schedule(
   'purge-expired-reservations-hourly',
-  '0 * * * *', -- Toutes les heures
+  '*/5 * * * *', -- Toutes les 5 minutes
   $$
-    -- Basculer les réservations de plus de 2 heures en statut expiré
+    -- Basculer les réservations de plus de 15 minutes en statut expiré
     UPDATE public.reservations
     SET statut = 'expired'
     WHERE statut = 'pending' AND expires_at < timezone('utc'::text, now());

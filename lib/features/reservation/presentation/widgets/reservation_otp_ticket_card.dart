@@ -181,7 +181,9 @@ class ReservationOtpTicketCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  isExpired ? 'Expiré' : 'TTL 2h actif',
+                  isExpired
+                      ? 'Expiré'
+                      : 'TTL ${AppConfig.otpValidityShortLabel} actif',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,

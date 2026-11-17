@@ -159,7 +159,8 @@ void main() {
     mockCatalogCubit = MockMedicationCatalogCubit();
 
     when(() => mockFlashCubit.state).thenReturn(const FlashReservationState());
-    when(() => mockCatalogCubit.state).thenReturn(const MedicationCatalogInitial());
+    when(() => mockCatalogCubit.state)
+        .thenReturn(const MedicationCatalogInitial());
   });
 
   Widget createWidgetUnderTest() {
@@ -180,7 +181,11 @@ void main() {
     );
   }
 
-  void configureViewport(WidgetTester tester, {required double width, required double height}) {
+  void configureViewport(
+    WidgetTester tester, {
+    required double width,
+    required double height,
+  }) {
     tester.view.physicalSize = Size(width, height);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
@@ -190,7 +195,9 @@ void main() {
   }
 
   group('PatientFlashFlowView Multi-Viewport & Responsive Tests', () {
-    testWidgets('renders mobile viewport (390x844) in initial state without overflow', (tester) async {
+    testWidgets(
+        'renders mobile viewport (390x844) in initial state without overflow',
+        (tester) async {
       configureViewport(tester, width: 390, height: 844);
 
       await tester.pumpWidget(createWidgetUnderTest());
@@ -200,10 +207,15 @@ void main() {
       expect(find.byType(PatientBasketComposerCard), findsOneWidget);
       expect(find.byType(YangoPulseFlashButton), findsOneWidget);
       expect(find.text(AppConfig.pricePolicyNotice), findsOneWidget);
-      expect(find.text('Comment fonctionne la recherche Flash ?'), findsOneWidget);
+      expect(
+        find.text('Comment fonctionne la recherche Flash ?'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('renders desktop viewport (1280x800) in 2 columns without overflow', (tester) async {
+    testWidgets(
+        'renders desktop viewport (1280x800) in 2 columns without overflow',
+        (tester) async {
       configureViewport(tester, width: 1280, height: 800);
 
       await tester.pumpWidget(createWidgetUnderTest());
@@ -212,10 +224,15 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.byType(PatientBasketComposerCard), findsOneWidget);
       expect(find.byType(YangoPulseFlashButton), findsOneWidget);
-      expect(find.text('Comment fonctionne la recherche Flash ?'), findsOneWidget);
+      expect(
+        find.text('Comment fonctionne la recherche Flash ?'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('triggers submitFlashRequest when basket is ready and button tapped', (tester) async {
+    testWidgets(
+        'triggers submitFlashRequest when basket is ready and button tapped',
+        (tester) async {
       configureViewport(tester, width: 390, height: 844);
 
       when(() => mockFlashCubit.state).thenReturn(
@@ -237,7 +254,9 @@ void main() {
       verify(() => mockFlashCubit.submitFlashRequest()).called(1);
     });
 
-    testWidgets('displays WaveDispatchProgressCard and triggers wave escalation', (tester) async {
+    testWidgets(
+        'displays WaveDispatchProgressCard and triggers wave escalation',
+        (tester) async {
       configureViewport(tester, width: 1280, height: 800);
 
       when(() => mockFlashCubit.state).thenReturn(
@@ -257,7 +276,8 @@ void main() {
       expect(find.text('Vague 1 active'), findsOneWidget);
       expect(find.text('Pharmacie du Soleil'), findsWidgets);
 
-      final escalateBtn = find.text('Solliciter 2 pharmacies de plus (Vague 2)');
+      final escalateBtn =
+          find.text('Solliciter 2 pharmacies de plus (Vague 2)');
       expect(escalateBtn, findsOneWidget);
       await tester.tap(escalateBtn);
       await tester.pumpAndSettle();
@@ -265,7 +285,9 @@ void main() {
       verify(() => mockFlashCubit.escalateWave()).called(1);
     });
 
-    testWidgets('displays PharmacyOffersComparisonList with 3 statuses and selects offer with phone', (tester) async {
+    testWidgets(
+        'displays PharmacyOffersComparisonList with 3 statuses and selects offer with phone',
+        (tester) async {
       configureViewport(tester, width: 390, height: 844);
 
       when(() => mockFlashCubit.state).thenReturn(
@@ -276,8 +298,12 @@ void main() {
           status: FlashReservationStatus.offersReceived,
         ),
       );
-      when(() => mockFlashCubit.selectOffer(any(), patientPhone: any(named: 'patientPhone')))
-          .thenAnswer((_) async {});
+      when(
+        () => mockFlashCubit.selectOffer(
+          any(),
+          patientPhone: any(named: 'patientPhone'),
+        ),
+      ).thenAnswer((_) async {});
 
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
@@ -290,10 +316,14 @@ void main() {
 
       // Verification du prix exclusif pharmacien
       expect(find.text('3100 FCFA'), findsOneWidget);
-      expect(find.text('Prix exclusif proposé par le pharmacien'), findsWidgets);
+      expect(
+        find.text('Prix exclusif proposé par le pharmacien'),
+        findsWidgets,
+      );
 
       // Clic sur Choisir cette pharmacie
-      final chooseBtn = find.widgetWithText(ElevatedButton, 'Choisir cette pharmacie').first;
+      final chooseBtn =
+          find.widgetWithText(ElevatedButton, 'Choisir cette pharmacie').first;
       await tester.ensureVisible(chooseBtn);
       await tester.pumpAndSettle();
       await tester.tap(chooseBtn);
@@ -301,17 +331,26 @@ void main() {
 
       // Dialogue de saisie du telephone
       expect(find.text('Confirmer la sélection'), findsOneWidget);
-      expect(find.text('Numéro de téléphone pour le retrait :'), findsOneWidget);
+      expect(
+        find.text('Numéro de téléphone pour le retrait :'),
+        findsOneWidget,
+      );
 
       final confirmBtn = find.widgetWithText(ElevatedButton, 'Confirmer');
       await tester.tap(confirmBtn);
       await tester.pumpAndSettle();
 
-      verify(() => mockFlashCubit.selectOffer(any(), patientPhone: any(named: 'patientPhone')))
-          .called(1);
+      verify(
+        () => mockFlashCubit.selectOffer(
+          any(),
+          patientPhone: any(named: 'patientPhone'),
+        ),
+      ).called(1);
     });
 
-    testWidgets('displays ReservationOtpTicketCard in confirmed state on mobile & desktop without overflow', (tester) async {
+    testWidgets(
+        'displays ReservationOtpTicketCard in confirmed state on mobile & desktop without overflow',
+        (tester) async {
       // Test sur mobile
       configureViewport(tester, width: 390, height: 844);
 
@@ -333,7 +372,7 @@ void main() {
       expect(find.byType(ReservationOtpTicketCard), findsOneWidget);
       expect(find.text('Réservation confirmée !'), findsOneWidget);
       expect(find.text('849201'), findsOneWidget);
-      expect(find.text('TTL 2h actif'), findsOneWidget);
+      expect(find.text('TTL 15 min actif'), findsOneWidget);
       expect(find.text('CODE DE RETRAIT AU COMPTOIR'), findsOneWidget);
       expect(find.text('Itinéraire OSM'), findsOneWidget);
       expect(find.text('Appeler'), findsOneWidget);

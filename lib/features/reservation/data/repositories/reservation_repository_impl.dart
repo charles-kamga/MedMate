@@ -119,7 +119,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
       final now = DateTime.now();
       final orderId = 'ORD-${now.millisecondsSinceEpoch % 1000000}';
-      final expiresAt = now.add(const Duration(hours: 2));
+      final expiresAt = now.add(AppConfig.otpValidityDuration);
 
       // 2 pharmacies partenaires les plus proches du repère sélectionné
       final targets = defaultWave1Pharmacies
@@ -267,7 +267,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       }
 
       final now = DateTime.now();
-      final expiresAt = now.add(const Duration(hours: 2));
+      final expiresAt = now.add(AppConfig.otpValidityDuration);
 
       // Génération stricte d'un code OTP à 6 chiffres
       final otp6Digits = (100000 + _random.nextInt(900000)).toString();

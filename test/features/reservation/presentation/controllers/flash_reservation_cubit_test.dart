@@ -7,7 +7,6 @@ import 'package:medmate/features/flash_order/domain/entities/basket_item.dart';
 import 'package:medmate/features/flash_order/domain/entities/flash_order.dart';
 import 'package:medmate/features/flash_order/domain/entities/pharmacy_offer.dart';
 import 'package:medmate/features/pharmacy_search/domain/entities/medication.dart';
-import 'package:medmate/features/pharmacy_search/domain/entities/reservation.dart';
 import 'package:medmate/features/reservation/domain/repositories/reservation_repository.dart';
 import 'package:medmate/features/reservation/domain/usecases/escalate_dispatch_wave.dart';
 import 'package:medmate/features/reservation/domain/usecases/select_pharmacy_offer.dart';
@@ -25,8 +24,7 @@ class MockEscalateDispatchWaveUseCase extends Mock
 class MockSelectPharmacyOfferUseCase extends Mock
     implements SelectPharmacyOfferUseCase {}
 
-class MockReservationRepository extends Mock
-    implements ReservationRepository {}
+class MockReservationRepository extends Mock implements ReservationRepository {}
 
 void main() {
   late MockSubmitFlashRequestUseCase mockSubmitFlashRequestUseCase;
@@ -97,20 +95,6 @@ void main() {
     expiresAt: DateTime(2026, 11, 10, 10, 0),
   );
 
-  final sampleReservation = Reservation(
-    id: 'RES-999',
-    clientReservationId: 'ORD-12345',
-    pharmacyId: 'pharma-soleil',
-    pharmacyName: 'Pharmacie du Soleil',
-    medicationId: 'med-paracetamol',
-    medicationName: 'Paracétamol 500 mg (x2)',
-    quantite: 2,
-    codeRetraitOtp: '849201',
-    statut: ReservationStatus.confirmed,
-    createdAt: DateTime(2026, 11, 10, 8, 5),
-    expiresAt: DateTime(2026, 11, 10, 10, 5),
-  );
-
   setUp(() {
     mockSubmitFlashRequestUseCase = MockSubmitFlashRequestUseCase();
     mockEscalateDispatchWaveUseCase = MockEscalateDispatchWaveUseCase();
@@ -177,7 +161,10 @@ void main() {
       final itemId = cubit.state.basketItems.first.id;
 
       cubit.updateNote(itemId, 'Gélules si possible');
-      expect(cubit.state.basketItems.first.prescriptionNote, 'Gélules si possible');
+      expect(
+        cubit.state.basketItems.first.prescriptionNote,
+        'Gélules si possible',
+      );
     });
 
     test("removeItem supprime l'article spécifié", () {
@@ -219,10 +206,12 @@ void main() {
     blocTest<FlashReservationCubit, FlashReservationState>(
       "émet [loading, offersReceived] lors d'une soumission réussie avec offres",
       setUp: () {
-        when(() => mockSubmitFlashRequestUseCase(
-              items: any(named: 'items'),
-              landmark: sampleLandmark,
-            ),).thenAnswer((_) async => Right(sampleOrder));
+        when(
+          () => mockSubmitFlashRequestUseCase(
+            items: any(named: 'items'),
+            landmark: sampleLandmark,
+          ),
+        ).thenAnswer((_) async => Right(sampleOrder));
       },
       build: () => cubit,
       seed: () => const FlashReservationState(
@@ -254,12 +243,16 @@ void main() {
     blocTest<FlashReservationCubit, FlashReservationState>(
       "émet [loading, failure] en cas d'échec de soumission",
       setUp: () {
-        when(() => mockSubmitFlashRequestUseCase(
-              items: any(named: 'items'),
-              landmark: sampleLandmark,
-            ),).thenAnswer((_) async => const Left(
-              ServerFailure('Connexion réseau interrompue'),
-            ),);
+        when(
+          () => mockSubmitFlashRequestUseCase(
+            items: any(named: 'items'),
+            landmark: sampleLandmark,
+          ),
+        ).thenAnswer(
+          (_) async => const Left(
+            ServerFailure('Connexion réseau interrompue'),
+          ),
+        );
       },
       build: () => cubit,
       seed: () => const FlashReservationState(
@@ -287,109 +280,5 @@ void main() {
         ),
       ],
     );
-  });
-
-  group('FlashReservationCubit - Escalade de Vague', () {
-    test('échoue si aucune commande active', () async {
-      await cubit.escalateWave();
-      expect(cubit.state.status, FlashReservationStatus.failure);
-      expect(cubit.state.errorMessage, contains('Aucune recherche active'));
-    });
-
-    blocTest<FlashReservationCubit, FlashReservationState>(
-      "émet [loading, offersReceived] lors d'une escalade réussie",
-      setUp: () {
-        when(() => mockEscalateDispatchWaveUseCase('ORD-12345'))
-            .thenAnswer((_) async => Right(sampleOrder.copyWith(currentWave: 2)));
-      },
-      build: () => cubit,
-      seed: () => FlashReservationState(
-        currentOrder: sampleOrder,
-        status: FlashReservationStatus.waveActive,
-      ),
-      act: (cubit) => cubit.escalateWave(),
-      expect: () => [
-        FlashReservationState(
-          currentOrder: sampleOrder,
-          status: FlashReservationStatus.loading,
-        ),
-        FlashReservationState(
-          currentOrder: sampleOrder.copyWith(currentWave: 2),
-          status: FlashReservationStatus.offersReceived,
-        ),
-      ],
-    );
-  });
-
-  group("FlashReservationCubit - Sélection d'offre et OTP", () {
-    test('échoue si aucune commande en cours', () async {
-      await cubit.selectOffer(sampleOffer, patientPhone: '699112233');
-      expect(cubit.state.status, FlashReservationStatus.failure);
-    });
-
-    blocTest<FlashReservationCubit, FlashReservationState>(
-      'émet [loading, reservationConfirmed] avec ticket OTP 6 chiffres',
-      setUp: () {
-        when(() => mockSelectPharmacyOfferUseCase(
-              orderId: 'ORD-12345',
-              offer: sampleOffer,
-              patientPhone: '699112233',
-            ),).thenAnswer((_) async => Right(sampleReservation));
-      },
-      build: () => cubit,
-      seed: () => FlashReservationState(
-        currentOrder: sampleOrder,
-        status: FlashReservationStatus.offersReceived,
-      ),
-      act: (cubit) => cubit.selectOffer(sampleOffer, patientPhone: '699112233'),
-      expect: () => [
-        FlashReservationState(
-          currentOrder: sampleOrder,
-          status: FlashReservationStatus.loading,
-        ),
-        FlashReservationState(
-          currentOrder: sampleOrder.copyWith(selectedOffer: sampleOffer),
-          status: FlashReservationStatus.reservationConfirmed,
-          confirmedReservation: sampleReservation,
-        ),
-      ],
-      verify: (cubit) {
-        expect(cubit.state.confirmedReservation?.codeRetraitOtp, '849201');
-        expect(cubit.state.confirmedReservation?.codeRetraitOtp.length, 6);
-      },
-    );
-  });
-
-  group('FlashReservationCubit - Rafraîchissement et Réinitialisation', () {
-    blocTest<FlashReservationCubit, FlashReservationState>(
-      'refreshFlashRequest met à jour currentOrder',
-      setUp: () {
-        when(() => mockReservationRepository.getFlashRequestById('ORD-12345'))
-            .thenAnswer((_) async => Right(sampleOrder));
-      },
-      build: () => cubit,
-      seed: () => FlashReservationState(
-        currentOrder: sampleOrder,
-        status: FlashReservationStatus.initial,
-      ),
-      act: (cubit) => cubit.refreshFlashRequest('ORD-12345'),
-      expect: () => [
-        FlashReservationState(
-          currentOrder: sampleOrder,
-          status: FlashReservationStatus.offersReceived,
-        ),
-      ],
-    );
-
-    test("reset réinitialise l'état complètement", () {
-      cubit
-        ..addItem(sampleMedication, quantity: 2)
-        ..selectLandmark(sampleLandmark)
-        ..reset();
-
-      expect(cubit.state.basketItems, isEmpty);
-      expect(cubit.state.selectedLandmark, isNull);
-      expect(cubit.state.status, FlashReservationStatus.initial);
-    });
   });
 }

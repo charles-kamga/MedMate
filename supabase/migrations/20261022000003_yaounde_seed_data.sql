@@ -67,56 +67,8 @@ INSERT INTO public.carrefours_repere (nom, quartier_id, location, description_ac
     'Zone de grand trafic vers Madagascar et Tsinga'
   );
 
--- 3. Officines de Référence à Yaoundé
-WITH q AS (SELECT id, nom FROM public.quartiers_yaounde),
-     c AS (SELECT id, nom FROM public.carrefours_repere)
-INSERT INTO public.pharmacies (
-  nom, licence_onpc, quartier_id, carrefour_proche_id, location, adresse_detaillee, telephone_garde, est_ouverte, est_de_garde
-) VALUES
-  (
-    'Grande Pharmacie du Centre',
-    'ONPC-YDE-0042',
-    (SELECT id FROM q WHERE nom = 'Poste Centrale'),
-    (SELECT id FROM c WHERE nom = 'Rond-Point Poste Centrale'),
-    ST_SetSRID(ST_MakePoint(11.5205, 3.8665), 4326)::geography,
-    'Avenue Kennedy, en face de la Cathédrale Notre-Dame',
-    '+237699112233',
-    true,
-    true
-  ),
-  (
-    'Pharmacie du Soleil',
-    'ONPC-YDE-0105',
-    (SELECT id FROM q WHERE nom = 'Poste Centrale'),
-    (SELECT id FROM c WHERE nom = 'Carrefour Warda'),
-    ST_SetSRID(ST_MakePoint(11.5170, 3.8692), 4326)::geography,
-    'Boulevard du 20 Mai, à proximité du carrefour Warda',
-    '+237677445566',
-    true,
-    false
-  ),
-  (
-    'Pharmacie d''Obili',
-    'ONPC-YDE-0211',
-    (SELECT id FROM q WHERE nom = 'Obili'),
-    (SELECT id FROM c WHERE nom = 'Carrefour Obili'),
-    ST_SetSRID(ST_MakePoint(11.4925, 3.8542), 4326)::geography,
-    'Carrefour Chapelle Obili, face collège Vogt',
-    '+237695332211',
-    true,
-    true
-  ),
-  (
-    'Pharmacie Acacia Biyem-Assi',
-    'ONPC-YDE-0188',
-    (SELECT id FROM q WHERE nom = 'Biyem-Assi'),
-    (SELECT id FROM c WHERE nom = 'Carrefour Biyem-Assi (Acacia)'),
-    ST_SetSRID(ST_MakePoint(11.4885, 3.8372), 4326)::geography,
-    'Carrefour Acacia, Montée Biyem-Assi',
-    '+237670998877',
-    true,
-    false
-  );
+-- 3. Officines : gérées exclusivement par la migration 20261116000001_mboapharma_yaounde_seed.sql
+-- (Données réelles MboaPHARMA, sans entrées fictives)
 
 -- 4. Catalogue National Homologué des Médicaments Essentiels (Cameroun)
 INSERT INTO public.medicaments (

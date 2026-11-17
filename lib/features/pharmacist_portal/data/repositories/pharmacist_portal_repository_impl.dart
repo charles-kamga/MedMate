@@ -1,4 +1,5 @@
 import 'package:fpdart/fpdart.dart';
+import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/yaounde_landmarks.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../flash_order/domain/entities/basket_item.dart';
@@ -183,10 +184,10 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
         return const Left(ConsumedOtpFailure());
       }
 
-      // Vérification de la validité temporelle (TTL 2h max)
+      // Vérification de la validité temporelle (TTL 15 min max)
       final now = DateTime.now();
       final isTtlExpired = now.isAfter(order.expiresAt) ||
-          now.difference(order.createdAt).inHours >= 2;
+          now.difference(order.createdAt) >= AppConfig.otpValidityDuration;
       if (isTtlExpired) {
         return const Left(ExpiredOtpFailure());
       }
@@ -322,7 +323,7 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
       waveTimeRemainingSeconds: 95,
       status: FlashOrderStatus.dispatchingWave,
       createdAt: now.subtract(const Duration(seconds: 25)),
-      expiresAt: now.add(const Duration(hours: 2)),
+      expiresAt: now.add(AppConfig.otpValidityDuration),
     );
 
     // 2. Demande prête pour retrait au comptoir avec code OTP (Test OTP)
@@ -353,8 +354,8 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
       status: FlashOrderStatus.readyForPickup,
       reservationOtpCode: '482910',
       phoneNumber: '+237 690 12 34 56',
-      createdAt: now.subtract(const Duration(minutes: 20)),
-      expiresAt: now.add(const Duration(minutes: 100)),
+      createdAt: now.subtract(const Duration(minutes: 3)),
+      expiresAt: now.add(const Duration(minutes: 12)),
     );
 
     // 3. Demande de la zone pilote Melen ciblant Mandela et Melen 8
@@ -369,7 +370,7 @@ class PharmacistPortalRepositoryImpl implements PharmacistPortalRepository {
       waveTimeRemainingSeconds: 110,
       status: FlashOrderStatus.dispatchingWave,
       createdAt: now.subtract(const Duration(seconds: 10)),
-      expiresAt: now.add(const Duration(hours: 2)),
+      expiresAt: now.add(AppConfig.otpValidityDuration),
     );
 
     _orders[order1.id] = order1;

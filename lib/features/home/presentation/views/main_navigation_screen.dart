@@ -4,12 +4,11 @@ import 'package:medmate/core/config/app_config.dart';
 import 'package:medmate/core/theme/app_colors.dart';
 import 'package:medmate/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:medmate/features/auth/presentation/bloc/auth_state.dart';
-import 'package:medmate/features/auth/presentation/views/auth_view.dart';
 import 'package:medmate/features/flash_order/presentation/views/patient_request_wizard_view.dart';
+import 'package:medmate/features/home/presentation/widgets/main_nav_profile_menu.dart';
 import 'package:medmate/features/pharmacist_portal/presentation/views/pharmacist_portal_view.dart';
 import 'package:medmate/features/patient_flow/presentation/views/auxiliary_tabs_views.dart';
 import 'package:medmate/features/patient_flow/presentation/views/patient_home_flow_view.dart';
-import 'package:medmate/features/pharmacy_search/presentation/views/pharmacy_map_view.dart';
 import 'package:medmate/features/reservation/presentation/views/patient_flash_flow_view.dart';
 
 /// Écran principal MedMate aligné sur la maquette HTML du maître d'œuvre
@@ -163,17 +162,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
             NavigationDestination(
               icon: Icon(Icons.search_rounded),
-              selectedIcon: Icon(Icons.search_rounded, color: AppColors.primary),
+              selectedIcon:
+                  Icon(Icons.search_rounded, color: AppColors.primary),
               label: 'Mes recherches',
             ),
             NavigationDestination(
               icon: Icon(Icons.access_time_rounded),
-              selectedIcon: Icon(Icons.access_time_filled_rounded, color: AppColors.primary),
+              selectedIcon: Icon(
+                Icons.access_time_filled_rounded,
+                color: AppColors.primary,
+              ),
               label: 'Rappels',
             ),
             NavigationDestination(
               icon: Icon(Icons.person_outline_rounded),
-              selectedIcon: Icon(Icons.person_rounded, color: AppColors.primary),
+              selectedIcon:
+                  Icon(Icons.person_rounded, color: AppColors.primary),
               label: 'Profil',
             ),
           ],
@@ -184,7 +188,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   Widget _buildCurrentTabContent() {
     final authState = context.watch<AuthBloc>().state;
-    final isPharmacist = authState is AuthAuthenticated && authState.session.isPharmacist;
+    final isPharmacist =
+        authState is AuthAuthenticated && authState.session.isPharmacist;
 
     switch (_currentTab) {
       case 'history':
@@ -202,20 +207,57 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                    onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => Scaffold(appBar: AppBar(title: const Text('Recherche Flash Yango')), body: const PatientFlashFlowView()))),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => Scaffold(
+                          appBar: AppBar(
+                            title: const Text('Recherche Flash Yango'),
+                          ),
+                          body: const PatientFlashFlowView(),
+                        ),
+                      ),
+                    ),
                     icon: const Icon(Icons.bolt_rounded),
-                    label: const Text('Recherche Flash « Style Yango » →', style: TextStyle(fontWeight: FontWeight.w700)),
+                    label: const Text(
+                      'Recherche Flash « Style Yango » →',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(foregroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                    onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => Scaffold(appBar: AppBar(title: const Text('Demande en vagues')), body: const PatientRequestWizardView()))),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => Scaffold(
+                          appBar: AppBar(
+                            title: const Text('Demande en vagues'),
+                          ),
+                          body: const PatientRequestWizardView(),
+                        ),
+                      ),
+                    ),
                     icon: const Icon(Icons.flash_on_rounded),
-                    label: const Text('Demande inversée classique (V2) →', style: TextStyle(fontWeight: FontWeight.w600)),
+                    label: const Text(
+                      'Demande inversée classique (V2) →',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ),
               ],
@@ -241,109 +283,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           buttonLabel: 'Rechercher un médicament',
           icon: Icons.person_rounded,
           onActionPressed: () => _setTab('home'),
-          extraWidget: Column(
-            children: [
-              Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.storefront_rounded, color: AppColors.primary),
-                  ),
-                  title: const Text(
-                    'Portail Officine Partenaire (Pharmacien)',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                  ),
-                  subtitle: const Text(
-                    'Traiter les demandes entrantes et valider les retraits OTP',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                  trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => Scaffold(
-                          appBar: AppBar(title: const Text('Portail Officine Partenaire')),
-                          body: const PharmacistPortalView(),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const Divider(color: Color(0xFFEDF2EE)),
-              Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.map_outlined, color: AppColors.primary),
-                  ),
-                  title: const Text(
-                    'Carte interactive des pharmacies',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                  ),
-                  subtitle: const Text(
-                    'Consulter la géolocalisation OpenStreetMap',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                  trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => Scaffold(
-                          appBar: AppBar(
-                            title: const Text('Carte des pharmacies'),
-                          ),
-                          body: PharmacyMapView(enableNetworkTiles: widget.enableNetworkTiles),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const Divider(color: Color(0xFFEDF2EE)),
-              Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.lock_outline, color: AppColors.primary),
-                  ),
-                  title: const Text(
-                    'Espace Professionnel & Sécurité',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                  ),
-                  subtitle: const Text(
-                    'Authentification praticien / pharmacie',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                  trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const AuthView(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+          extraWidget: MainNavProfileMenu(
+            enableNetworkTiles: widget.enableNetworkTiles,
           ),
         );
 
@@ -362,7 +303,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         if (isPharmacist) {
           return PharmacistPortalView(
             key: const ValueKey('tab_home_pharma'),
-            initialPharmacyId: authState.session.pharmacyProfile?.pharmacyId ?? 'pharma-soleil',
+            initialPharmacyId: authState.session.pharmacyProfile?.pharmacyId ??
+                'pharma-soleil',
           );
         }
         return PatientHomeFlowView(

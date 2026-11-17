@@ -1,3 +1,4 @@
+import '../../../../core/config/app_config.dart';
 import '../../../../features/flash_order/domain/entities/basket_item.dart';
 import '../../../../features/flash_order/domain/entities/flash_order.dart';
 import '../../../../features/pharmacy_search/domain/entities/medication.dart';
@@ -16,17 +17,25 @@ class FlashOrderDto {
 
     final rawTargets = json['targets'] as List<dynamic>? ?? <dynamic>[];
     final targets = rawTargets
-        .map((e) => DispatchedPharmacyDto.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map(
+          (e) => DispatchedPharmacyDto.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
         .toList();
 
     final rawOffers = json['offers'] as List<dynamic>? ?? <dynamic>[];
     final offers = rawOffers
-        .map((e) => PharmacyOfferDto.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map(
+          (e) => PharmacyOfferDto.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
         .toList();
 
     final rawSelectedOffer = json['selected_offer'] ?? json['selectedOffer'];
     final selectedOffer = rawSelectedOffer != null
-        ? PharmacyOfferDto.fromJson(Map<String, dynamic>.from(rawSelectedOffer as Map))
+        ? PharmacyOfferDto.fromJson(
+            Map<String, dynamic>.from(rawSelectedOffer as Map),
+          )
         : null;
 
     final createdAtStr = json['created_at'] ?? json['createdAt'];
@@ -37,7 +46,7 @@ class FlashOrderDto {
     final expiresAtStr = json['expires_at'] ?? json['expiresAt'];
     final expiresAt = expiresAtStr != null
         ? DateTime.parse(expiresAtStr.toString())
-        : createdAt.add(const Duration(hours: 2));
+        : createdAt.add(AppConfig.otpValidityDuration);
 
     return FlashOrder(
       id: (json['id'] ?? '').toString(),
@@ -47,15 +56,20 @@ class FlashOrderDto {
       createdAt: createdAt,
       expiresAt: expiresAt,
       currentWave: (json['current_wave'] ?? json['currentWave'] ?? 1) as int,
-      waveTimeRemainingSeconds:
-          (json['wave_time_remaining_seconds'] ?? json['waveTimeRemainingSeconds'] ?? 120) as int,
+      waveTimeRemainingSeconds: (json['wave_time_remaining_seconds'] ??
+          json['waveTimeRemainingSeconds'] ??
+          120) as int,
       offers: offers,
       selectedOffer: selectedOffer,
       status: _parseStatus((json['status'] ?? '').toString()),
-      paymentMethod: _parsePaymentMethod(json['payment_method'] ?? json['paymentMethod']),
-      paymentStatus: _parsePaymentStatus(json['payment_status'] ?? json['paymentStatus']),
-      phoneNumber: json['phone_number']?.toString() ?? json['phoneNumber']?.toString(),
-      reservationOtpCode: json['reservation_otp_code']?.toString() ?? json['reservationOtpCode']?.toString(),
+      paymentMethod:
+          _parsePaymentMethod(json['payment_method'] ?? json['paymentMethod']),
+      paymentStatus:
+          _parsePaymentStatus(json['payment_status'] ?? json['paymentStatus']),
+      phoneNumber:
+          json['phone_number']?.toString() ?? json['phoneNumber']?.toString(),
+      reservationOtpCode: json['reservation_otp_code']?.toString() ??
+          json['reservationOtpCode']?.toString(),
       isPickedUp: (json['is_picked_up'] ?? json['isPickedUp'] ?? false) as bool,
     );
   }
@@ -125,9 +139,13 @@ class DispatchedPharmacyDto {
       phone: (json['phone'] ?? '').toString(),
       waveIndex: (json['wave_index'] ?? json['waveIndex'] ?? 1) as int,
       status: _parseReplyType((json['status'] ?? '').toString()),
-      conditionNote: json['condition_note']?.toString() ?? json['conditionNote']?.toString(),
-      respondedAt: respondedAtStr != null ? DateTime.tryParse(respondedAtStr.toString()) : null,
-      quotedPriceCfa: json['quoted_price_cfa'] as int? ?? json['quotedPriceCfa'] as int?,
+      conditionNote: json['condition_note']?.toString() ??
+          json['conditionNote']?.toString(),
+      respondedAt: respondedAtStr != null
+          ? DateTime.tryParse(respondedAtStr.toString())
+          : null,
+      quotedPriceCfa:
+          json['quoted_price_cfa'] as int? ?? json['quotedPriceCfa'] as int?,
     );
   }
 
@@ -170,9 +188,11 @@ class BasketItemDto {
       id: (json['id'] ?? '').toString(),
       medication: medication,
       quantity: (json['quantity'] ?? 1) as int,
-      hasPrescription: (json['has_prescription'] ?? json['hasPrescription'] ?? false) as bool,
-      prescriptionNote:
-          json['prescription_note']?.toString() ?? json['prescriptionNote']?.toString(),
+      hasPrescription: (json['has_prescription'] ??
+          json['hasPrescription'] ??
+          false) as bool,
+      prescriptionNote: json['prescription_note']?.toString() ??
+          json['prescriptionNote']?.toString(),
     );
   }
 
@@ -195,15 +215,18 @@ class MedicationDto {
     return Medication(
       id: (json['id'] ?? '').toString(),
       dci: (json['dci'] ?? '').toString(),
-      nomCommercial: (json['nom_commercial'] ?? json['nomCommercial'] ?? '').toString(),
+      nomCommercial:
+          (json['nom_commercial'] ?? json['nomCommercial'] ?? '').toString(),
       forme: (json['forme'] ?? '').toString(),
       dosage: (json['dosage'] ?? '').toString(),
       classeTherapeutique:
-          (json['classe_therapeutique'] ?? json['classeTherapeutique'] ?? '').toString(),
+          (json['classe_therapeutique'] ?? json['classeTherapeutique'] ?? '')
+              .toString(),
       prixHomologueCfa:
           (json['prix_homologue_cfa'] ?? json['prixHomologueCfa'] ?? 0) as int,
-      necessiteOrdonnance:
-          (json['necessite_ordonnance'] ?? json['necessiteOrdonnance'] ?? false) as bool,
+      necessiteOrdonnance: (json['necessite_ordonnance'] ??
+          json['necessiteOrdonnance'] ??
+          false) as bool,
     );
   }
 

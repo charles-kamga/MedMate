@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../../../../core/config/app_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/reservation.dart';
 
@@ -89,7 +90,7 @@ class ReservationQrCodeBox extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            "Valable jusqu'à ${_formatTime(reservation.expiresAt)} (2 heures)",
+            "Valable jusqu'à ${_formatTime(reservation.expiresAt)} (${AppConfig.otpValidityLabel})",
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,
