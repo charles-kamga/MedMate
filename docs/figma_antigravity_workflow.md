@@ -71,7 +71,8 @@ Fichier Figma cible : https://www.figma.com/design/<TA_CLE_DE_FICHIER>/MedMate-H
 2. Crée d'abord les variables Figma de couleur à partir des tokens d'`app_colors.dart` (valeurs exactes, pas de hex inventés).
 3. Crée UNE seule frame « 01 - Accueil Patient » (390×844) en Auto-Layout vertical (espacements 8/16/24), calques nommés clairement (ex. `Header`, `SearchBar`, `QuickActions`), couleurs liées aux variables.
 4. Les éléments non reproductibles fidèlement (icônes, carte) sont de simples placeholders étiquetés.
-5. Arrête-toi, donne-moi le lien de la frame et liste ce que tu as approximé. N'enchaîne pas.
+5. Économie de quota Figma (plan gratuit) : lis le code local plutôt que Figma, ne relis pas le fichier Figma entre chaque modification, ne liste ni n'explore d'autres fichiers, et ne fais pas de captures de contrôle sauf si je te le demande.
+6. Arrête-toi, donne-moi le lien de la frame et liste ce que tu as approximé. N'enchaîne pas.
 ```
 
 #### Étapes 4.1 à 4.4 — Frames suivantes (un prompt chacune)
@@ -81,7 +82,8 @@ Modèle de prompt (à répéter en changeant la ligne « Frame ») :
 ```markdown
 Frame 1 validée. Crée UNIQUEMENT la frame suivante, à droite de la précédente avec 80 px d'espacement, en réutilisant les variables et composants existants, avec les MÊMES noms de calques pour les éléments communs (header, barre de navigation) afin de permettre Smart Animate.
 Frame : <voir tableau ci-dessous>
-Lis d'abord les fichiers sources indiqués. Ne représente que ce que le code affiche. Arrête-toi ensuite et liste tes approximations.
+Lis d'abord les fichiers sources indiqués (code local). Ne représente que ce que le code affiche.
+Économie de quota Figma : ne relis pas le fichier Figma entre les modifications, n'explore pas d'autres fichiers, pas de captures de contrôle sauf demande. Arrête-toi ensuite et liste tes approximations.
 ```
 
 | Étape | Frame | Taille | Sources à lire |
